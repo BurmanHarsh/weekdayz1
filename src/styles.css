@@ -38,62 +38,57 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-toxic: var(--toxic);
-  --color-toxic-foreground: var(--toxic-foreground);
-  --color-electric: var(--electric);
-  --color-electric-foreground: var(--electric-foreground);
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-navy: var(--navy);
+  --color-navy-foreground: var(--navy-foreground);
+  --color-cream: var(--cream);
 }
 
 :root {
   --radius: 0.25rem;
-  /* Pitch-black streetwear base */
-  --background: oklch(0.08 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.12 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.12 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0); /* white as primary */
-  --primary-foreground: oklch(0.08 0 0);
-  --secondary: oklch(0.18 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.16 0 0);
-  --muted-foreground: oklch(0.65 0 0);
-  --accent: oklch(0.92 0.21 130); /* toxic green */
-  --accent-foreground: oklch(0.08 0 0);
-  --destructive: oklch(0.65 0.25 25);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.22 0 0);
-  --input: oklch(0.22 0 0);
-  --ring: oklch(0.92 0.21 130);
+  /* Cream paper, ink black, deep navy */
+  --cream: #F4F0E6;
+  --background: #F4F0E6;
+  --foreground: #0A0A0A;
+  --card: #FFFFFF;
+  --card-foreground: #0A0A0A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0A0A0A;
+  --primary: #0A0A0A;
+  --primary-foreground: #F4F0E6;
+  --secondary: #E8E2D2;
+  --secondary-foreground: #0A0A0A;
+  --muted: #E8E2D2;
+  --muted-foreground: #5A5852;
+  --accent: #0B1B3D;            /* dark royal navy */
+  --accent-foreground: #F4F0E6;
+  --destructive: #B83227;
+  --destructive-foreground: #F4F0E6;
+  --border: #D9D2BF;
+  --input: #D9D2BF;
+  --ring: #0B1B3D;
 
-  --toxic: oklch(0.92 0.21 130);            /* #C8FF00-ish */
-  --toxic-foreground: oklch(0.08 0 0);
-  --electric: oklch(0.62 0.24 265);         /* electric blue */
-  --electric-foreground: oklch(0.985 0 0);
-}
-
-.light {
-  --background: oklch(0.985 0 0);
-  --foreground: oklch(0.08 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.08 0 0);
-  --primary: oklch(0.08 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.95 0 0);
-  --secondary-foreground: oklch(0.08 0 0);
-  --muted: oklch(0.95 0 0);
-  --muted-foreground: oklch(0.45 0 0);
-  --border: oklch(0.9 0 0);
-  --input: oklch(0.9 0 0);
+  --ink: #0A0A0A;
+  --ink-foreground: #F4F0E6;
+  --navy: #0B1B3D;
+  --navy-foreground: #F4F0E6;
 }
 
 @layer base {
   * { border-color: var(--color-border); }
   html, body { background-color: var(--color-background); color: var(--color-foreground); }
-  body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(rgba(10,10,10,0.05) 1px, transparent 1px),
+      radial-gradient(rgba(10,10,10,0.04) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 1px;
+  }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
-  ::selection { background: var(--color-toxic); color: var(--color-toxic-foreground); }
+  ::selection { background: var(--color-navy); color: var(--color-navy-foreground); }
 }
 
 @utility text-display {
@@ -103,11 +98,34 @@
   line-height: 0.9;
 }
 
-@utility shadow-toxic {
-  box-shadow: 0 0 0 1px var(--color-toxic), 0 8px 32px -8px color-mix(in oklab, var(--color-toxic) 40%, transparent);
+@utility text-graffiti {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  text-transform: uppercase;
+  font-style: italic;
+  text-shadow:
+    3px 3px 0 var(--color-navy),
+    6px 6px 0 rgba(11, 27, 61, 0.3);
+}
+
+@utility shadow-brutal {
+  box-shadow: 6px 6px 0 0 var(--color-ink);
+}
+
+@utility shadow-brutal-navy {
+  box-shadow: 6px 6px 0 0 var(--color-navy);
 }
 
 @utility no-scrollbar {
   &::-webkit-scrollbar { display: none; }
   scrollbar-width: none;
+}
+
+@utility paper-grain {
+  background-image:
+    radial-gradient(rgba(10,10,10,0.06) 1px, transparent 1px),
+    radial-gradient(rgba(10,10,10,0.04) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 1px;
 }
