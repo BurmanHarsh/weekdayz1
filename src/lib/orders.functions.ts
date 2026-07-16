@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { sendOrderConfirmation } from "./email";
 
 const OrderItemSchema = z.object({
   product_id: z.string().uuid().nullable().optional(),
@@ -51,6 +52,24 @@ export const placeOrder = createServerFn({ method: "POST" })
 
     const { error: itemsErr } = await supabase.from("order_items").insert(items);
     if (itemsErr) throw new Error(itemsErr.message);
+
+    // Atomically decrement inventory for each product in the order
+    const productItems = data.items.filter((i) => i.product_id);
+    await Promise.all(
+      productItems.map((i) =>
+        supabase.rpc("decrement_inventory", {
+          p_product_id: i.product_id as string,
+          p_qty: i.quantity,
+        })
+      )
+    );
+
+    // Send order confirmation email (fire-and-forget, non-blocking)
+    const shippingDetails = data.shipping_details as Record<string, string>;
+    const email = shippingDetails.email;
+    if (email) {
+      sendOrderConfirmation(email, order.id, data.total_cents).catch(() => {});
+    }
 
     return { id: order.id };
   });

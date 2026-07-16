@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { motion, AnimatePresence } from "framer-motion";
 import { IndianRupee, Package, Sparkles, Plus, X, Download } from "lucide-react";
 import { toast } from "sonner";
+import { MultiImageUploader } from "@/components/ui/MultiImageUploader";
 
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -88,9 +89,9 @@ function ProductCreator() {
     price: "1899",
     inventory: "100",
     category: "tee",
-    image_urls: "",
     sizes: "S,M,L,XL,XXL",
   });
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const m = useMutation({
     mutationFn: () =>
       createFn({
@@ -100,7 +101,7 @@ function ProductCreator() {
           description: form.description,
           price_cents: Math.round(Number(form.price) * 100),
           inventory_count: Number(form.inventory),
-          image_urls: form.image_urls.split(/[,\n]/).map((s) => s.trim()).filter(Boolean),
+          image_urls: imageUrls,
           sizes: form.sizes.split(",").map((s) => s.trim()),
           colors: [],
           category: form.category,
@@ -110,7 +111,8 @@ function ProductCreator() {
       toast.success("Product added");
       qc.invalidateQueries({ queryKey: ["products"] });
       setOpen(false);
-      setForm({ ...form, slug: "", title: "", description: "", image_urls: "" });
+      setForm({ ...form, slug: "", title: "", description: "" });
+      setImageUrls([]);
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : "Failed"),
   });
@@ -155,17 +157,11 @@ function ProductCreator() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-xs uppercase tracking-widest text-muted-foreground">Image URLs (comma or newline separated)</label>
-            <textarea
-              value={form.image_urls}
-              onChange={(e) => setForm({ ...form, image_urls: e.target.value })}
-              rows={2}
-              placeholder="/products/tee-black.jpg, /products/tee-white.jpg"
-              className="mt-1 w-full bg-background border border-border px-3 py-2 text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              TODO: Hook up multi-image uploader to the <code>product-images</code> bucket (see README).
-            </p>
+            <label className="text-xs uppercase tracking-widest text-muted-foreground block mb-2">Product Images</label>
+            <MultiImageUploader onUrlsChange={setImageUrls} maxFiles={8} />
+            {imageUrls.length > 0 && (
+              <p className="text-xs text-accent mt-1">{imageUrls.length} image{imageUrls.length > 1 ? 's' : ''} ready</p>
+            )}
           </div>
           <div className="sm:col-span-2">
             <button

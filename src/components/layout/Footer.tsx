@@ -6,8 +6,8 @@ export function Footer() {
     <footer className="border-t border-border bg-background mt-24">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 grid gap-12 md:grid-cols-4">
         <div className="md:col-span-2">
-          <Link to="/" className="text-display text-3xl tracking-tighter">
-            WEEKDAYZ<span className="text-accent">.</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.png" alt="Weekdayz" className="h-24 w-auto" />
           </Link>
           <p className="mt-4 text-sm text-muted-foreground max-w-sm">
             Premium streetwear for the always-online generation. Drops every week.

@@ -1,12 +1,6 @@
-export function formatPrice(cents: number, currency = "INR"): string {
-  const value = cents / 100;
-  try {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(value);
-  } catch {
-    return `₹${value.toFixed(0)}`;
-  }
+import { useCurrencyStore, formatInCurrency } from "./currency-store";
+
+export function formatPrice(cents: number, currency?: string): string {
+  const activeCurrency = (currency || useCurrencyStore.getState().currency) as any;
+  return formatInCurrency(cents, activeCurrency);
 }

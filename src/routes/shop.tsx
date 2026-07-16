@@ -4,6 +4,7 @@ import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { listProducts } from "@/lib/products.functions";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { SlidersHorizontal, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const productsQ = queryOptions({
   queryKey: ["products"],
@@ -51,7 +52,7 @@ function Shop() {
             <button
               key={c}
               onClick={() => setCategory(category === c ? null : c)}
-              className={`px-3 py-1.5 text-xs uppercase tracking-widest border ${
+              className={`px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
                 category === c ? "bg-accent text-accent-foreground border-accent" : "border-border hover:border-accent"
               }`}
             >
@@ -67,7 +68,7 @@ function Shop() {
             <button
               key={s}
               onClick={() => setSize(size === s ? null : s)}
-              className={`min-w-10 px-3 py-1.5 text-xs uppercase tracking-widest border ${
+              className={`min-w-10 px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
                 size === s ? "bg-accent text-accent-foreground border-accent" : "border-border hover:border-accent"
               }`}
             >
@@ -113,7 +114,7 @@ function Shop() {
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="lg:hidden inline-flex items-center gap-2 border border-border px-4 py-2 text-xs uppercase tracking-widest"
+          className="lg:hidden inline-flex items-center gap-2 border border-border px-4 py-2 text-xs uppercase tracking-widest hover:border-accent transition-colors"
         >
           <SlidersHorizontal className="h-4 w-4" /> Filters
         </button>
@@ -132,19 +133,37 @@ function Shop() {
         </div>
       </div>
 
-      {/* Mobile filter sheet */}
-      {open && (
-        <>
-          <div className="fixed inset-0 bg-black/60 z-40" onClick={() => setOpen(false)} />
-          <div className="fixed inset-x-0 bottom-0 z-50 bg-card border-t border-border p-6 rounded-t-2xl max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-display text-xl">Filters</h2>
-              <button onClick={() => setOpen(false)}><X className="h-5 w-5" /></button>
-            </div>
-            {Filters}
-          </div>
-        </>
-      )}
+      {/* Mobile filter sheet with slide-up animations */}
+      <AnimatePresence>
+        {open && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 220 }}
+              className="fixed inset-x-0 bottom-0 z-50 bg-card border-t border-border p-6 rounded-t-2xl max-h-[85vh] overflow-y-auto shadow-2xl"
+            >
+              {/* Drag handle bar at top of sheet */}
+              <div className="w-12 h-1 bg-border rounded-full mx-auto mb-4" />
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-display text-xl">Filters</h2>
+                <button onClick={() => setOpen(false)} className="p-1 hover:text-accent transition-colors">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              {Filters}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

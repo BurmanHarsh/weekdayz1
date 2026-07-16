@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { sendShipped, sendDelivered } from "./email";
 
 async function assertAdmin(ctx: { supabase: any; userId: string }) {
   const { data, error } = await ctx.supabase.rpc("has_role", {
@@ -19,6 +20,32 @@ export const isAdmin = createServerFn({ method: "GET" })
       _role: "admin",
     });
     return { admin: Boolean(data) };
+  });
+
+export const bootstrapAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ secret: z.string() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const expected = process.env.ADMIN_BOOTSTRAP_SECRET ?? "weekdayz-secret-1337";
+    if (data.secret !== expected) throw new Error("Invalid bootstrap secret");
+    
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Check if role already exists using admin client
+    const { data: existing } = await supabaseAdmin
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!existing) {
+      const { error } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: context.userId, role: "admin" });
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
   });
 
 export const getAdminStats = createServerFn({ method: "GET" })
@@ -80,6 +107,26 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    // Fire transactional email on key status changes (non-blocking)
+    if (data.fulfillment_status === "shipped" || data.fulfillment_status === "delivered") {
+      const { data: orderRow } = await context.supabase
+        .from("orders")
+        .select("shipping_details, tracking_number")
+        .eq("id", data.id)
+        .single();
+      const shipping = (orderRow?.shipping_details ?? {}) as Record<string, string>;
+      const emailAddr = shipping.email;
+      if (emailAddr) {
+        if (data.fulfillment_status === "shipped") {
+          const trackingId = data.tracking_number ?? orderRow?.tracking_number ?? "N/A";
+          sendShipped(emailAddr, data.id, trackingId).catch(() => {});
+        } else {
+          sendDelivered(emailAddr, data.id).catch(() => {});
+        }
+      }
+    }
+
     return { ok: true };
   });
 

@@ -39,3 +39,15 @@ export const getSignedDesignUrl = createServerFn({ method: "POST" })
     if (error || !signed) throw new Error(error?.message ?? "Failed to sign URL");
     return { url: signed.signedUrl };
   });
+
+export const myDesigns = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("custom_designs")
+      .select("id, design_file_url, base_color, placement_settings, created_at")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+

@@ -105,6 +105,7 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const isAuthPage = router.state.location.pathname.startsWith('/auth');
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
@@ -118,11 +119,11 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
-        <Navbar />
+        {!isAuthPage && <Navbar />}
         <main className="flex-1">
           <Outlet />
         </main>
-        <Footer />
+        {!isAuthPage && <Footer />}
       </div>
       <CartDrawer />
       <Toaster theme="light" position="bottom-right" />
