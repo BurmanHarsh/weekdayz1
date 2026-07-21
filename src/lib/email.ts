@@ -35,6 +35,8 @@ async function sendEmail(payload: EmailPayload): Promise<void> {
   }
 }
 
+import { formatEstimatedDeliveryDate } from "./shipping";
+
 function formatRupees(cents: number): string {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(cents / 100);
 }
@@ -42,8 +44,13 @@ function formatRupees(cents: number): string {
 export async function sendOrderConfirmation(
   to: string,
   orderId: string,
-  totalCents: number
+  totalCents: number,
+  estimatedDeliveryDate?: string
 ): Promise<void> {
+  const deliveryStatus = estimatedDeliveryDate
+    ? formatEstimatedDeliveryDate(estimatedDeliveryDate)
+    : "Arrives in 3–5 business days";
+
   await sendEmail({
     to,
     subject: `Order confirmed — #${orderId.slice(0, 8).toUpperCase()}`,
@@ -51,6 +58,9 @@ export async function sendOrderConfirmation(
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h1 style="font-size:28px;margin-bottom:8px">Order Confirmed ✅</h1>
         <p>Hey! Your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> for <strong>${formatRupees(totalCents)}</strong> is confirmed and we're getting it ready.</p>
+        <p style="font-size:16px;color:#111;margin:16px 0;padding:12px;background:#f7f7f7;border-left:4px solid #000">
+          <strong>${deliveryStatus}</strong>
+        </p>
         <p style="color:#888">You'll get another email when it ships. Stay fly. 🚀</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
         <p style="font-size:12px;color:#888">Weekdayz · Built for the always-online generation</p>
@@ -64,6 +74,7 @@ export async function sendShipped(
   orderId: string,
   trackingId: string
 ): Promise<void> {
+  const trackingUrl = `https://shiprocket.co/tracking/${trackingId}`;
   await sendEmail({
     to,
     subject: `Your order shipped — Track #${trackingId}`,
@@ -72,6 +83,9 @@ export async function sendShipped(
         <h1 style="font-size:28px;margin-bottom:8px">It's on its way 📦</h1>
         <p>Order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has shipped.</p>
         <p>Tracking ID: <strong>${trackingId}</strong></p>
+        <p style="margin:16px 0;">
+          <a href="${trackingUrl}" target="_blank" style="background-color:#000;color:#fff;padding:12px 24px;text-decoration:none;font-weight:bold;display:inline-block;">Track Shipment</a>
+        </p>
         <p style="color:#888">Should arrive in 3–5 business days.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
         <p style="font-size:12px;color:#888">Weekdayz · Built for the always-online generation</p>

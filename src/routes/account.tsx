@@ -24,6 +24,35 @@ export const Route = createFileRoute("/account")({
   component: AccountPage,
 });
 
+function DesignImage({ path }: { path: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const { data, error } = await supabase.storage
+          .from("user-graphics")
+          .createSignedUrl(path, 60 * 60);
+        if (error) throw error;
+        if (active && data) setUrl(data.signedUrl);
+      } catch (err) {
+        console.error("Failed to load signed URL for design:", err);
+      }
+    }
+    load();
+    return () => {
+      active = false;
+    };
+  }, [path]);
+
+  if (!url) {
+    return <div className="w-full h-full bg-muted flex items-center justify-center text-[10px] text-muted-foreground">Loading...</div>;
+  }
+
+  return <img src={url} alt="Saved design" className="w-full h-full object-cover" />;
+}
+
 function AccountPage() {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -144,23 +173,32 @@ function AccountPage() {
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {designs.map((d) => (
               <div key={d.id} className="border border-border bg-card p-4 flex gap-4 items-center">
-                <div className="relative w-20 h-20 bg-muted flex-shrink-0 border border-border">
-                  <img src={d.design_file_url} alt="" className="w-full h-full object-cover" />
+                <div className="relative w-20 h-20 bg-muted flex-shrink-0 border border-border overflow-hidden">
+                  <DesignImage path={d.design_file_url} />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold uppercase tracking-wider">Custom Tee</h3>
                   <p className="text-xs text-muted-foreground mt-1">Color: {d.base_color}</p>
                   <p className="text-xs text-muted-foreground">Created: {new Date(d.created_at).toLocaleDateString()}</p>
                   <button
-                    onClick={() => {
-                      addItem({
-                        custom_design_id: d.id,
-                        title: `Custom Tee · ${d.base_color}`,
-                        image: d.design_file_url,
-                        size: "L",
-                        unit_price_cents: 209900,
-                      });
-                      toast.success("Added custom tee to bag");
+                    onClick={async () => {
+                      try {
+                        const { data: signed, error } = await supabase.storage
+                          .from("user-graphics")
+                          .createSignedUrl(d.design_file_url, 60 * 60 * 24 * 7); // 7 days
+                        if (error) throw error;
+
+                        addItem({
+                          custom_design_id: d.id,
+                          title: `Custom Tee · ${d.base_color}`,
+                          image: signed.signedUrl,
+                          size: "L",
+                          unit_price_cents: 209900,
+                        });
+                        toast.success("Added custom tee to bag");
+                      } catch (err) {
+                        toast.error("Failed to re-add design to bag");
+                      }
                     }}
                     className="mt-2 text-xs text-accent uppercase tracking-widest font-semibold hover:underline"
                   >

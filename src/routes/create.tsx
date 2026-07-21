@@ -69,6 +69,83 @@ function CreatorStudio() {
 
   const total = BASE_PRICE + (graphic ? CUSTOM_PRINT_SURCHARGE : 0);
 
+  const generateCompositeImageBlob = async (): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+
+      canvas.width = 600;
+      canvas.height = 600;
+
+      const baseImg = new Image();
+      baseImg.crossOrigin = "anonymous";
+      baseImg.src = color.image;
+
+      baseImg.onload = () => {
+        ctx.drawImage(baseImg, 0, 0, 600, 600);
+
+        if (!graphic) {
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Failed to generate blob"));
+          }, "image/png");
+          return;
+        }
+
+        const logoImg = new Image();
+        logoImg.crossOrigin = "anonymous";
+        logoImg.src = graphic.preview;
+
+        logoImg.onload = () => {
+          ctx.save();
+
+          const container = canvasRef.current;
+          const containerWidth = container?.clientWidth || 400;
+          const containerHeight = container?.clientHeight || 400;
+          
+          const scaleX = 600 / containerWidth;
+          const scaleY = 600 / containerHeight;
+
+          const centerX = 300 + pos.x * scaleX;
+          const centerY = 300 + pos.y * scaleY;
+          ctx.translate(centerX, centerY);
+
+          ctx.rotate((rotate * Math.PI) / 180);
+
+          const domGraphicSize = 176;
+          const canvasGraphicSize = domGraphicSize * scaleX * scale;
+
+          ctx.drawImage(
+            logoImg,
+            -canvasGraphicSize / 2,
+            -canvasGraphicSize / 2,
+            canvasGraphicSize,
+            canvasGraphicSize
+          );
+
+          ctx.restore();
+
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("Failed to generate blob"));
+          }, "image/png");
+        };
+
+        logoImg.onerror = (err) => {
+          reject(new Error("Failed to load overlay graphic image"));
+        };
+      };
+
+      baseImg.onerror = (err) => {
+        reject(new Error("Failed to load base T-shirt image"));
+      };
+    });
+  };
+
   async function handleAddToCart() {
     if (!user) {
       toast.error("Sign in to save your design");
@@ -82,30 +159,58 @@ function CreatorStudio() {
     setSaving(true);
     try {
       const ext = graphic.file.name.split(".").pop() ?? "png";
-      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("user-graphics")
-        .upload(path, graphic.file, { upsert: false, contentType: graphic.file.type });
-      if (upErr) throw upErr;
+      const rawPath = `${user.id}/raw_${crypto.randomUUID()}.${ext}`;
+      const compositePath = `${user.id}/composite_${crypto.randomUUID()}.png`;
 
-      const placement = { scale, rotate, x: pos.x, y: pos.y };
+      // 1. Upload raw graphic for printing reference
+      const { error: upRawErr } = await supabase.storage
+        .from("user-graphics")
+        .upload(rawPath, graphic.file, { upsert: false, contentType: graphic.file.type });
+      if (upRawErr) throw upRawErr;
+
+      // 2. Generate composite t-shirt preview image
+      const compositeBlob = await generateCompositeImageBlob();
+
+      // 3. Upload composite t-shirt preview
+      const { error: upCompErr } = await supabase.storage
+        .from("user-graphics")
+        .upload(compositePath, compositeBlob, { upsert: false, contentType: "image/png" });
+      if (upCompErr) throw upCompErr;
+
+      // 4. Create a signed URL for the composite image so it's viewable by the user
+      const { data: signedData, error: signedErr } = await supabase.storage
+        .from("user-graphics")
+        .createSignedUrl(compositePath, 60 * 60 * 24 * 7); // 7 days
+      if (signedErr) throw signedErr;
+      const imageUrl = signedData.signedUrl;
+
+      // 5. Create design in database
+      const placement = { 
+        scale, 
+        rotate, 
+        x: pos.x, 
+        y: pos.y,
+        raw_graphic_url: rawPath
+      };
       const { id } = await createDesignFn({
         data: {
-          design_file_url: path,
+          design_file_url: compositePath,
           base_color: color.hex,
           placement_settings: placement,
         },
       });
 
+      // 6. Add custom tee with its composite signed preview image to cart
       addItem({
         custom_design_id: id,
         title: `Custom Tee · ${color.name}`,
-        image: color.image,
+        image: imageUrl,
         size,
         unit_price_cents: total,
       });
       toast.success("Custom tee added to bag");
     } catch (e) {
+      console.error(e);
       toast.error(e instanceof Error ? e.message : "Failed to save design");
     } finally {
       setSaving(false);

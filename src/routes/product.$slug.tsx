@@ -55,6 +55,7 @@ function ProductPage() {
   const [zoom, setZoom] = useState({ x: 50, y: 50, active: false });
   const addItem = useCart((s) => s.addItem);
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Reactively watch currency change
   useCurrencyStore((s) => s.currency);
@@ -71,6 +72,11 @@ function ProductPage() {
     : 0;
 
   const handleAdd = (express?: boolean) => {
+    if (!user) {
+      toast.error("Please sign in to add items to your bag");
+      navigate({ to: "/auth" });
+      return;
+    }
     if (!size) {
       toast.error("Pick a size");
       return;
