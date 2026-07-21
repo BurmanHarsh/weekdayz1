@@ -102,35 +102,86 @@ export type Database = {
       orders: {
         Row: {
           created_at: string
+          estimated_delivery_date: string | null
           fulfillment_status: Database["public"]["Enums"]["fulfillment_status"]
           id: string
           payment_status: Database["public"]["Enums"]["payment_status"]
           shipping_details: Json
+          shiprocket_order_id: string | null
+          shiprocket_shipment_id: string | null
           total_cents: number
           tracking_number: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          estimated_delivery_date?: string | null
           fulfillment_status?: Database["public"]["Enums"]["fulfillment_status"]
           id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           shipping_details?: Json
+          shiprocket_order_id?: string | null
+          shiprocket_shipment_id?: string | null
           total_cents: number
           tracking_number?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
+          estimated_delivery_date?: string | null
           fulfillment_status?: Database["public"]["Enums"]["fulfillment_status"]
           id?: string
           payment_status?: Database["public"]["Enums"]["payment_status"]
           shipping_details?: Json
+          shiprocket_order_id?: string | null
+          shiprocket_shipment_id?: string | null
           total_cents?: number
           tracking_number?: string | null
           user_id?: string
         }
         Relationships: []
+      }
+      product_reviews: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          product_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          created_at?: string
+          id?: string
+          product_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          product_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -138,42 +189,54 @@ export type Database = {
           colors: string[]
           created_at: string
           description: string
+          height_cm: number
           id: string
           image_urls: string[]
           inventory_count: number
           is_active: boolean
+          length_cm: number
           price_cents: number
           sizes: string[]
           slug: string
           title: string
+          weight_g: number
+          width_cm: number
         }
         Insert: {
           category?: string
           colors?: string[]
           created_at?: string
           description?: string
+          height_cm?: number
           id?: string
           image_urls?: string[]
           inventory_count?: number
           is_active?: boolean
+          length_cm?: number
           price_cents: number
           sizes?: string[]
           slug: string
           title: string
+          weight_g?: number
+          width_cm?: number
         }
         Update: {
           category?: string
           colors?: string[]
           created_at?: string
           description?: string
+          height_cm?: number
           id?: string
           image_urls?: string[]
           inventory_count?: number
           is_active?: boolean
+          length_cm?: number
           price_cents?: number
           sizes?: string[]
           slug?: string
           title?: string
+          weight_g?: number
+          width_cm?: number
         }
         Relationships: []
       }
@@ -219,11 +282,47 @@ export type Database = {
         }
         Relationships: []
       }
+      wishlist: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlist_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      decrement_inventory: {
+        Args: {
+          p_product_id: string
+          p_qty: number
+        }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
