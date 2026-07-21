@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { getFallbackReviews } from "@/lib/fallback-data";
 
 function getPublicClient() {
   return createClient<Database>(
@@ -15,14 +16,19 @@ function getPublicClient() {
 export const getProductReviews = createServerFn({ method: "GET" })
   .inputValidator((data) => z.object({ product_id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    const supabase = getPublicClient();
-    const { data: reviews, error } = await supabase
-      .from("product_reviews")
-      .select("id, rating, body, created_at, user_id, profiles(full_name)")
-      .eq("product_id", data.product_id)
-      .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return reviews ?? [];
+    try {
+      const supabase = getPublicClient();
+      const { data: reviews, error } = await supabase
+        .from("product_reviews")
+        .select("id, rating, body, created_at, user_id, profiles(full_name)")
+        .eq("product_id", data.product_id)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return reviews ?? [];
+    } catch (error) {
+      console.warn("Falling back to local reviews:", error);
+      return getFallbackReviews();
+    }
   });
 
 export const submitReview = createServerFn({ method: "POST" })

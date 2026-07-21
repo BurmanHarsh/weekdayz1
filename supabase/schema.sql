@@ -146,6 +146,13 @@ REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM PUBLIC, anon, authentic
 REVOKE EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.has_role(UUID, public.app_role) TO authenticated, service_role;
 
+-- Create storage buckets
+INSERT INTO storage.buckets (id, name, public)
+VALUES 
+  ('user-graphics', 'user-graphics', false),
+  ('product-images', 'product-images', true)
+ON CONFLICT (id) DO NOTHING;
+
 -- Storage policies: user-graphics (private)
 CREATE POLICY "Users upload to own folder" ON storage.objects FOR INSERT TO authenticated
   WITH CHECK (bucket_id = 'user-graphics' AND auth.uid()::text = (storage.foldername(name))[1]);

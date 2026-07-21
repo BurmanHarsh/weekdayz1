@@ -1,17 +1,18 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, CreditCard, Loader2 } from "lucide-react";
+import { Check, CreditCard, Loader2, MapPin, ShieldCheck, Lock, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart, cartSubtotal } from "@/lib/cart-store";
 import { useAuth } from "@/hooks/use-auth";
 import { formatPrice } from "@/lib/format";
-import { calculateShippingCost } from "@/lib/shipping";
+import { calculateShippingCost, checkAddressServiceability } from "@/lib/shipping";
 import { placeOrder } from "@/lib/orders.functions";
+import { createRazorpayOrder } from "@/lib/razorpay.functions";
 
 const ShippingSchema = z.object({
   full_name: z.string().min(2, "Required"),
@@ -38,9 +39,18 @@ export const Route = createFileRoute("/checkout")({
 
 function Checkout() {
   const { items, clear } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Please sign in to access checkout");
+      navigate({ to: "/auth" });
+    }
+  }, [user, authLoading, navigate]);
+
   const placeOrderFn = useServerFn(placeOrder);
+  const createRazorpayOrderFn = useServerFn(createRazorpayOrder);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [shipping, setShipping] = useState<Shipping | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,6 +65,142 @@ function Checkout() {
     defaultValues: { country: "IN", email: user?.email ?? "" },
   });
 
+  const checkServiceabilityFn = useServerFn(checkAddressServiceability);
+  const [checkingServiceability, setCheckingServiceability] = useState(false);
+  const [locating, setLocating] = useState(false);
+
+  const handleUseCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+          );
+          if (!res.ok) throw new Error("Failed to get address");
+          const data = await res.json();
+          const addr = data.address;
+
+          if (addr) {
+            const streetParts = [
+              addr.house_number,
+              addr.road,
+              addr.suburb || addr.neighbourhood,
+            ].filter(Boolean);
+            const line1 = streetParts.join(", ") || addr.amenity || "";
+            
+            const city = addr.city || addr.town || addr.village || addr.municipality || "";
+            const state = addr.state || "";
+            const postcode = addr.postcode || "";
+            const country = (addr.country_code || "IN").toUpperCase();
+
+            form.setValue("line1", line1, { shouldValidate: true });
+            form.setValue("city", city, { shouldValidate: true });
+            form.setValue("state", state, { shouldValidate: true });
+            form.setValue("postal_code", postcode, { shouldValidate: true });
+            form.setValue("country", country, { shouldValidate: true });
+
+            if (postcode) {
+              const result = await checkServiceabilityFn({
+                data: { postal_code: postcode, country }
+              });
+              if (!result.valid) {
+                form.setError("postal_code", { type: "manual", message: result.error || "Invalid pincode" });
+              } else if (!result.serviceable) {
+                form.setError("postal_code", { type: "manual", message: result.error || "Not serviceable" });
+              } else {
+                form.clearErrors("postal_code");
+                toast.success("Address and serviceability details populated!");
+                return;
+              }
+            }
+            toast.success("Location added successfully!");
+          } else {
+            toast.error("Could not determine address details");
+          }
+        } catch (error) {
+          console.error("Reverse geocoding error:", error);
+          toast.error("Failed to retrieve address details");
+        } finally {
+          setLocating(false);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+        if (!window.isSecureContext) {
+          toast.error("Geolocation requires a secure connection (HTTPS). On mobile, please connect via HTTPS/tunnel or enter the address manually.");
+        } else if (error.code === 1) {
+          toast.error("Location permission denied. Please allow location access in your browser settings.");
+        } else if (error.code === 2) {
+          toast.error("Location unavailable. Please check if device GPS/Location is enabled.");
+        } else if (error.code === 3) {
+          toast.error("Location request timed out. Please try again.");
+        } else {
+          toast.error("Failed to access your location. Please check browser permissions.");
+        }
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleShippingSubmit = async (data: Shipping) => {
+    setCheckingServiceability(true);
+    try {
+      const result = await checkServiceabilityFn({
+        data: {
+          postal_code: data.postal_code,
+          country: data.country,
+        },
+      });
+
+      if (!result.valid) {
+        form.setError("postal_code", {
+          type: "manual",
+          message: result.error || "Invalid postal code.",
+        });
+        toast.error(result.error || "Invalid postal code.");
+        return;
+      }
+
+      if (!result.serviceable) {
+        form.setError("postal_code", {
+          type: "manual",
+          message: result.error || "This location is not serviceable.",
+        });
+        toast.error(result.error || "This location is not serviceable.");
+        return;
+      }
+
+      if (result.city && !form.getValues("city")) {
+        form.setValue("city", result.city);
+        data.city = result.city;
+      }
+      if (result.state && !form.getValues("state")) {
+        form.setValue("state", result.state);
+        data.state = result.state;
+      }
+      if (result.area && !form.getValues("line2")) {
+        form.setValue("line2", result.area);
+        data.line2 = result.area;
+      }
+
+      setShipping(data);
+      setStep(2);
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to verify address serviceability. Please try again.");
+    } finally {
+      setCheckingServiceability(false);
+    }
+  };
+
   if (items.length === 0) {
     return (
       <div className="py-24 text-center">
@@ -64,6 +210,20 @@ function Checkout() {
     );
   }
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if ((window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   async function pay() {
     if (!user) {
       toast.error("Sign in to complete your order");
@@ -72,32 +232,75 @@ function Checkout() {
     }
     if (!shipping) return;
     setLoading(true);
-    // MOCK PAYMENT: simulate a successful payment intent. Real integration:
-    // create intent → confirm → on webhook success, hit placeOrder server fn.
-    await new Promise((r) => setTimeout(r, 1500));
+
+    const isLoaded = await loadRazorpayScript();
+    if (!isLoaded) {
+      toast.error("Failed to load Razorpay SDK. Check your internet connection.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { id } = await placeOrderFn({
-        data: {
-          items: items.map((i) => ({
-            product_id: i.product_id ?? null,
-            custom_design_id: i.custom_design_id ?? null,
-            quantity: i.quantity,
-            size: i.size,
-            unit_price_cents: i.unit_price_cents,
-            title_snapshot: i.title,
-            image_snapshot: i.image,
-          })),
-          total_cents: total,
-          shipping_details: shipping,
-          payment_intent_id: `mock_${crypto.randomUUID()}`,
-        },
+      const order = await createRazorpayOrderFn({
+        data: { amount_cents: total },
       });
-      clear();
-      toast.success("Payment successful!");
-      navigate({ to: "/account", search: { order: id } as never });
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_live_TEtasug4cgmYdw",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Weekdayz",
+        description: "Streetwear & Custom Drops",
+        order_id: order.id,
+        handler: async function (response: any) {
+          setLoading(true);
+          try {
+            const { id } = await placeOrderFn({
+              data: {
+                items: items.map((i) => ({
+                  product_id: i.product_id ?? null,
+                  custom_design_id: i.custom_design_id ?? null,
+                  quantity: i.quantity,
+                  size: i.size,
+                  unit_price_cents: i.unit_price_cents,
+                  title_snapshot: i.title,
+                  image_snapshot: i.image,
+                })),
+                total_cents: total,
+                shipping_details: shipping,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              },
+            });
+            clear();
+            toast.success("Payment successful!");
+            navigate({ to: "/account", search: { order: id } as never });
+          } catch (e) {
+            toast.error(e instanceof Error ? e.message : "Order failed");
+          } finally {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: shipping.full_name,
+          email: shipping.email,
+          contact: shipping.phone,
+        },
+        theme: {
+          color: "#0A0A0A",
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+          },
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Order failed");
-    } finally {
+      toast.error(e instanceof Error ? e.message : "Payment initialization failed");
       setLoading(false);
     }
   }
@@ -127,35 +330,186 @@ function Checkout() {
         <div>
           {step === 1 && (
             <form
-              onSubmit={form.handleSubmit((d) => { setShipping(d); setStep(2); })}
-              className="space-y-4"
+              onSubmit={form.handleSubmit(handleShippingSubmit)}
+              className="space-y-6"
             >
-              {(
-                [
-                  ["full_name", "Full name"],
-                  ["email", "Email"],
-                  ["phone", "Phone"],
-                  ["line1", "Address line 1"],
-                  ["line2", "Address line 2 (optional)"],
-                  ["city", "City"],
-                  ["state", "State / Region"],
-                  ["postal_code", "Postal code"],
-                  ["country", "Country (e.g. IN)"],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key}>
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground">{label}</label>
+              <div className="flex justify-between items-center pb-2 border-b border-border">
+                <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Contact & Shipping</h2>
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  disabled={locating}
+                  className="inline-flex items-center gap-1.5 text-xs text-accent hover:text-accent/80 transition-colors uppercase tracking-widest font-semibold disabled:opacity-50"
+                >
+                  {locating ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <MapPin className="h-3.5 w-3.5" />
+                  )}
+                  {locating ? "Locating..." : "Use Current Location"}
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Full name */}
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Full name</label>
                   <input
-                    {...form.register(key)}
+                    {...form.register("full_name")}
                     className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                    placeholder="Your name"
                   />
-                  {form.formState.errors[key] && (
-                    <p className="text-xs text-destructive mt-1">{form.formState.errors[key]?.message as string}</p>
+                  {form.formState.errors.full_name && (
+                    <p className="text-xs text-destructive mt-1">{form.formState.errors.full_name.message}</p>
                   )}
                 </div>
-              ))}
-              <button type="submit" className="bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold">
-                Continue to review
+
+                {/* Email and Phone Grid */}
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Email</label>
+                    <input
+                      {...form.register("email")}
+                      className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                      placeholder="your-email@example.com"
+                    />
+                    {form.formState.errors.email && (
+                      <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Phone</label>
+                    <input
+                      {...form.register("phone")}
+                      className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                      placeholder="xxxxxxxxxx"
+                    />
+                    {form.formState.errors.phone && (
+                      <p className="text-xs text-destructive mt-1">{form.formState.errors.phone.message}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Address Lines */}
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Address line 1</label>
+                  <input
+                    {...form.register("line1")}
+                    className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                    placeholder="House number, Street name, Apartment"
+                  />
+                  {form.formState.errors.line1 && (
+                    <p className="text-xs text-destructive mt-1">{form.formState.errors.line1.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Address line 2 (optional)</label>
+                  <input
+                    {...form.register("line2")}
+                    className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                    placeholder="Landmark, Area, Suite"
+                  />
+                  {form.formState.errors.line2 && (
+                    <p className="text-xs text-destructive mt-1">{form.formState.errors.line2.message}</p>
+                  )}
+                </div>
+
+                {/* City, State, Pincode Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="col-span-1">
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Postal code</label>
+                    <input
+                      {...form.register("postal_code", {
+                        onBlur: async (e) => {
+                          const val = e.target.value;
+                          const country = form.getValues("country") || "IN";
+                          if (val && val.length >= 3) {
+                            try {
+                              const res = await checkServiceabilityFn({
+                                data: { postal_code: val, country }
+                              });
+                              if (!res.valid) {
+                                form.setError("postal_code", { type: "manual", message: res.error || "Invalid pincode" });
+                              } else if (!res.serviceable) {
+                                form.setError("postal_code", { type: "manual", message: res.error || "Not serviceable" });
+                              } else {
+                                form.clearErrors("postal_code");
+                                if (res.city && !form.getValues("city")) {
+                                  form.setValue("city", res.city, { shouldValidate: true });
+                                }
+                                if (res.state && !form.getValues("state")) {
+                                  form.setValue("state", res.state, { shouldValidate: true });
+                                }
+                                if (res.area && !form.getValues("line2")) {
+                                  form.setValue("line2", res.area, { shouldValidate: true });
+                                }
+                              }
+                            } catch (err) {
+                              console.error(err);
+                            }
+                          }
+                        }
+                      })}
+                      className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                      placeholder="560001"
+                    />
+                    {form.formState.errors.postal_code && (
+                      <p className="text-xs text-destructive mt-1">{form.formState.errors.postal_code.message}</p>
+                    )}
+                  </div>
+
+                  <div className="col-span-1">
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">City</label>
+                    <input
+                      {...form.register("city")}
+                      className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                      placeholder="Bengaluru"
+                    />
+                    {form.formState.errors.city && (
+                      <p className="text-xs text-destructive mt-1">{form.formState.errors.city.message}</p>
+                    )}
+                  </div>
+
+                  <div className="col-span-1">
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">State / Region</label>
+                    <input
+                      {...form.register("state")}
+                      className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                      placeholder="Karnataka"
+                    />
+                    {form.formState.errors.state && (
+                      <p className="text-xs text-destructive mt-1">{form.formState.errors.state.message}</p>
+                    )}
+                  </div>
+
+                  <div className="col-span-1">
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Country</label>
+                    <input
+                      {...form.register("country")}
+                      className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
+                      placeholder="IN"
+                    />
+                    {form.formState.errors.country && (
+                      <p className="text-xs text-destructive mt-1">{form.formState.errors.country.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={checkingServiceability}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:bg-accent/90 transition-colors"
+              >
+                {checkingServiceability ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verifying serviceability...
+                  </>
+                ) : (
+                  "Continue to review"
+                )}
               </button>
             </form>
           )}
@@ -190,28 +544,49 @@ function Checkout() {
 
           {step === 3 && (
             <div className="space-y-5">
-              <div className="bg-card border border-border p-5">
-                <div className="flex items-center gap-2 mb-4">
-                  <CreditCard className="h-4 w-4 text-accent" />
-                  <h3 className="text-xs uppercase tracking-widest">Mock payment</h3>
+              <div className="bg-card border border-border p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-5 w-5 text-accent" />
+                    <div>
+                      <h3 className="text-sm font-semibold uppercase tracking-wider">Razorpay Secure Checkout</h3>
+                      <p className="text-xs text-muted-foreground">100% Encrypted & Safe Payment</p>
+                    </div>
+                  </div>
+                  <Lock className="h-4 w-4 text-muted-foreground" />
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
-                  This is a demo. No real card is charged. Replace with Stripe/Razorpay for production.
+
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  <strong className="text-foreground">Pay {formatPrice(total)}</strong> using any of the following methods:
                 </p>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <input placeholder="Card number" className="bg-background border border-border px-3 py-3 text-sm" defaultValue="4242 4242 4242 4242" />
-                  <input placeholder="MM/YY" className="bg-background border border-border px-3 py-3 text-sm" defaultValue="12/30" />
-                  <input placeholder="Name on card" className="bg-background border border-border px-3 py-3 text-sm" defaultValue={shipping?.full_name ?? ""} />
-                  <input placeholder="CVV" className="bg-background border border-border px-3 py-3 text-sm" defaultValue="123" />
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="border border-border bg-background p-3 flex flex-col items-center justify-center gap-1 text-center">
+                    <Smartphone className="h-4 w-4 text-accent" />
+                    <span className="text-xs font-medium">UPI / QR</span>
+                    <span className="text-[10px] text-muted-foreground">GPay, PhonePe, Paytm</span>
+                  </div>
+                  <div className="border border-border bg-background p-3 flex flex-col items-center justify-center gap-1 text-center">
+                    <CreditCard className="h-4 w-4 text-accent" />
+                    <span className="text-xs font-medium">Cards</span>
+                    <span className="text-[10px] text-muted-foreground">Visa, Mastercard, RuPay</span>
+                  </div>
+                  <div className="border border-border bg-background p-3 flex flex-col items-center justify-center gap-1 text-center col-span-2 sm:col-span-1">
+                    <ShieldCheck className="h-4 w-4 text-accent" />
+                    <span className="text-xs font-medium">NetBanking & Wallets</span>
+                    <span className="text-[10px] text-muted-foreground">All Major Banks</span>
+                  </div>
                 </div>
               </div>
+
               <button
                 onClick={pay}
                 disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-5 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:bg-accent/90"
+                className="w-full inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-5 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:bg-accent/90 transition-colors"
               >
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing…</> : <>Pay {formatPrice(total)}</>}
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing order...</> : <>Pay {formatPrice(total)} with Razorpay</>}
               </button>
+
               {!user && (
                 <p className="text-xs text-center text-muted-foreground">
                   <Link to="/auth" className="text-accent underline">Sign in</Link> to complete your order.
