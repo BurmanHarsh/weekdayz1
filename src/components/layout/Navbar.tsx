@@ -59,7 +59,7 @@ export function Navbar() {
           <Link to="/search" className="p-2 hover:text-accent transition-colors" aria-label="Search">
             <Search className="h-5 w-5" />
           </Link>
-          <Link to={user ? "/account" : "/auth"} className="p-2 hover:text-accent transition-colors" aria-label="Account">
+          <Link to={user ? (isAdmin ? "/admin" : "/account") : "/auth"} className="p-2 hover:text-accent transition-colors" aria-label="Account">
             <User className="h-5 w-5" />
           </Link>
           <button

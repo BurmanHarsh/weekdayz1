@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { AuthUI } from "@/components/ui/auth-ui";
 
@@ -13,12 +14,22 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
-  const { user } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
 
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      if (isAdmin) {
+        navigate({ to: "/admin" });
+      } else {
+        navigate({ to: "/account" });
+      }
+    }
+  }, [user, isAdmin, loading, navigate]);
+
   if (user) {
-    navigate({ to: "/account" });
-    return null;
+    return <div className="py-24 text-center text-muted-foreground text-sm">Directing to dashboard…</div>;
   }
 
   return <AuthUI />;

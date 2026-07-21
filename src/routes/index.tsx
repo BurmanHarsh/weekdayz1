@@ -1,6 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { useAuth } from "@/hooks/use-auth";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
-import { useRef } from "react";
 import { ArrowRight, Sparkles, Zap, ShoppingBag, Flag, Trophy } from "lucide-react";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { listProducts } from "@/lib/products.functions";

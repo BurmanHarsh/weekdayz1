@@ -31,6 +31,23 @@ export const getProductReviews = createServerFn({ method: "GET" })
     }
   });
 
+export const canUserReviewProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ product_id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { data: item } = await supabase
+      .from("order_items")
+      .select("id, orders!inner(user_id, payment_status)")
+      .eq("product_id", data.product_id)
+      .eq("orders.user_id", userId)
+      .eq("orders.payment_status", "paid")
+      .limit(1)
+      .maybeSingle();
+
+    return { canReview: Boolean(item) };
+  });
+
 export const submitReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
@@ -43,11 +60,27 @@ export const submitReview = createServerFn({ method: "POST" })
       .parse(data)
   )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase
+    const { supabase, userId } = context;
+
+    // Verify user has purchased this item
+    const { data: item } = await supabase
+      .from("order_items")
+      .select("id, orders!inner(user_id, payment_status)")
+      .eq("product_id", data.product_id)
+      .eq("orders.user_id", userId)
+      .eq("orders.payment_status", "paid")
+      .limit(1)
+      .maybeSingle();
+
+    if (!item) {
+      throw new Error("You can only review products you have purchased.");
+    }
+
+    const { error } = await supabase
       .from("product_reviews")
       .upsert(
         {
-          user_id: context.userId,
+          user_id: userId,
           product_id: data.product_id,
           rating: data.rating,
           body: data.body,
@@ -57,3 +90,17 @@ export const submitReview = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const deleteReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ product_id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("product_reviews")
+      .delete()
+      .eq("user_id", context.userId)
+      .eq("product_id", data.product_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+

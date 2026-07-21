@@ -59,8 +59,13 @@ function AccountPage() {
   const addItem = useCart((s) => s.addItem);
 
   useEffect(() => {
-    if (!loading && !user) navigate({ to: "/auth" });
-  }, [loading, user, navigate]);
+    if (loading) return;
+    if (!user) {
+      navigate({ to: "/auth" });
+    } else if (isAdmin) {
+      navigate({ to: "/admin" });
+    }
+  }, [loading, user, isAdmin, navigate]);
 
   const { data: orders } = useQuery({
     queryKey: ["my-orders", user?.id],

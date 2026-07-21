@@ -80,15 +80,43 @@ export function getFallbackProductBySlug(slug: string): FallbackProduct | undefi
   return fallbackProducts.find((product) => product.slug === slug);
 }
 
-export function getFallbackReviews() {
-  return [
-    {
-      id: "fallback-review",
-      rating: 5,
-      body: "A strong fallback review while the live catalog is unavailable.",
-      created_at: new Date().toISOString(),
-      user_id: "fallback-user",
-      profiles: { full_name: "Local Preview" },
+export type FallbackReview = {
+  id: string;
+  rating: number;
+  body: string;
+  created_at: string;
+  user_id: string;
+  profiles: {
+    full_name: string | null;
+  } | null;
+};
+
+const fallbackReviews: FallbackReview[] = [
+  {
+    id: "fb-rev-1",
+    rating: 5,
+    body: "Exceptional quality and incredible fit! Highly recommended.",
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    user_id: "user-fb-1",
+    profiles: {
+      full_name: "Alex M.",
     },
-  ];
+  },
+  {
+    id: "fb-rev-2",
+    rating: 4,
+    body: "Super soft material, very comfortable for daily wear.",
+    created_at: new Date(Date.now() - 86400000 * 5).toISOString(),
+    user_id: "user-fb-2",
+    profiles: {
+      full_name: "Jordan K.",
+    },
+  },
+];
+
+export function getFallbackReviews(): FallbackReview[] {
+  return fallbackReviews;
 }
+
+
+

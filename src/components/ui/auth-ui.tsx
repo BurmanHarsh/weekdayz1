@@ -365,9 +365,22 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
         if (error) throw error;
         toast.success("Account created! Please check your email for confirmation.");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success("Welcome back!");
+        
+        if (authData?.user) {
+          const { data: roleRow } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", authData.user.id)
+            .eq("role", "admin")
+            .maybeSingle();
+          if (roleRow) {
+            navigate({ to: "/admin" });
+            return;
+          }
+        }
       }
       navigate({ to: "/account" });
     } catch (err) {

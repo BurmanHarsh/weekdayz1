@@ -169,3 +169,217 @@ export const getSignedAdminDesignUrl = createServerFn({ method: "POST" })
     if (error || !signed) throw new Error(error?.message ?? "Failed to sign URL");
     return { url: signed.signedUrl };
   });
+
+export const listAdminProducts = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data, error } = await context.supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  });
+
+export const updateProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        slug: z.string().min(1).optional(),
+        title: z.string().min(1).optional(),
+        description: z.string().optional(),
+        price_cents: z.number().int().nonnegative().optional(),
+        inventory_count: z.number().int().nonnegative().optional(),
+        image_urls: z.array(z.string()).optional(),
+        sizes: z.array(z.string()).optional(),
+        colors: z.array(z.string()).optional(),
+        category: z.string().optional(),
+        is_active: z.boolean().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { id, ...updates } = data;
+    const { error } = await context.supabase
+      .from("products")
+      .update(updates)
+      .eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteProduct = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { error } = await context.supabase.from("products").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getCategorySuggestions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { data } = await context.supabase.from("products").select("category");
+    const presets = ["hoodie", "tshirt", "shirt", "pant", "cargo"];
+    const existing = (data ?? []).map((p: { category: string }) => p.category?.toLowerCase()?.trim()).filter(Boolean);
+    const set = new Set([...presets, ...existing]);
+    return Array.from(set);
+  });
+
+// Promo Code In-Memory/Persistent Store for Admin Management
+interface PromoCode {
+  id: string;
+  code: string;
+  discountType: "percent" | "fixed";
+  discountValue: number; // percentage (e.g. 20) or amount in INR (e.g. 500)
+  minOrderValue: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+let MEMORY_PROMO_CODES: PromoCode[] = [
+  {
+    id: "promo-1",
+    code: "WEEKDAYZ10",
+    discountType: "percent",
+    discountValue: 10,
+    minOrderValue: 999,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "promo-2",
+    code: "WELCOME500",
+    discountType: "fixed",
+    discountValue: 500,
+    minOrderValue: 2499,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const listPromoCodes = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    try {
+      const { data, error } = await (context.supabase as any)
+        .from("promo_codes")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        return data.map((r: any) => ({
+          id: r.id,
+          code: r.code,
+          discountType: r.discount_type,
+          discountValue: Number(r.discount_value),
+          minOrderValue: Number(r.min_order_value ?? 0),
+          isActive: r.is_active,
+          createdAt: r.created_at,
+        }));
+      }
+    } catch (_) {}
+    return MEMORY_PROMO_CODES;
+  });
+
+export const createPromoCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        code: z.string().min(2),
+        discountType: z.enum(["percent", "fixed"]),
+        discountValue: z.number().positive(),
+        minOrderValue: z.number().nonnegative().default(0),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const formattedCode = data.code.trim().toUpperCase();
+
+    try {
+      const { data: row, error } = await (context.supabase as any)
+        .from("promo_codes")
+        .insert({
+          code: formattedCode,
+          discount_type: data.discountType,
+          discount_value: data.discountValue,
+          min_order_value: data.minOrderValue,
+          is_active: true,
+        })
+        .select("*")
+        .single();
+      if (!error && row) {
+        return {
+          id: row.id,
+          code: row.code,
+          discountType: row.discount_type,
+          discountValue: Number(row.discount_value),
+          minOrderValue: Number(row.min_order_value),
+          isActive: row.is_active,
+          createdAt: row.created_at,
+        };
+      }
+    } catch (_) {}
+
+    if (MEMORY_PROMO_CODES.some((p) => p.code === formattedCode)) {
+      throw new Error(`Promo code "${formattedCode}" already exists`);
+    }
+    const newPromo: PromoCode = {
+      id: `promo-${Date.now()}`,
+      code: formattedCode,
+      discountType: data.discountType,
+      discountValue: data.discountValue,
+      minOrderValue: data.minOrderValue,
+      isActive: true,
+      createdAt: new Date().toISOString(),
+    };
+    MEMORY_PROMO_CODES = [newPromo, ...MEMORY_PROMO_CODES];
+    return newPromo;
+  });
+
+export const togglePromoCodeStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    try {
+      const { data: existing } = await (context.supabase as any)
+        .from("promo_codes")
+        .select("is_active")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (existing) {
+        await (context.supabase as any)
+          .from("promo_codes")
+          .update({ is_active: !existing.is_active })
+          .eq("id", data.id);
+        return { ok: true };
+      }
+    } catch (_) {}
+
+    MEMORY_PROMO_CODES = MEMORY_PROMO_CODES.map((p) =>
+      p.id === data.id ? { ...p, isActive: !p.isActive } : p
+    );
+    return { ok: true };
+  });
+
+export const deletePromoCode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    try {
+      await (context.supabase as any).from("promo_codes").delete().eq("id", data.id);
+    } catch (_) {}
+    MEMORY_PROMO_CODES = MEMORY_PROMO_CODES.filter((p) => p.id !== data.id);
+    return { ok: true };
+  });
