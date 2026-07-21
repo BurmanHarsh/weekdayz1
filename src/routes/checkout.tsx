@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, CreditCard, Loader2, MapPin, ShieldCheck, Lock, Smartphone } from "lucide-react";
+import { Check, CreditCard, Loader2, MapPin, ShieldCheck, Lock, Smartphone, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart, cartSubtotal } from "@/lib/cart-store";
@@ -17,7 +17,10 @@ import { createRazorpayOrder } from "@/lib/razorpay.functions";
 const ShippingSchema = z.object({
   full_name: z.string().min(2, "Required"),
   email: z.string().email("Invalid email"),
-  phone: z.string().min(7, "Required"),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\d{10}$/, "Please enter a valid 10-digit phone number"),
   line1: z.string().min(2, "Required"),
   line2: z.string().optional(),
   city: z.string().min(2, "Required"),
@@ -224,7 +227,7 @@ function Checkout() {
     });
   };
 
-  async function pay() {
+  async function pay(preferredMethod?: "upi" | "card" | "netbanking") {
     if (!user) {
       toast.error("Sign in to complete your order");
       navigate({ to: "/auth" });
@@ -245,7 +248,7 @@ function Checkout() {
         data: { amount_cents: total },
       });
 
-      const options = {
+      const options: any = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_live_TEtasug4cgmYdw",
         amount: order.amount,
         currency: order.currency,
@@ -286,6 +289,7 @@ function Checkout() {
           name: shipping.full_name,
           email: shipping.email,
           contact: shipping.phone,
+          method: preferredMethod,
         },
         theme: {
           color: "#0A0A0A",
@@ -314,14 +318,23 @@ function Checkout() {
           const n = (i + 1) as 1 | 2 | 3;
           const active = step === n;
           const done = step > n;
+          const isClickable = n < step || (n === 2 && shipping !== null);
           return (
-            <div key={label} className={`flex items-center gap-2 ${active ? "text-accent" : done ? "text-foreground" : "text-muted-foreground"}`}>
+            <button
+              key={label}
+              type="button"
+              onClick={() => {
+                if (isClickable) setStep(n);
+              }}
+              disabled={!isClickable && !active}
+              className={`flex items-center gap-2 ${active ? "text-accent font-semibold" : done ? "text-foreground hover:text-accent cursor-pointer font-semibold" : "text-muted-foreground cursor-not-allowed"}`}
+            >
               <div className={`w-7 h-7 grid place-items-center border ${active ? "border-accent bg-accent text-accent-foreground" : done ? "border-foreground bg-foreground text-background" : "border-border"}`}>
                 {done ? <Check className="h-3.5 w-3.5" /> : n}
               </div>
               {label}
               {n < 3 && <span className="w-8 h-px bg-border" />}
-            </div>
+            </button>
           );
         })}
       </div>
@@ -381,8 +394,10 @@ function Checkout() {
                     <label className="text-xs uppercase tracking-widest text-muted-foreground">Phone</label>
                     <input
                       {...form.register("phone")}
+                      type="tel"
+                      maxLength={10}
                       className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
-                      placeholder="xxxxxxxxxx"
+                      placeholder="9876543210"
                     />
                     {form.formState.errors.phone && (
                       <p className="text-xs text-destructive mt-1">{form.formState.errors.phone.message}</p>
@@ -516,13 +531,14 @@ function Checkout() {
 
           {step === 2 && shipping && (
             <div className="space-y-6">
-              <div className="bg-card border border-border p-5 text-sm">
-                <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Shipping to</h3>
-                <p>{shipping.full_name}</p>
-                <p>{shipping.line1}{shipping.line2 ? `, ${shipping.line2}` : ""}</p>
+              <div className="bg-card border border-border p-5 text-sm space-y-1">
+                <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-semibold">Shipping to</h3>
+                <p className="font-semibold text-foreground">{shipping.full_name}</p>
+                <p className="text-xs text-muted-foreground">Phone: {shipping.phone} · {shipping.email}</p>
+                <p className="pt-1">{shipping.line1}{shipping.line2 ? `, ${shipping.line2}` : ""}</p>
                 <p>{shipping.city}, {shipping.state} {shipping.postal_code}</p>
                 <p>{shipping.country}</p>
-                <button onClick={() => setStep(1)} className="text-xs text-accent uppercase tracking-widest mt-3 hover:underline">Edit</button>
+                <button onClick={() => setStep(1)} className="text-xs text-accent uppercase tracking-widest pt-2 font-semibold hover:underline block">Edit Details</button>
               </div>
               <ul className="divide-y divide-border border border-border">
                 {items.map((i) => (
@@ -536,9 +552,21 @@ function Checkout() {
                   </li>
                 ))}
               </ul>
-              <button onClick={() => setStep(3)} className="bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold">
-                Continue to payment
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="inline-flex items-center gap-2 border border-border bg-card hover:bg-muted text-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back to Shipping
+                </button>
+                <button
+                  onClick={() => setStep(3)}
+                  className="bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-accent/90 transition-colors"
+                >
+                  Continue to payment
+                </button>
+              </div>
             </div>
           )}
 
@@ -557,35 +585,62 @@ function Checkout() {
                 </div>
 
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  <strong className="text-foreground">Pay {formatPrice(total)}</strong> using any of the following methods:
+                  Select your preferred payment method to launch <strong className="text-foreground">Razorpay</strong> directly for <strong className="text-foreground">Pay {formatPrice(total)}</strong>:
                 </p>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="border border-border bg-background p-3 flex flex-col items-center justify-center gap-1 text-center">
-                    <Smartphone className="h-4 w-4 text-accent" />
-                    <span className="text-xs font-medium">UPI / QR</span>
+                  <button
+                    type="button"
+                    onClick={() => pay("upi")}
+                    disabled={loading}
+                    className="border border-border bg-background hover:bg-muted hover:border-accent p-4 flex flex-col items-center justify-center gap-1.5 text-center transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+                  >
+                    <Smartphone className="h-5 w-5 text-accent group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">UPI / QR</span>
                     <span className="text-[10px] text-muted-foreground">GPay, PhonePe, Paytm</span>
-                  </div>
-                  <div className="border border-border bg-background p-3 flex flex-col items-center justify-center gap-1 text-center">
-                    <CreditCard className="h-4 w-4 text-accent" />
-                    <span className="text-xs font-medium">Cards</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => pay("card")}
+                    disabled={loading}
+                    className="border border-border bg-background hover:bg-muted hover:border-accent p-4 flex flex-col items-center justify-center gap-1.5 text-center transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50"
+                  >
+                    <CreditCard className="h-5 w-5 text-accent group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">Cards</span>
                     <span className="text-[10px] text-muted-foreground">Visa, Mastercard, RuPay</span>
-                  </div>
-                  <div className="border border-border bg-background p-3 flex flex-col items-center justify-center gap-1 text-center col-span-2 sm:col-span-1">
-                    <ShieldCheck className="h-4 w-4 text-accent" />
-                    <span className="text-xs font-medium">NetBanking & Wallets</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => pay("netbanking")}
+                    disabled={loading}
+                    className="border border-border bg-background hover:bg-muted hover:border-accent p-4 flex flex-col items-center justify-center gap-1.5 text-center transition-all group cursor-pointer focus:outline-none focus:ring-2 focus:ring-accent disabled:opacity-50 col-span-2 sm:col-span-1"
+                  >
+                    <ShieldCheck className="h-5 w-5 text-accent group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-semibold">NetBanking & Wallets</span>
                     <span className="text-[10px] text-muted-foreground">All Major Banks</span>
-                  </div>
+                  </button>
                 </div>
               </div>
 
-              <button
-                onClick={pay}
-                disabled={loading}
-                className="w-full inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-5 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:bg-accent/90 transition-colors"
-              >
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing order...</> : <>Pay {formatPrice(total)} with Razorpay</>}
-              </button>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={() => setStep(2)}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-2 border border-border bg-card hover:bg-muted text-foreground px-6 py-5 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Back to Review
+                </button>
+                <button
+                  onClick={() => pay()}
+                  disabled={loading}
+                  className="flex-1 min-w-[240px] inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-5 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:bg-accent/90 transition-colors"
+                >
+                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing order...</> : <>Pay {formatPrice(total)} with Razorpay</>}
+                </button>
+              </div>
 
               {!user && (
                 <p className="text-xs text-center text-muted-foreground">
