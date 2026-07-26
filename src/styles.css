@@ -1,9 +1,6 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
-@import "@fontsource/space-grotesk/400.css";
-@import "@fontsource/space-grotesk/500.css";
-@import "@fontsource/space-grotesk/700.css";
 @import "@fontsource/inter/400.css";
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
@@ -11,14 +8,13 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-display: "Space Grotesk", system-ui, sans-serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -38,6 +34,27 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-soft: var(--brand-soft);
+
+  /* Legacy brutalist color/font mapping compatibility */
+  --font-display: "Assistant", "Inter", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
   --color-ink: var(--ink);
   --color-ink-foreground: var(--ink-foreground);
   --color-navy: var(--navy);
@@ -46,75 +63,109 @@
 }
 
 :root {
-  --radius: 0.25rem;
-  /* Cream paper, ink black, deep navy */
-  --cream: #F4F0E6;
-  --background: #F4F0E6;
-  --foreground: #0A0A0A;
-  --card: #FFFFFF;
-  --card-foreground: #0A0A0A;
-  --popover: #FFFFFF;
-  --popover-foreground: #0A0A0A;
-  --primary: #0A0A0A;
-  --primary-foreground: #F4F0E6;
-  --secondary: #E8E2D2;
-  --secondary-foreground: #0A0A0A;
-  --muted: #E8E2D2;
-  --muted-foreground: #5A5852;
-  --accent: #0B1B3D;            /* dark royal navy */
-  --accent-foreground: #F4F0E6;
-  --destructive: #B83227;
-  --destructive-foreground: #F4F0E6;
-  --border: #D9D2BF;
-  --input: #D9D2BF;
-  --ring: #0B1B3D;
+  --radius: 0.625rem;
+  --brand-ink: #282c3f;
+  --brand-pink: #ff3f6c;
+  --brand-soft: #f5f5f6;
 
-  --ink: #0A0A0A;
-  --ink-foreground: #F4F0E6;
-  --navy: #0B1B3D;
-  --navy-foreground: #F4F0E6;
+  /* Warm logo cream/white theme */
+  --background: #F4F0E6;
+  --foreground: oklch(0.19 0.02 264);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.19 0.02 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.19 0.02 264);
+  
+  --primary: oklch(0.66 0.24 6); /* Myntra-like pink accent */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.965 0.005 264);
+  --secondary-foreground: oklch(0.19 0.02 264);
+  --muted: oklch(0.965 0.005 264);
+  --muted-foreground: oklch(0.46 0.02 264);
+  --accent: oklch(0.66 0.24 6);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(0.92 0.005 264);
+  --input: oklch(0.92 0.005 264);
+  --ring: oklch(0.66 0.24 6);
+
+  /* Legacy mappings */
+  --cream: #ffffff;
+  --ink: #282c3f;
+  --ink-foreground: #ffffff;
+  --navy: #282c3f;
+  --navy-foreground: #ffffff;
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.984 0.003 247.858);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+
+  --cream: oklch(0.129 0.042 264.695);
+  --ink: oklch(0.984 0.003 247.858);
+  --ink-foreground: oklch(0.129 0.042 264.695);
+  --navy: oklch(0.208 0.042 265.755);
+  --navy-foreground: oklch(0.984 0.003 247.858);
 }
 
 @layer base {
-  * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); }
-  body {
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    background-image:
-      radial-gradient(rgba(10,10,10,0.05) 1px, transparent 1px),
-      radial-gradient(rgba(10,10,10,0.04) 1px, transparent 1px);
-    background-size: 3px 3px, 7px 7px;
-    background-position: 0 0, 1px 1px;
+  * {
+    border-color: var(--color-border);
   }
-  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
-  ::selection { background: var(--color-navy); color: var(--color-navy-foreground); }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: "Assistant", "Inter", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Assistant", "Inter", ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background: var(--color-primary);
+    color: var(--color-primary-foreground);
+  }
 }
 
 @utility text-display {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 0.9;
+  font-family: "Assistant", "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 @utility text-graffiti {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.05em;
+  font-family: "Assistant", "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  font-style: italic;
-  text-shadow:
-    3px 3px 0 var(--color-navy),
-    6px 6px 0 rgba(11, 27, 61, 0.3);
 }
 
 @utility shadow-brutal {
-  box-shadow: 6px 6px 0 0 var(--color-ink);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 @utility shadow-brutal-navy {
-  box-shadow: 6px 6px 0 0 var(--color-navy);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 @utility no-scrollbar {
@@ -123,9 +174,53 @@
 }
 
 @utility paper-grain {
-  background-image:
-    radial-gradient(rgba(10,10,10,0.06) 1px, transparent 1px),
-    radial-gradient(rgba(10,10,10,0.04) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 1px;
+  background: transparent;
+}
+
+/* ─── Marquee (scrolling banner) ─── */
+@utility marquee {
+  animation: marquee 40s linear infinite;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ─── Scroll-reveal ─── */
+@utility reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+@utility reveal-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Hover lift ─── */
+@utility hover-lift {
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+.hover-lift:hover { transform: translateY(-4px); }
+
+/* ─── RCB / F1 wash backgrounds ─── */
+@utility rcb-wash {
+  background: radial-gradient(ellipse at top, #b21b1b 0%, #1a0505 70%);
+}
+@utility f1-wash {
+  background: linear-gradient(135deg, #0b0b10 0%, #1a1d24 50%, #0b0b10 100%);
+}
+
+/* ─── Stars ─── */
+@utility star-filled {
+  color: #f59e0b;
+}
+@utility star-empty {
+  color: #D9D2BF;
+}
+
+/* ─── Reduced motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  .marquee { animation: none; }
+  .reveal  { opacity: 1; transform: none; }
 }

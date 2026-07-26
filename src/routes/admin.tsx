@@ -21,9 +21,11 @@ import {
   Eye,
   Percent,
   ChevronDown,
+  LogOut,
 } from "lucide-react";
 import { toast } from "sonner";
 import { MultiImageUploader } from "@/components/ui/MultiImageUploader";
+import { supabase } from "@/integrations/supabase/client";
 
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -124,12 +126,35 @@ function AdminPage() {
     );
   }
 
+  async function signOut() {
+    await supabase.auth.signOut();
+    toast.success("Signed out");
+    navigate({ to: "/auth" });
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-border pb-6">
-        <div>
-          <span className="text-xs uppercase tracking-[0.3em] text-accent font-semibold">Admin Panel</span>
-          <h1 className="text-display text-4xl sm:text-5xl mt-1">Control Room</h1>
+        <div className="flex items-center justify-between w-full sm:w-auto">
+          <div>
+            <span className="text-xs uppercase tracking-[0.3em] text-accent font-semibold">Admin Panel</span>
+            <h1 className="text-display text-4xl sm:text-5xl mt-1">Control Room</h1>
+          </div>
+          <button
+            onClick={signOut}
+            className="sm:hidden inline-flex items-center gap-2 border border-border px-3 py-1.5 text-xs uppercase tracking-widest font-semibold hover:border-accent hover:text-accent transition-colors"
+          >
+            <LogOut className="h-3 w-3" /> Out
+          </button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={signOut}
+            className="hidden sm:inline-flex items-center gap-2 border border-border px-4 py-2.5 text-xs uppercase tracking-widest font-semibold hover:border-accent hover:text-accent transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" /> Sign Out
+          </button>
         </div>
 
         {/* Tab Switcher */}
