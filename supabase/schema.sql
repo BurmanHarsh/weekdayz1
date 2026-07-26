@@ -172,7 +172,7 @@ CREATE POLICY "Admins manage product images" ON storage.objects FOR ALL TO authe
 CREATE POLICY "Anyone reads product images" ON storage.objects FOR SELECT TO anon, authenticated
   USING (bucket_id = 'product-images');
 -- Wishlist table
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS public.wishlist (
+CREATE TABLE IF NOT EXISTS public.wishlist (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
@@ -184,7 +184,7 @@ GRANT ALL ON public.wishlist TO service_role;
 ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage own wishlist" ON public.wishlist FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 -- Product reviews table
-CREATE TABLE IF NOT EXISTS IF NOT EXISTS public.product_reviews (
+CREATE TABLE IF NOT EXISTS public.product_reviews (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   product_id UUID NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,

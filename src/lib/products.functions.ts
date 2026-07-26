@@ -1,16 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { getFallbackProductBySlug, getFallbackProducts } from "@/lib/fallback-data";
+import { getPublicClient } from "@/lib/supabase-server";
 
-function getPublicClient() {
-  return createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
-}
 
 export const listProducts = createServerFn({ method: "GET" }).handler(async () => {
   try {

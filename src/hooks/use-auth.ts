@@ -1,6 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+
+const ADMIN_CACHE_KEY = "wdz_admin_role";
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+interface AdminCacheEntry {
+  userId: string;
+  isAdmin: boolean;
+  cachedAt: number;
+}
+
+function readAdminCache(userId: string): boolean | null {
+  try {
+    const raw = sessionStorage.getItem(ADMIN_CACHE_KEY);
+    if (!raw) return null;
+    const entry: AdminCacheEntry = JSON.parse(raw);
+    if (entry.userId !== userId) return null;
+    if (Date.now() - entry.cachedAt > ADMIN_CACHE_TTL_MS) {
+      sessionStorage.removeItem(ADMIN_CACHE_KEY);
+      return null;
+    }
+    return entry.isAdmin;
+  } catch {
+    return null;
+  }
+}
+
+function writeAdminCache(userId: string, isAdmin: boolean) {
+  try {
+    const entry: AdminCacheEntry = { userId, isAdmin, cachedAt: Date.now() };
+    sessionStorage.setItem(ADMIN_CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    // sessionStorage unavailable (SSR, private browsing edge cases) — silently ignore
+  }
+}
+
+function clearAdminCache() {
+  try {
+    sessionStorage.removeItem(ADMIN_CACHE_KEY);
+  } catch {
+    // no-op
+  }
+}
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -33,8 +75,17 @@ export function useAuth() {
   useEffect(() => {
     if (!user) {
       setIsAdmin(false);
+      clearAdminCache();
       return;
     }
+
+    // Try cache first — avoids a DB round-trip on tab switches
+    const cached = readAdminCache(user.id);
+    if (cached !== null) {
+      setIsAdmin(cached);
+      return;
+    }
+
     let cancelled = false;
     supabase
       .from("user_roles")
@@ -43,7 +94,11 @@ export function useAuth() {
       .eq("role", "admin")
       .maybeSingle()
       .then(({ data }) => {
-        if (!cancelled) setIsAdmin(Boolean(data));
+        if (!cancelled) {
+          const result = Boolean(data);
+          setIsAdmin(result);
+          writeAdminCache(user.id, result);
+        }
       });
     return () => {
       cancelled = true;

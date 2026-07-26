@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { getPublicClient } from "@/lib/supabase-server";
 
 export interface ShippingAddress {
   full_name: string;
@@ -17,14 +17,6 @@ export interface ShippingAddress {
 
 let shiprocketToken: string | null = null;
 let tokenExpiry: number | null = null;
-
-function getPublicClient() {
-  return createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } }
-  );
-}
 
 async function getShiprocketToken(): Promise<string | null> {
   const email = process.env.SHIPROCKET_EMAIL;

@@ -1,6 +1,6 @@
 # Weekdayz — Build Notes for Future AI Agents
 
-A production-grade Gen-Z streetwear e-commerce app built on **TanStack Start + Vite + Tailwind v4 + Supabase (Lovable Cloud) + Framer Motion**.
+A production-grade Gen-Z streetwear e-commerce app built on **TanStack Start + Vite + Tailwind v4 + Supabase + Framer Motion**.
 
 ## ✅ Implemented
 

@@ -26,7 +26,10 @@ export const bootstrapAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ secret: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
-    const expected = process.env.ADMIN_BOOTSTRAP_SECRET ?? "weekdayz-secret-1337";
+    const expected = process.env.ADMIN_BOOTSTRAP_SECRET;
+    if (!expected) {
+      throw new Error("Admin bootstrap secret is not configured on the server");
+    }
     if (data.secret !== expected) throw new Error("Invalid bootstrap secret");
     
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

@@ -268,11 +268,11 @@ function RcbBlock() {
 
 function F1Block() {
   const cards = [
-    { t: "Podium Chrome", d: "Metallic finishes.", n: "01", p: "₹1299" },
-    { t: "Pit Lane", d: "Utility & carbon.", n: "02", p: "₹1499" },
-    { t: "Speed Line", d: "Race-day graphics.", n: "03", p: "₹999" },
-    { t: "Driver Series", d: "Race-cut jackets.", n: "04", p: "₹2499" },
-    { t: "Chequer Pack", d: "Caps & socks.", n: "05", p: "₹499" },
+    { t: "Podium Chrome", d: "Metallic finishes.", n: "01", p: "₹1999", slug: "f1-racewear-graphic-tee" },
+    { t: "Pit Lane", d: "Utility & carbon.", n: "02", p: "₹2499", slug: "ferrari-scuderia-drop-tee" },
+    { t: "Speed Line", d: "Race-day graphics.", n: "03", p: "₹2299", slug: "redbull-pit-crew-tee" },
+    { t: "Driver Series", d: "Race-cut jackets.", n: "04", p: "₹1999", slug: "f1-racewear-graphic-tee" },
+    { t: "Chequer Pack", d: "Caps & socks.", n: "05", p: "₹1999", slug: "f1-racewear-graphic-tee" },
   ];
 
   return (
@@ -315,7 +315,7 @@ function F1Block() {
           <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-8 -mx-4 px-4 no-scrollbar">
             {cards.map((c, i) => (
               <Reveal key={c.n} delay={i * 80}>
-                <Link to="/collections/$slug" params={{ slug: "f1" }} className="block snap-start shrink-0 w-72 md:w-80 border border-white/10 bg-white/5 hover:bg-white/10 p-8 rounded-xl transition-all duration-300 hover:border-[#E10600] group shadow-xl">
+                <Link to="/product/$slug" params={{ slug: c.slug }} className="block snap-start shrink-0 w-72 md:w-80 border border-white/10 bg-white/5 hover:bg-white/10 p-8 rounded-xl transition-all duration-300 hover:border-[#E10600] group shadow-xl">
                   <div className="flex justify-between items-start mb-12">
                     <div className="text-sm font-bold text-white/40 group-hover:text-[#E10600] transition-colors">VOL. {c.n}</div>
                     <div className="text-xs font-bold bg-white/10 px-2 py-1 rounded-sm text-white/80 group-hover:bg-[#E10600] group-hover:text-white transition-colors">{c.p}</div>

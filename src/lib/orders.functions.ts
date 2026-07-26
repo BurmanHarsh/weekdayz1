@@ -41,6 +41,25 @@ export const placeOrder = createServerFn({ method: "POST" })
       throw new Error("Payment signature verification failed. Order placement aborted.");
     }
 
+    // 1b. Server-side validation of product prices against DB
+    const dbProductIds = data.items.map((i) => i.product_id).filter(Boolean) as string[];
+    if (dbProductIds.length > 0) {
+      const { data: dbProds } = await supabase
+        .from("products")
+        .select("id, price_cents")
+        .in("id", dbProductIds);
+      const priceMap = new Map((dbProds ?? []).map((p) => [p.id, p.price_cents]));
+
+      for (const item of data.items) {
+        if (item.product_id && priceMap.has(item.product_id)) {
+          const expectedPrice = priceMap.get(item.product_id)!;
+          if (item.unit_price_cents !== expectedPrice) {
+            throw new Error(`Price mismatch detected for product. Order rejected.`);
+          }
+        }
+      }
+    }
+
     // 2. Insert order record into database
     const { data: order, error } = await supabase
       .from("orders")

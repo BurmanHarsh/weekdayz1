@@ -248,8 +248,15 @@ function Checkout() {
         data: { amount_cents: total },
       });
 
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        toast.error("Payment configuration error: VITE_RAZORPAY_KEY_ID is missing.");
+        setLoading(false);
+        return;
+      }
+
       const options: any = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_live_TEtasug4cgmYdw",
+        key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
         name: "Weekdayz",

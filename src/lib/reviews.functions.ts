@@ -1,16 +1,28 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { getFallbackReviews } from "@/lib/fallback-data";
+import { getPublicClient } from "@/lib/supabase-server";
 
-function getPublicClient() {
-  return createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
+/**
+ * Checks whether a user has at least one paid order containing the given product.
+ * Shared by canUserReviewProduct and submitReview to avoid query duplication.
+ */
+async function verifyPurchase(
+  supabase: ReturnType<typeof getPublicClient>,
+  userId: string,
+  productId: string,
+) {
+  const { data: item } = await supabase
+    .from("order_items")
+    .select("id, orders!inner(user_id, payment_status)")
+    .eq("product_id", productId)
+    .eq("orders.user_id", userId)
+    .eq("orders.payment_status", "paid")
+    .limit(1)
+    .maybeSingle();
+  return Boolean(item);
 }
 
 export const getProductReviews = createServerFn({ method: "GET" })
@@ -35,17 +47,8 @@ export const canUserReviewProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ product_id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
-    const { data: item } = await supabase
-      .from("order_items")
-      .select("id, orders!inner(user_id, payment_status)")
-      .eq("product_id", data.product_id)
-      .eq("orders.user_id", userId)
-      .eq("orders.payment_status", "paid")
-      .limit(1)
-      .maybeSingle();
-
-    return { canReview: Boolean(item) };
+    const hasPurchased = await verifyPurchase(context.supabase, context.userId, data.product_id);
+    return { canReview: hasPurchased };
   });
 
 export const submitReview = createServerFn({ method: "POST" })
@@ -63,16 +66,8 @@ export const submitReview = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
 
     // Verify user has purchased this item
-    const { data: item } = await supabase
-      .from("order_items")
-      .select("id, orders!inner(user_id, payment_status)")
-      .eq("product_id", data.product_id)
-      .eq("orders.user_id", userId)
-      .eq("orders.payment_status", "paid")
-      .limit(1)
-      .maybeSingle();
-
-    if (!item) {
+    const hasPurchased = await verifyPurchase(supabase, userId, data.product_id);
+    if (!hasPurchased) {
       throw new Error("You can only review products you have purchased.");
     }
 
