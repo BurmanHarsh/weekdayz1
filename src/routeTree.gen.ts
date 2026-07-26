@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as CreateRouteImport } from './routes/create'
@@ -19,7 +20,13 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProductSlugRouteImport } from './routes/product.$slug'
+import { Route as CollectionsSlugRouteImport } from './routes/collections.$slug'
 
+const WishlistRoute = WishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopRoute = ShopRouteImport.update({
   id: '/shop',
   path: '/shop',
@@ -70,6 +77,11 @@ const ProductSlugRoute = ProductSlugRouteImport.update({
   path: '/product/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CollectionsSlugRoute = CollectionsSlugRouteImport.update({
+  id: '/collections/$slug',
+  path: '/collections/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +93,8 @@ export interface FileRoutesByFullPath {
   '/create': typeof CreateRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
+  '/wishlist': typeof WishlistRoute
+  '/collections/$slug': typeof CollectionsSlugRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +107,8 @@ export interface FileRoutesByTo {
   '/create': typeof CreateRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
+  '/wishlist': typeof WishlistRoute
+  '/collections/$slug': typeof CollectionsSlugRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRoutesById {
@@ -106,6 +122,8 @@ export interface FileRoutesById {
   '/create': typeof CreateRoute
   '/search': typeof SearchRoute
   '/shop': typeof ShopRoute
+  '/wishlist': typeof WishlistRoute
+  '/collections/$slug': typeof CollectionsSlugRoute
   '/product/$slug': typeof ProductSlugRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +138,8 @@ export interface FileRouteTypes {
     | '/create'
     | '/search'
     | '/shop'
+    | '/wishlist'
+    | '/collections/$slug'
     | '/product/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +152,8 @@ export interface FileRouteTypes {
     | '/create'
     | '/search'
     | '/shop'
+    | '/wishlist'
+    | '/collections/$slug'
     | '/product/$slug'
   id:
     | '__root__'
@@ -144,6 +166,8 @@ export interface FileRouteTypes {
     | '/create'
     | '/search'
     | '/shop'
+    | '/wishlist'
+    | '/collections/$slug'
     | '/product/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -157,11 +181,20 @@ export interface RootRouteChildren {
   CreateRoute: typeof CreateRoute
   SearchRoute: typeof SearchRoute
   ShopRoute: typeof ShopRoute
+  WishlistRoute: typeof WishlistRoute
+  CollectionsSlugRoute: typeof CollectionsSlugRoute
   ProductSlugRoute: typeof ProductSlugRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shop': {
       id: '/shop'
       path: '/shop'
@@ -232,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProductSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/collections/$slug': {
+      id: '/collections/$slug'
+      path: '/collections/$slug'
+      fullPath: '/collections/$slug'
+      preLoaderRoute: typeof CollectionsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -245,6 +285,8 @@ const rootRouteChildren: RootRouteChildren = {
   CreateRoute: CreateRoute,
   SearchRoute: SearchRoute,
   ShopRoute: ShopRoute,
+  WishlistRoute: WishlistRoute,
+  CollectionsSlugRoute: CollectionsSlugRoute,
   ProductSlugRoute: ProductSlugRoute,
 }
 export const routeTree = rootRouteImport

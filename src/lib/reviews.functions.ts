@@ -104,3 +104,26 @@ export const deleteReview = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Fetch the N most recent reviews site-wide for the homepage marquee. */
+export const listLatestReviews = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const supabase = getPublicClient();
+    const { data, error } = await supabase
+      .from("product_reviews")
+      .select("id, rating, body, created_at, profiles(full_name)")
+      .order("created_at", { ascending: false })
+      .limit(10);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      id: r.id as string,
+      reviewer_name: (r.profiles?.full_name as string | null) ?? "Anonymous",
+      rating: r.rating as number,
+      body: r.body as string,
+    }));
+  } catch {
+    // Return empty — homepage marquee is optional
+    return [];
+  }
+});
+
+

@@ -2,7 +2,7 @@ import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-ro
 import { useState, useEffect } from "react";
 import { useSuspenseQuery, queryOptions, useQuery, useMutation } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck } from "lucide-react";
+import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw } from "lucide-react";
 import { getProductBySlug } from "@/lib/products.functions";
 import { getProductReviews, submitReview, deleteReview, canUserReviewProduct } from "@/lib/reviews.functions";
 import { useCart } from "@/lib/cart-store";
@@ -95,9 +95,29 @@ function ProductPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 space-y-16">
       <div className="grid lg:grid-cols-2 gap-10">
-        <div>
+        {/* Image gallery: vertical thumbnail rail + main image */}
+        <div className="grid grid-cols-[72px_1fr] gap-3">
+          {/* Thumbnail rail */}
+          {product.image_urls.length > 1 && (
+            <div className="flex flex-col gap-2">
+              {product.image_urls.map((u, i) => (
+                <button
+                  key={i}
+                  onClick={() => setImgIdx(i)}
+                  className={`aspect-[4/5] border-2 overflow-hidden transition-all ${
+                    i === imgIdx ? "border-accent" : "border-transparent hover:border-border"
+                  }`}
+                >
+                  <img src={u} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Main image with zoom */}
           <div
-            className="relative aspect-[4/5] bg-muted overflow-hidden cursor-zoom-in border border-border"
+            className={`relative aspect-[4/5] bg-muted overflow-hidden cursor-zoom-in border border-border ${
+              product.image_urls.length <= 1 ? "col-span-2" : ""
+            }`}
             onMouseMove={(e) => {
               const r = e.currentTarget.getBoundingClientRect();
               setZoom({
@@ -118,19 +138,6 @@ function ProductPage() {
               }}
             />
           </div>
-          {product.image_urls.length > 1 && (
-            <div className="flex gap-3 mt-4">
-              {product.image_urls.map((u, i) => (
-                <button
-                  key={i}
-                  onClick={() => setImgIdx(i)}
-                  className={`w-20 aspect-[4/5] border ${i === imgIdx ? "border-accent" : "border-border"}`}
-                >
-                  <img src={u} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
 
         <div className="lg:pl-8 flex flex-col justify-center">
@@ -194,11 +201,21 @@ function ProductPage() {
             </button>
           </div>
 
-          <ul className="mt-8 border-t border-border pt-6 space-y-2 text-xs text-muted-foreground uppercase tracking-widest">
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" /> Free shipping above ₹2,000</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" /> 7-day no-questions return</li>
-            <li className="flex items-center gap-2"><Check className="h-4 w-4 text-accent" /> Printed in India</li>
-          </ul>
+          {/* Trust badges */}
+          <div className="mt-8 grid grid-cols-3 gap-3 border-t border-border pt-6">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <Truck className="h-5 w-5 text-accent" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Free ship ₹999+</span>
+            </div>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <RotateCcw className="h-5 w-5 text-accent" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">15-day returns</span>
+            </div>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <ShieldCheck className="h-5 w-5 text-accent" />
+              <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Secure checkout</span>
+            </div>
+          </div>
         </div>
       </div>
 

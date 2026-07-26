@@ -3,15 +3,22 @@ import { useMemo, useState } from "react";
 import { useSuspenseQuery, queryOptions } from "@tanstack/react-query";
 import { listProducts } from "@/lib/products.functions";
 import { ProductCard } from "@/components/shop/ProductCard";
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal, X, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+import { z } from "zod";
 
 const productsQ = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
 });
 
+const shopSearchSchema = z.object({
+  category: z.string().optional(),
+});
+
 export const Route = createFileRoute("/shop")({
+  validateSearch: (search) => shopSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Shop All Drops — Weekdayz" },
@@ -29,19 +36,33 @@ const SIZES = ["S", "M", "L", "XL", "XXL"];
 
 function Shop() {
   const { data } = useSuspenseQuery(productsQ);
-  const [category, setCategory] = useState<string | null>(null);
+  const { category: initialCategory } = Route.useSearch();
+  const [category, setCategory] = useState<string | null>(initialCategory || null);
   const [size, setSize] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState(5000);
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sort, setSort] = useState<"new" | "price_asc" | "price_desc">("new");
 
   const filtered = useMemo(() => {
-    return data.filter((p) => {
+    let list = data.filter((p) => {
       if (category && p.category !== category) return false;
       if (size && !p.sizes.includes(size)) return false;
       if (p.price_cents > maxPrice * 100) return false;
+      if (searchTerm) {
+        const t = searchTerm.toLowerCase();
+        const matches =
+          p.title.toLowerCase().includes(t) ||
+          p.category.toLowerCase().includes(t) ||
+          (p.description ?? "").toLowerCase().includes(t);
+        if (!matches) return false;
+      }
       return true;
     });
-  }, [data, category, size, maxPrice]);
+    if (sort === "price_asc") list = [...list].sort((a, b) => a.price_cents - b.price_cents);
+    if (sort === "price_desc") list = [...list].sort((a, b) => b.price_cents - a.price_cents);
+    return list;
+  }, [data, category, size, maxPrice, searchTerm, sort]);
 
   const Filters = (
     <div className="space-y-8">
@@ -89,12 +110,13 @@ function Shop() {
           className="w-full accent-[var(--color-accent)]"
         />
       </div>
-      {(category || size || maxPrice < 5000) && (
+      {(category || size || maxPrice < 5000 || searchTerm) && (
         <button
           onClick={() => {
             setCategory(null);
             setSize(null);
             setMaxPrice(5000);
+            setSearchTerm("");
           }}
           className="text-xs uppercase tracking-widest text-accent hover:underline"
         >
@@ -106,18 +128,50 @@ function Shop() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
-      <div className="flex items-end justify-between mb-10">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
         <div>
           <span className="text-xs uppercase tracking-[0.3em] text-accent">Shop</span>
           <h1 className="text-display text-5xl sm:text-7xl mt-2">All Drops.</h1>
           <p className="text-muted-foreground mt-2">{filtered.length} pieces available</p>
         </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="lg:hidden inline-flex items-center gap-2 border border-border px-4 py-2 text-xs uppercase tracking-widest hover:border-accent transition-colors"
-        >
-          <SlidersHorizontal className="h-4 w-4" /> Filters
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Sort */}
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+            className="border border-border bg-background px-3 py-2 text-xs uppercase tracking-widest font-semibold focus:outline-none focus:border-accent"
+          >
+            <option value="new">Newest</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
+          <button
+            onClick={() => setOpen(true)}
+            className="lg:hidden inline-flex items-center gap-2 border border-border px-4 py-2 text-xs uppercase tracking-widest hover:border-accent transition-colors"
+          >
+            <SlidersHorizontal className="h-4 w-4" /> Filters
+          </button>
+        </div>
+      </div>
+
+      {/* Search bar */}
+      <div className="mb-8 relative max-w-xl">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="search"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search products, categories…"
+          className="w-full border border-border bg-secondary pl-10 pr-4 py-2.5 text-sm outline-none focus:border-accent transition-colors"
+        />
+        {searchTerm && (
+          <button
+            onClick={() => setSearchTerm("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-10">
