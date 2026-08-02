@@ -4,6 +4,7 @@ import { z } from "zod";
 import { sendOrderConfirmation } from "./email";
 import { verifySignature } from "./razorpay.functions";
 import { createShiprocketOrder } from "./shipping";
+import { decrementFallbackInventory } from "./fallback-data";
 
 const OrderItemSchema = z.object({
   product_id: z.string().uuid().nullable().optional(),
@@ -93,12 +94,33 @@ export const placeOrder = createServerFn({ method: "POST" })
     // 4. Atomically decrement inventory for each product in the order
     const productItems = data.items.filter((i) => i.product_id);
     await Promise.all(
-      productItems.map((i) =>
-        supabase.rpc("decrement_inventory", {
-          p_product_id: i.product_id as string,
-          p_qty: i.quantity,
-        })
-      )
+      productItems.map(async (i) => {
+        if (!i.product_id) return;
+        try {
+          const { error: rpcErr } = await supabase.rpc("decrement_inventory", {
+            p_product_id: i.product_id as string,
+            p_qty: i.quantity,
+          });
+
+          if (rpcErr) {
+            const { data: prod } = await supabase
+              .from("products")
+              .select("inventory_count")
+              .eq("id", i.product_id)
+              .maybeSingle();
+
+            if (prod) {
+              const updatedCount = Math.max(0, (prod.inventory_count ?? 0) - i.quantity);
+              await supabase
+                .from("products")
+                .update({ inventory_count: updatedCount })
+                .eq("id", i.product_id);
+            }
+          }
+        } catch (_) {}
+
+        decrementFallbackInventory(i.product_id, i.quantity);
+      })
     );
 
     // 5. Gather shipping weight and package dimensions from products table

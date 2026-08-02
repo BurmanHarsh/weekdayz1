@@ -39,15 +39,23 @@ function Shop() {
   const { category: initialCategory } = Route.useSearch();
   const [category, setCategory] = useState<string | null>(initialCategory || null);
   const [size, setSize] = useState<string | null>(null);
+  const [color, setColor] = useState<string | null>(null);
   const [maxPrice, setMaxPrice] = useState(5000);
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState<"new" | "price_asc" | "price_desc">("new");
 
+  const allColors = useMemo(() => {
+    const set = new Set<string>();
+    data.forEach((p) => p.colors?.forEach((c) => set.add(c)));
+    return Array.from(set);
+  }, [data]);
+
   const filtered = useMemo(() => {
     let list = data.filter((p) => {
       if (category && p.category !== category) return false;
       if (size && !p.sizes.includes(size)) return false;
+      if (color && !p.colors?.includes(color)) return false;
       if (p.price_cents > maxPrice * 100) return false;
       if (searchTerm) {
         const t = searchTerm.toLowerCase();
@@ -62,7 +70,7 @@ function Shop() {
     if (sort === "price_asc") list = [...list].sort((a, b) => a.price_cents - b.price_cents);
     if (sort === "price_desc") list = [...list].sort((a, b) => b.price_cents - a.price_cents);
     return list;
-  }, [data, category, size, maxPrice, searchTerm, sort]);
+  }, [data, category, size, color, maxPrice, searchTerm, sort]);
 
   const Filters = (
     <div className="space-y-8">
@@ -98,6 +106,25 @@ function Shop() {
           ))}
         </div>
       </div>
+
+      {allColors.length > 0 && (
+        <div>
+          <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Color Variant</h3>
+          <div className="flex flex-wrap gap-2">
+            {allColors.map((c) => (
+              <button
+                key={c}
+                onClick={() => setColor(color === c ? null : c)}
+                className={`px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
+                  color === c ? "bg-accent text-accent-foreground border-accent" : "border-border hover:border-accent"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div>
         <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Max Price · ₹{maxPrice}</h3>
         <input

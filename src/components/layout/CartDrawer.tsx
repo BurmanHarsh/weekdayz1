@@ -61,7 +61,7 @@ export function CartDrawer() {
                           </button>
                         </div>
                         <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
-                          Size {item.size}
+                          Size {item.size} {item.color ? `• ${item.color}` : ""}
                           {item.custom_design_id && <span className="ml-2 text-accent">Custom Print</span>}
                         </p>
                         <div className="flex items-center justify-between mt-3">

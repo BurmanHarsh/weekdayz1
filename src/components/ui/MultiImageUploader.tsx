@@ -46,27 +46,46 @@ export function MultiImageUploader({
   const uploadFile = useCallback(
     async (img: UploadedImage) => {
       if (!img.file) return;
-      const ext = img.file.name.split(".").pop() ?? "jpg";
-      const path = `products/${crypto.randomUUID()}.${ext}`;
-      const { error } = await supabase.storage
-        .from("product-images")
-        .upload(path, img.file, { upsert: false, contentType: img.file.type });
-      if (error) {
-        setImages((prev) =>
-          prev.map((i) => (i.id === img.id ? { ...i, status: "error" as const } : i))
-        );
-        toast.error(`Failed to upload ${img.file.name}`);
-        return;
-      }
-      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
-      const publicUrl = urlData.publicUrl;
-      setImages((prev) => {
-        const next = prev.map((i) =>
-          i.id === img.id ? { ...i, status: "done" as const, publicUrl } : i
-        );
-        notifyChange(next);
-        return next;
-      });
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64Data = reader.result as string;
+
+        try {
+          const ext = img.file!.name.split(".").pop() ?? "jpg";
+          const path = `products/${crypto.randomUUID()}.${ext}`;
+          const { error } = await supabase.storage
+            .from("product-images")
+            .upload(path, img.file!, { upsert: false, contentType: img.file!.type });
+
+          if (!error) {
+            const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+            const publicUrl = urlData.publicUrl;
+            setImages((prev) => {
+              const next = prev.map((i) =>
+                i.id === img.id
+                  ? { ...i, status: "done" as const, publicUrl, preview: publicUrl }
+                  : i
+              );
+              notifyChange(next);
+              return next;
+            });
+            return;
+          }
+        } catch (_) {}
+
+        // Fallback: use base64 data URL if Supabase storage is unconfigured or blocked by RLS
+        setImages((prev) => {
+          const next = prev.map((i) =>
+            i.id === img.id
+              ? { ...i, status: "done" as const, publicUrl: base64Data, preview: base64Data }
+              : i
+          );
+          notifyChange(next);
+          return next;
+        });
+      };
+      reader.readAsDataURL(img.file);
     },
     [notifyChange]
   );
@@ -144,7 +163,7 @@ export function MultiImageUploader({
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="relative aspect-square border border-border bg-black/40 overflow-hidden group"
               >
-                <img src={img.preview} alt="" className="w-full h-full object-cover" />
+                <img src={img.preview || img.publicUrl} alt="" className="w-full h-full object-contain p-1" />
 
                 {/* Cover Photo Badge */}
                 {idx === 0 && (

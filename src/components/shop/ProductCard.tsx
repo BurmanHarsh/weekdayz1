@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Heart } from "lucide-react";
@@ -21,7 +22,12 @@ export type ProductCardData = {
 
 export function ProductCard({ product }: { product: ProductCardData }) {
   const primary = product.image_urls[0] ?? "/products/tee-black.jpg";
-  const secondary = product.image_urls[1] ?? primary;
+  const secondaryCandidate = product.image_urls.find((u, i) => i > 0 && !u.includes("size-chart"));
+  const secondary = secondaryCandidate && secondaryCandidate !== primary ? secondaryCandidate : null;
+
+  const [hasSecondaryError, setHasSecondaryError] = useState(false);
+  const [hasPrimaryError, setHasPrimaryError] = useState(false);
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -66,28 +72,32 @@ export function ProductCard({ product }: { product: ProductCardData }) {
   return (
     <Link to="/product/$slug" params={{ slug: product.slug }} className="group block relative">
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
+        {secondary && !hasSecondaryError && (
+          <img
+            src={secondary}
+            alt=""
+            aria-hidden
+            onError={() => setHasSecondaryError(true)}
+            className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-500"
+          />
+        )}
         <motion.img
-          src={primary}
+          src={hasPrimaryError ? "/products/tee-black.jpg" : primary}
           alt={product.title}
-          className="absolute inset-0 w-full h-full object-cover"
+          onError={() => setHasPrimaryError(true)}
+          className="absolute inset-0 w-full h-full object-cover z-10"
           initial={{ opacity: 1 }}
-          whileHover={{ opacity: 0, scale: 1.04 }}
+          whileHover={secondary && !hasSecondaryError ? { opacity: 0, scale: 1.04 } : { scale: 1.04 }}
           transition={{ duration: 0.4 }}
         />
-        <img
-          src={secondary}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-500"
-        />
-        <div className="absolute top-3 left-3 px-2 py-1 bg-background/80 backdrop-blur text-[10px] uppercase tracking-widest">
+        <div className="absolute top-3 left-3 px-2 py-1 bg-background/80 backdrop-blur text-[10px] uppercase tracking-widest z-20">
           {product.category}
         </div>
 
         {/* Heart Icon Button */}
         <button
           onClick={handleHeartClick}
-          className="absolute top-3 right-3 p-1.5 bg-background/80 backdrop-blur rounded-none border border-border text-foreground hover:text-accent hover:border-accent transition-colors z-10"
+          className="absolute top-3 right-3 p-1.5 bg-background/80 backdrop-blur rounded-none border border-border text-foreground hover:text-accent hover:border-accent transition-colors z-20"
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
           <motion.div whileTap={{ scale: 0.8 }}>

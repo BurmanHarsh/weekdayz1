@@ -2,12 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export type CartItem = {
-  key: string; // unique per (product+size) or (design+size)
+  key: string; // unique per (product+size+color) or (design+size+color)
   product_id?: string;
   custom_design_id?: string;
   title: string;
   image: string;
   size: string;
+  color?: string;
   unit_price_cents: number;
   quantity: number;
 };
@@ -23,7 +24,7 @@ interface CartState {
 }
 
 function makeKey(item: Omit<CartItem, "quantity" | "key">) {
-  return [item.product_id ?? "p", item.custom_design_id ?? "d", item.size].join("|");
+  return [item.product_id ?? "p", item.custom_design_id ?? "d", item.size, item.color ?? ""].join("|");
 }
 
 export const useCart = create<CartState>()(

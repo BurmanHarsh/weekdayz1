@@ -141,3 +141,112 @@ VALUES (
   true,
   now()
 );
+
+-- ==================== COUPLE T-SHIRTS COLLECTION ====================
+
+INSERT INTO public.products (id, title, slug, description, price_cents, inventory_count, image_urls, category, sizes, colors, is_active, created_at)
+VALUES (
+  gen_random_uuid(),
+  'Certified Yapper & Certified Listener Couple Tees',
+  'certified-yapper-and-listener-couple-tees',
+  'Celebrate your connection with matching Couple T-Shirts that are designed to turn everyday moments into lasting memories. Whether you''re heading out for a coffee date, movie night, vacation, college, anniversary, or simply spending time together, these premium oversized tees let you wear your bond with confidence and style.
+
+Crafted from 240 GSM French Terry fabric (97% Cotton, 3% Spandex), our Couple T-Shirts offer a soft feel, breathable comfort, and a structured oversized fit that looks great on everyone. Every design is printed using premium DTF technology, delivering sharp details, vibrant colours, and long-lasting durability.
+
+Why You''ll Love It:
+• Premium 240 GSM French Terry Fabric (97% Cotton, 3% Spandex)
+• Relaxed Oversized Fit
+• High-Quality Premium DTF Print
+• Soft, breathable, and durable
+• Perfect for couples, gifting, anniversaries, birthdays, Valentine''s Day, movie dates, vacations, and everyday wear
+
+Product Details:
+• Category: Couple T-Shirts
+• Fit: Oversized
+• Fabric: 240 GSM French Terry (97% Cotton, 3% Spandex)
+• Print: Premium DTF Print
+• Sizes Available: S, M, L, XL, XXL
+
+Wash Care:
+• Wash inside out with similar colours.
+• Machine wash in cold water.
+• Do not bleach.
+• Do not iron directly on the print.
+• Hang dry for the best print life.
+
+Match your vibe. Create memories. Wear Weekdayzz.',
+  199900,
+  100,
+  ARRAY[
+    '/products/certified-yapper-listener-couple.png',
+    '/products/size-chart-oversized.png',
+    '/products/certified-yapper-white.png',
+    '/products/certified-listener-black.png'
+  ],
+  'Couple T-Shirts',
+  ARRAY['S', 'M', 'L', 'XL', 'XXL'],
+  ARRAY['White & Black', 'White', 'Black'],
+  true,
+  now()
+);
+
+INSERT INTO public.products (id, title, slug, description, price_cents, inventory_count, image_urls, category, sizes, colors, is_active, created_at)
+VALUES (
+  gen_random_uuid(),
+  'Certified Yapper Oversized Tee',
+  'certified-yapper-women-oversized-tee',
+  'Celebrate your connection with matching Couple T-Shirts that are designed to turn everyday moments into lasting memories. Crafted from 240 GSM French Terry fabric (97% Cotton, 3% Spandex), our Couple T-Shirts offer a soft feel, breathable comfort, and a structured oversized fit.',
+  119900,
+  80,
+  ARRAY[
+    '/products/certified-yapper-white.png',
+    '/products/size-chart-oversized.png',
+    '/products/certified-yapper-listener-couple.png'
+  ],
+  'Casuals',
+  ARRAY['S', 'M', 'L', 'XL', 'XXL'],
+  ARRAY['White'],
+  true,
+  now()
+);
+
+INSERT INTO public.products (id, title, slug, description, price_cents, inventory_count, image_urls, category, sizes, colors, is_active, created_at)
+VALUES (
+  gen_random_uuid(),
+  'Certified Listener Oversized Tee',
+  'certified-listener-men-oversized-tee',
+  'Celebrate your connection with matching Couple T-Shirts that are designed to turn everyday moments into lasting memories. Crafted from 240 GSM French Terry fabric (97% Cotton, 3% Spandex), our Couple T-Shirts offer a soft feel, breathable comfort, and a structured oversized fit.',
+  119900,
+  80,
+  ARRAY[
+    '/products/certified-listener-black.png',
+    '/products/size-chart-oversized.png',
+    '/products/certified-yapper-listener-couple.png'
+  ],
+  'Casuals',
+  ARRAY['S', 'M', 'L', 'XL', 'XXL'],
+  ARRAY['Black'],
+  true,
+  now()
+);
+
+INSERT INTO public.products (id, title, slug, description, price_cents, inventory_count, image_urls, category, sizes, colors, is_active, created_at)
+VALUES (
+  gen_random_uuid(),
+  'Calm Admi & Kaleshi Aurat Couple Tees',
+  'calm-admi-and-kaleshi-aurat-tees',
+  'Celebrate your connection with matching Calm Admi & Kaleshi Aurat Couple T-Shirts. Available in Black and White color variants. Crafted from 240 GSM French Terry fabric (97% Cotton, 3% Spandex) for breathable comfort and a structured oversized fit.',
+  149800,
+  100,
+  ARRAY[
+    '/products/calm-admi-kaleshi-aurat-black.png',
+    '/products/calm-admi-kaleshi-aurat-white.png',
+    '/products/size-chart-oversized.png'
+  ],
+  'Couple T-Shirts',
+  ARRAY['S', 'M', 'L', 'XL', 'XXL'],
+  ARRAY['Black', 'White'],
+  true,
+  now()
+);
+

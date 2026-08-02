@@ -272,6 +272,7 @@ function ProductFormModal({
       ? initialProduct.category
       : "",
     sizes: initialProduct?.sizes?.join(", ") ?? "S, M, L, XL, XXL",
+    colors: initialProduct?.colors?.join(", ") ?? "",
   });
 
   const [imageUrls, setImageUrls] = useState<string[]>(initialProduct?.image_urls ?? []);
@@ -286,12 +287,16 @@ function ProductFormModal({
       if (!finalCategory) throw new Error("Please select or enter a product category");
       if (!form.title.trim()) throw new Error("Title is required");
 
-      const slug =
-        form.slug.trim() ||
-        form.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "");
+      const slug = form.slug.trim()
+        ? form.slug
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "")
+        : form.title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
 
       const payload = {
         slug,
@@ -301,7 +306,7 @@ function ProductFormModal({
         inventory_count: Number(form.inventory),
         image_urls: imageUrls,
         sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
-        colors: [],
+        colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
         category: finalCategory,
       };
 
@@ -451,6 +456,102 @@ function ProductFormModal({
                 placeholder="S, M, L, XL, XXL"
                 className="mt-1 w-full bg-background border border-border px-3 py-2 text-sm font-mono"
               />
+            </div>
+
+            <div className="sm:col-span-2 space-y-2 border border-border p-3.5 bg-background/50">
+              <div className="flex items-center justify-between">
+                <label className="text-xs uppercase tracking-widest text-foreground font-bold">
+                  Available Color Variants (Type any custom color)
+                </label>
+                <span className="text-[10px] text-muted-foreground">Type any custom colors or click quick presets</span>
+              </div>
+
+              <input
+                value={form.colors}
+                onChange={(e) => setForm({ ...form, colors: e.target.value })}
+                placeholder="e.g. Black, White, Crimson Red, Navy Blue, Sage Green (Comma separated)"
+                className="w-full bg-background border border-border px-3 py-2 text-sm font-mono focus:outline-none focus:border-accent"
+              />
+
+              {/* Active Colors Pills */}
+              {form.colors.split(",").map((c) => c.trim()).filter(Boolean).length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">Active:</span>
+                  {form.colors
+                    .split(",")
+                    .map((c) => c.trim())
+                    .filter(Boolean)
+                    .map((c, idx) => (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-foreground text-background font-semibold uppercase tracking-wider"
+                      >
+                        {c}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const list = form.colors.split(",").map((x) => x.trim()).filter(Boolean);
+                            const updated = list.filter((_, i) => i !== idx);
+                            setForm({ ...form, colors: updated.join(", ") });
+                          }}
+                          className="hover:text-destructive transition-colors ml-0.5"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                </div>
+              )}
+
+              {/* Quick Add Presets */}
+              <div className="pt-2">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground block mb-1.5 font-semibold">
+                  Quick Add Presets:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    "Black",
+                    "White",
+                    "Red",
+                    "Navy Blue",
+                    "Olive Green",
+                    "Cream",
+                    "Charcoal",
+                    "Beige",
+                    "Pink",
+                    "Gold",
+                    "Maroon",
+                    "Lavender",
+                    "Brown",
+                  ].map((preset) => {
+                    const currentList = form.colors.split(",").map((x) => x.trim().toLowerCase());
+                    const isAdded = currentList.includes(preset.toLowerCase());
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          const list = form.colors.split(",").map((x) => x.trim()).filter(Boolean);
+                          if (isAdded) {
+                            const updated = list.filter((x) => x.toLowerCase() !== preset.toLowerCase());
+                            setForm({ ...form, colors: updated.join(", ") });
+                          } else {
+                            const updated = [...list, preset];
+                            setForm({ ...form, colors: updated.join(", ") });
+                          }
+                        }}
+                        className={`px-2.5 py-1 text-[11px] font-mono border transition-all ${
+                          isAdded
+                            ? "border-accent bg-accent/10 text-accent font-bold"
+                            : "border-border hover:border-foreground text-muted-foreground"
+                        }`}
+                      >
+                        {isAdded ? `✓ ${preset}` : `+ ${preset}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <div className="sm:col-span-2">

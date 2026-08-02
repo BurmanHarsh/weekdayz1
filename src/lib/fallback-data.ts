@@ -13,7 +13,54 @@ export type FallbackProduct = {
   created_at?: string;
 };
 
-const fallbackProducts: FallbackProduct[] = [
+const coupleTeesDescription = `Celebrate your connection with matching Couple T-Shirts that are designed to turn everyday moments into lasting memories. Whether you're heading out for a coffee date, movie night, vacation, college, anniversary, or simply spending time together, these premium oversized tees let you wear your bond with confidence and style.
+
+Crafted from 240 GSM French Terry fabric (97% Cotton, 3% Spandex), our Couple T-Shirts offer a soft feel, breathable comfort, and a structured oversized fit that looks great on everyone. Every design is printed using premium DTF technology, delivering sharp details, vibrant colours, and long-lasting durability.
+
+Why You'll Love It:
+• Premium 240 GSM French Terry Fabric (97% Cotton, 3% Spandex)
+• Relaxed Oversized Fit
+• High-Quality Premium DTF Print
+• Soft, breathable, and durable
+• Perfect for couples, gifting, anniversaries, birthdays, Valentine's Day, movie dates, vacations, and everyday wear
+
+Product Details:
+• Category: Couple T-Shirts
+• Fit: Oversized
+• Fabric: 240 GSM French Terry (97% Cotton, 3% Spandex)
+• Print: Premium DTF Print
+• Sizes Available: S, M, L, XL, XXL
+
+Wash Care:
+• Wash inside out with similar colours.
+• Machine wash in cold water.
+• Do not bleach.
+• Do not iron directly on the print.
+• Hang dry for the best print life.
+
+Match your vibe. Create memories. Wear Weekdayzz.`;
+
+let fallbackProducts: FallbackProduct[] = [
+  {
+    id: "fallback-calm-kaleshi",
+    slug: "calm-admi-and-kaleshi-aurat-tees",
+    title: "Calm Admi & Kaleshi Aurat Couple Tees",
+    description: coupleTeesDescription,
+    price_cents: 149800,
+    inventory_count: 100,
+    image_urls: [
+      "/products/calm-admi-kaleshi-aurat-white.png",
+      "/products/calm-admi-kaleshi-aurat-black.png",
+      "/products/size-chart-oversized.png"
+    ],
+    sizes: ["S", "M", "L", "XL", "XXL"],
+    colors: ["White", "Black"],
+    category: "Couple T-Shirts",
+    is_active: true,
+    created_at: new Date().toISOString(),
+  },
+  
+  
   {
     id: "fallback-tee",
     slug: "weekdayz-core-casual-tee",
@@ -72,12 +119,50 @@ const fallbackProducts: FallbackProduct[] = [
   },
 ];
 
+let CUSTOM_FALLBACK_PRODUCTS: FallbackProduct[] = [];
+
 export function getFallbackProducts(): FallbackProduct[] {
-  return fallbackProducts;
+  return [...CUSTOM_FALLBACK_PRODUCTS, ...fallbackProducts];
 }
 
 export function getFallbackProductBySlug(slug: string): FallbackProduct | undefined {
-  return fallbackProducts.find((product) => product.slug === slug);
+  return getFallbackProducts().find((product) => product.slug === slug);
+}
+
+export function addCustomFallbackProduct(product: FallbackProduct) {
+  CUSTOM_FALLBACK_PRODUCTS = [
+    product,
+    ...CUSTOM_FALLBACK_PRODUCTS.filter((p) => p.id !== product.id && p.slug !== product.slug),
+  ];
+}
+
+export function updateCustomFallbackProduct(id: string, updates: Partial<FallbackProduct>) {
+  CUSTOM_FALLBACK_PRODUCTS = CUSTOM_FALLBACK_PRODUCTS.map((p) => (p.id === id ? { ...p, ...updates } : p));
+  const idx = fallbackProducts.findIndex((p) => p.id === id);
+  if (idx !== -1) {
+    fallbackProducts[idx] = { ...fallbackProducts[idx], ...updates };
+  }
+}
+
+export function deleteCustomFallbackProduct(id: string) {
+  CUSTOM_FALLBACK_PRODUCTS = CUSTOM_FALLBACK_PRODUCTS.filter((p) => p.id !== id && p.slug !== id);
+  fallbackProducts = fallbackProducts.filter((p) => p.id !== id && p.slug !== id);
+}
+
+export function decrementFallbackInventory(idOrSlug: string, qty: number) {
+  CUSTOM_FALLBACK_PRODUCTS = CUSTOM_FALLBACK_PRODUCTS.map((p) => {
+    if (p.id === idOrSlug || p.slug === idOrSlug) {
+      return { ...p, inventory_count: Math.max(0, p.inventory_count - qty) };
+    }
+    return p;
+  });
+
+  fallbackProducts = fallbackProducts.map((p) => {
+    if (p.id === idOrSlug || p.slug === idOrSlug) {
+      return { ...p, inventory_count: Math.max(0, p.inventory_count - qty) };
+    }
+    return p;
+  });
 }
 
 export type FallbackReview = {
