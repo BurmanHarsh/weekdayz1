@@ -11,6 +11,7 @@ const OrderItemSchema = z.object({
   custom_design_id: z.string().uuid().nullable().optional(),
   quantity: z.number().int().positive(),
   size: z.string().min(1),
+  color: z.string().nullable().optional(),
   unit_price_cents: z.number().int().nonnegative(),
   title_snapshot: z.string().default(""),
   image_snapshot: z.string().nullable().optional(),
@@ -83,6 +84,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       custom_design_id: i.custom_design_id ?? null,
       quantity: i.quantity,
       size: i.size,
+      color: i.color ?? null,
       unit_price_cents: i.unit_price_cents,
       title_snapshot: i.title_snapshot,
       image_snapshot: i.image_snapshot ?? null,
@@ -161,6 +163,7 @@ export const placeOrder = createServerFn({ method: "POST" })
         totalCents: data.total_cents,
         items: data.items.map((it) => ({
           title: it.title_snapshot,
+          color: it.color ?? undefined,
           quantity: it.quantity,
           unitPriceCents: it.unit_price_cents,
         })),

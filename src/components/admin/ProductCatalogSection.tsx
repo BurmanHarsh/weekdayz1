@@ -305,8 +305,8 @@ function ProductFormModal({
         price_cents: Math.round(Number(form.price) * 100),
         inventory_count: Number(form.inventory),
         image_urls: imageUrls,
-        sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
-        colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
+        sizes: form.sizes.split(",").map((s: string) => s.trim()).filter(Boolean),
+        colors: form.colors.split(",").map((c: string) => c.trim()).filter(Boolean),
         category: finalCategory,
       };
 
@@ -474,14 +474,14 @@ function ProductFormModal({
               />
 
               {/* Active Colors Pills */}
-              {form.colors.split(",").map((c) => c.trim()).filter(Boolean).length > 0 && (
+              {form.colors.split(",").map((c: string) => c.trim()).filter(Boolean).length > 0 && (
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground mr-1">Active:</span>
                   {form.colors
                     .split(",")
-                    .map((c) => c.trim())
+                    .map((c: string) => c.trim())
                     .filter(Boolean)
-                    .map((c, idx) => (
+                    .map((c: string, idx: number) => (
                       <span
                         key={idx}
                         className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs bg-foreground text-background font-semibold uppercase tracking-wider"
@@ -490,8 +490,8 @@ function ProductFormModal({
                         <button
                           type="button"
                           onClick={() => {
-                            const list = form.colors.split(",").map((x) => x.trim()).filter(Boolean);
-                            const updated = list.filter((_, i) => i !== idx);
+                            const list = form.colors.split(",").map((x: string) => x.trim()).filter(Boolean);
+                            const updated = list.filter((_: string, i: number) => i !== idx);
                             setForm({ ...form, colors: updated.join(", ") });
                           }}
                           className="hover:text-destructive transition-colors ml-0.5"
@@ -524,16 +524,16 @@ function ProductFormModal({
                     "Lavender",
                     "Brown",
                   ].map((preset) => {
-                    const currentList = form.colors.split(",").map((x) => x.trim().toLowerCase());
+                    const currentList = form.colors.split(",").map((x: string) => x.trim().toLowerCase());
                     const isAdded = currentList.includes(preset.toLowerCase());
                     return (
                       <button
                         key={preset}
                         type="button"
                         onClick={() => {
-                          const list = form.colors.split(",").map((x) => x.trim()).filter(Boolean);
+                          const list = form.colors.split(",").map((x: string) => x.trim()).filter(Boolean);
                           if (isAdded) {
-                            const updated = list.filter((x) => x.toLowerCase() !== preset.toLowerCase());
+                            const updated = list.filter((x: string) => x.toLowerCase() !== preset.toLowerCase());
                             setForm({ ...form, colors: updated.join(", ") });
                           } else {
                             const updated = [...list, preset];

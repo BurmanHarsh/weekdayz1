@@ -304,7 +304,7 @@ export async function createShiprocketOrder(params: {
   orderId: string;
   address: ShippingAddress;
   totalCents: number;
-  items: Array<{ title: string; quantity: number; unitPriceCents: number }>;
+  items: Array<{ title: string; color?: string; quantity: number; unitPriceCents: number }>;
   weightKg: number;
   lengthCm: number;
   widthCm: number;
@@ -331,8 +331,8 @@ export async function createShiprocketOrder(params: {
       billing_phone: params.address.phone,
       shipping_is_billing: true,
       order_items: params.items.map((it) => ({
-        name: it.title,
-        sku: it.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+        name: it.color ? `${it.title} (${it.color})` : it.title,
+        sku: `${it.title}${it.color ? `-${it.color}` : ""}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
         units: it.quantity,
         selling_price: it.unitPriceCents / 100,
       })),

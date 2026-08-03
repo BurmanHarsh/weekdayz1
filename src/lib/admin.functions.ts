@@ -83,7 +83,7 @@ export const listAllOrders = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("orders")
       .select(
-        "id, user_id, total_cents, payment_status, fulfillment_status, tracking_number, shipping_details, created_at, order_items(id, product_id, custom_design_id, quantity, size, unit_price_cents, title_snapshot, image_snapshot, custom_designs(id, design_file_url, base_color, placement_settings))",
+        "id, user_id, total_cents, payment_status, fulfillment_status, tracking_number, shipping_details, created_at, order_items(id, product_id, custom_design_id, quantity, size, color, unit_price_cents, title_snapshot, image_snapshot, custom_designs(id, design_file_url, base_color, placement_settings))",
       )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -203,7 +203,18 @@ export const listAdminProducts = createServerFn({ method: "GET" })
       .select("*")
       .order("created_at", { ascending: false });
     
-    const dbProducts = data ?? [];
+    const dbProducts = (data ?? []).map((p: any) => {
+      if (!p.image_urls || p.image_urls.length === 0 || (p.image_urls.length === 1 && !p.image_urls[0])) {
+        const fallback = getFallbackProducts().find(
+          (f) => f.slug.toLowerCase() === (p.slug ?? "").toLowerCase() || f.id === p.id
+        );
+        if (fallback && fallback.image_urls && fallback.image_urls.length > 0) {
+          return { ...p, image_urls: fallback.image_urls };
+        }
+      }
+      return p;
+    });
+
     const dbSlugs = new Set(dbProducts.map((p: any) => p.slug));
     const extraFallbacks = getFallbackProducts().filter((p) => !dbSlugs.has(p.slug));
 

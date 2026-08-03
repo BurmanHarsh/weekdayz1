@@ -272,6 +272,7 @@ function Checkout() {
                   custom_design_id: i.custom_design_id ?? null,
                   quantity: i.quantity,
                   size: i.size,
+                  color: i.color ?? null,
                   unit_price_cents: i.unit_price_cents,
                   title_snapshot: i.title,
                   image_snapshot: i.image,
@@ -553,7 +554,9 @@ function Checkout() {
                     <div className="w-12 h-14 bg-muted overflow-hidden"><img src={i.image} alt="" className="w-full h-full object-cover" /></div>
                     <div className="flex-1 text-sm">
                       <p className="font-semibold">{i.title}</p>
-                      <p className="text-xs text-muted-foreground">Size {i.size} · Qty {i.quantity}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Size {i.size}{i.color ? ` · ${i.color}` : ""} · Qty {i.quantity}
+                      </p>
                     </div>
                     <span className="text-sm font-semibold">{formatPrice(i.unit_price_cents * i.quantity)}</span>
                   </li>

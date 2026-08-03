@@ -15,7 +15,16 @@ export const listProducts = createServerFn({ method: "GET" }).handler(async () =
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     
-    const dbProducts = data ?? [];
+    const dbProducts = (data ?? []).map((p) => {
+      if (!p.image_urls || p.image_urls.length === 0 || (p.image_urls.length === 1 && !p.image_urls[0])) {
+        const fallback = getFallbackProductBySlug(p.slug);
+        if (fallback && fallback.image_urls && fallback.image_urls.length > 0) {
+          return { ...p, image_urls: fallback.image_urls };
+        }
+      }
+      return p;
+    });
+
     const dbSlugs = new Set(dbProducts.map((p) => p.slug));
     const extraFallbacks = getFallbackProducts().filter((p) => !dbSlugs.has(p.slug) && p.is_active !== false);
 
@@ -41,7 +50,16 @@ export const getProductBySlug = createServerFn({ method: "GET" })
         .or(`slug.eq."${rawSlug}",slug.eq."${cleanSlug}",slug.ilike."${cleanSlug}"`)
         .eq("is_active", true)
         .maybeSingle();
-      if (!error && product) return product;
+
+      if (!error && product) {
+        if (!product.image_urls || product.image_urls.length === 0 || (product.image_urls.length === 1 && !product.image_urls[0])) {
+          const fallback = getFallbackProductBySlug(cleanSlug) ?? getFallbackProductBySlug(rawSlug);
+          if (fallback && fallback.image_urls && fallback.image_urls.length > 0) {
+            return { ...product, image_urls: fallback.image_urls };
+          }
+        }
+        return product;
+      }
     } catch (_) {}
 
     const fallbacks = getFallbackProducts();

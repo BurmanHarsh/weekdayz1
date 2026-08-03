@@ -4,6 +4,7 @@ interface OrderItem {
   id: string;
   title_snapshot?: string | null;
   size?: string;
+  color?: string | null;
   quantity: number;
   unit_price_cents: number;
   image_snapshot?: string | null;
@@ -105,6 +106,7 @@ export function exportOrderToPdf(order: OrderExportData) {
             <tr>
               <th>Item</th>
               <th>Size</th>
+              <th>Color</th>
               <th>Qty</th>
               <th>Unit Price</th>
               <th style="text-align: right;">Total</th>
@@ -119,7 +121,8 @@ export function exportOrderToPdf(order: OrderExportData) {
                   <div class="item-title">${it.title_snapshot || "T-Shirt Item"}</div>
                   ${it.custom_designs?.base_color ? `<div style="font-size: 10px; color: #64748b;">Custom print base: ${it.custom_designs.base_color}</div>` : ""}
                 </td>
-                <td>${it.size}</td>
+                <td>${it.size || "—"}</td>
+                <td>${it.color || "—"}</td>
                 <td>${it.quantity}</td>
                 <td>${formatPrice(it.unit_price_cents)}</td>
                 <td style="text-align: right;">${formatPrice(it.unit_price_cents * it.quantity)}</td>

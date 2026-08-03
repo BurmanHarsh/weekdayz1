@@ -178,7 +178,7 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
                     <div className="flex-1 text-sm">
                       <p className="font-semibold">{it.title_snapshot || "Item"}</p>
                       <p className="text-xs text-muted-foreground">
-                        Size {it.size} · Qty {it.quantity} · {formatPrice(it.unit_price_cents)}
+                        Size {it.size}{(it as any).color ? ` · ${(it as any).color}` : ""} · Qty {it.quantity} · {formatPrice(it.unit_price_cents)}
                       </p>
                       {it.custom_designs && (
                         <div className="mt-2 border border-accent/40 bg-accent/5 p-2 text-xs space-y-1">

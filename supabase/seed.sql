@@ -246,7 +246,6 @@ VALUES (
   'Couple T-Shirts',
   ARRAY['S', 'M', 'L', 'XL', 'XXL'],
   ARRAY['Black', 'White'],
-  true,
   now()
 );
 

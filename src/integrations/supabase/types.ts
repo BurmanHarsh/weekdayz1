@@ -43,6 +43,7 @@ export type Database = {
       }
       order_items: {
         Row: {
+          color: string | null
           custom_design_id: string | null
           id: string
           image_snapshot: string | null
@@ -54,6 +55,7 @@ export type Database = {
           unit_price_cents: number
         }
         Insert: {
+          color?: string | null
           custom_design_id?: string | null
           id?: string
           image_snapshot?: string | null
@@ -65,6 +67,7 @@ export type Database = {
           unit_price_cents: number
         }
         Update: {
+          color?: string | null
           custom_design_id?: string | null
           id?: string
           image_snapshot?: string | null
