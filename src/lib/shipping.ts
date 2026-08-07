@@ -69,9 +69,7 @@ export function formatEstimatedDeliveryDate(etdString: string | null): string {
   return `Arrives by ${dayName}, ${day}${suffix} ${monthName}`;
 }
 
-/**
- * Sync signature function for static UI fallback
- */
+
 export function calculateShippingCost(address: ShippingAddress): number {
   const country = address.country?.toUpperCase() || "IN";
   return country === "IN" ? 9900 : 99900;
@@ -83,9 +81,7 @@ export function generateTrackingId(): string {
   return `WKZ-${ts}-${rand}`;
 }
 
-/**
- * Calculate live shipping details based on database weights/dimensions and Shiprocket API
- */
+
 export const getLiveShippingDetails = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -105,12 +101,10 @@ export const getLiveShippingDetails = createServerFn({ method: "POST" })
     const isDomestic = (address.country?.toUpperCase() || "IN") === "IN";
     const destPincode = address.postal_code;
 
-    // Standard fallback settings
     let finalCostCents = isDomestic ? 9900 : 99900;
     let etd: string | null = null;
 
     try {
-      // 1. Resolve product weights and dimensions from Supabase
       const productIds = data.items.map((i) => i.product_id).filter(Boolean) as string[];
       let totalWeight = 0;
       let maxLength = 0;
@@ -128,16 +122,13 @@ export const getLiveShippingDetails = createServerFn({ method: "POST" })
 
         data.items.forEach((item) => {
           const prod = item.product_id ? productMap.get(item.product_id) : null;
-          // default values: 300g per item
           const weightG = (prod?.weight_g ?? 300) * item.quantity;
           totalWeight += weightG;
           maxLength = Math.max(maxLength, prod?.length_cm ? Number(prod.length_cm) : 30);
           maxWidth = Math.max(maxWidth, prod?.width_cm ? Number(prod.width_cm) : 20);
-          // stack heights
           maxHeight += (prod?.height_cm ? Number(prod.height_cm) : 3) * item.quantity;
         });
       } else {
-        // Fallback for custom graphic uploads (no associated products)
         data.items.forEach((item) => {
           totalWeight += 300 * item.quantity;
           maxLength = Math.max(maxLength, 30);
@@ -146,10 +137,7 @@ export const getLiveShippingDetails = createServerFn({ method: "POST" })
         });
       }
 
-      // Convert to Shiprocket expected units
       const totalWeightKg = totalWeight / 1000;
-
-      // 2. Fetch live rate from Shiprocket API
       const pickupPostcode = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
       const token = await getShiprocketToken();
 
@@ -197,9 +185,6 @@ export const getLiveShippingDetails = createServerFn({ method: "POST" })
     };
   });
 
-/**
- * Checks address validation and courier serviceability using postalpincode.in and Shiprocket.
- */
 export const checkAddressServiceability = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -213,7 +198,6 @@ export const checkAddressServiceability = createServerFn({ method: "POST" })
     const { postal_code, country } = data;
     const isDomestic = country.toUpperCase() === "IN";
 
-    // 1. If domestic (India), first validate Pincode using postalpincode.in API
     if (isDomestic) {
       try {
         const pinRes = await fetch(`https://api.postalpincode.in/pincode/${postal_code}`);
@@ -230,7 +214,6 @@ export const checkAddressServiceability = createServerFn({ method: "POST" })
             const postOffices = pinData[0].PostOffice;
             if (postOffices && postOffices.length > 0) {
               const info = postOffices[0];
-              // Pincode is valid! Let's check Shiprocket serviceability now if credentials are set
               const token = await getShiprocketToken();
               if (token) {
                 try {
@@ -310,6 +293,7 @@ export async function createShiprocketOrder(params: {
   widthCm: number;
   heightCm: number;
 }): Promise<{ shiprocketOrderId: string; shiprocketShipmentId: string } | null> {
+  return null;
   const token = await getShiprocketToken();
   if (!token) return null;
 

@@ -6,24 +6,39 @@ import { verifySignature } from "./razorpay.functions";
 import { createShiprocketOrder } from "./shipping";
 import { decrementFallbackInventory } from "./fallback-data";
 
+import { checkRateLimit } from "./rate-limiter";
+import { sanitizeInput } from "./security";
+
 const OrderItemSchema = z.object({
   product_id: z.string().uuid().nullable().optional(),
   custom_design_id: z.string().uuid().nullable().optional(),
-  quantity: z.number().int().positive(),
-  size: z.string().min(1),
-  color: z.string().nullable().optional(),
-  unit_price_cents: z.number().int().nonnegative(),
-  title_snapshot: z.string().default(""),
-  image_snapshot: z.string().nullable().optional(),
+  quantity: z.number().int().positive().max(100),
+  size: z.string().min(1).max(20),
+  color: z.string().max(50).nullable().optional(),
+  unit_price_cents: z.number().int().nonnegative().max(10000000),
+  title_snapshot: z.string().max(200).default(""),
+  image_snapshot: z.string().max(1000).nullable().optional(),
+});
+
+const ShippingDetailsSchema = z.object({
+  full_name: z.string().min(1).max(100),
+  email: z.string().email().max(255),
+  phone: z.string().max(20),
+  line1: z.string().min(1).max(200),
+  line2: z.string().max(200).optional(),
+  city: z.string().min(1).max(100),
+  state: z.string().min(1).max(100),
+  postal_code: z.string().min(1).max(20),
+  country: z.string().min(1).max(100).default("India"),
 });
 
 const PlaceOrderSchema = z.object({
-  items: z.array(OrderItemSchema).min(1),
-  total_cents: z.number().int().nonnegative(),
-  shipping_details: z.record(z.any()),
-  razorpay_order_id: z.string(),
-  razorpay_payment_id: z.string(),
-  razorpay_signature: z.string(),
+  items: z.array(OrderItemSchema).min(1).max(50),
+  total_cents: z.number().int().nonnegative().max(100000000),
+  shipping_details: ShippingDetailsSchema.passthrough(),
+  razorpay_order_id: z.string().min(5).max(100),
+  razorpay_payment_id: z.string().min(5).max(100),
+  razorpay_signature: z.string().min(10).max(255),
 });
 
 export const placeOrder = createServerFn({ method: "POST" })
@@ -31,6 +46,14 @@ export const placeOrder = createServerFn({ method: "POST" })
   .validator((data) => PlaceOrderSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // 0. Rate limiting: max 100 order placements per minute per user
+    checkRateLimit(
+      `place_order_${userId}`,
+      100,
+      60 * 1000,
+      "Order placement rate limit reached. Please wait a moment before trying again."
+    );
 
     // 1. Verify Razorpay Payment Signature
     const isPaymentVerified = verifySignature(
@@ -40,7 +63,7 @@ export const placeOrder = createServerFn({ method: "POST" })
     );
 
     if (!isPaymentVerified) {
-      throw new Error("Payment signature verification failed. Order placement aborted.");
+      throw new Error("Security Alert: Payment signature verification failed. Order placement aborted.");
     }
 
     // 1b. Server-side validation of product prices against DB
@@ -56,7 +79,7 @@ export const placeOrder = createServerFn({ method: "POST" })
         if (item.product_id && priceMap.has(item.product_id)) {
           const expectedPrice = priceMap.get(item.product_id)!;
           if (item.unit_price_cents !== expectedPrice) {
-            throw new Error(`Price mismatch detected for product. Order rejected.`);
+            throw new Error(`Security Alert: Price mismatch detected for product. Order rejected.`);
           }
         }
       }
@@ -70,7 +93,7 @@ export const placeOrder = createServerFn({ method: "POST" })
         total_cents: data.total_cents,
         payment_status: "paid",
         fulfillment_status: "processing",
-        shipping_details: data.shipping_details,
+        shipping_details: data.shipping_details as any,
       })
       .select("id")
       .single();
@@ -90,7 +113,15 @@ export const placeOrder = createServerFn({ method: "POST" })
       image_snapshot: i.image_snapshot ?? null,
     }));
 
-    const { error: itemsErr } = await supabase.from("order_items").insert(items);
+    let { error: itemsErr } = await supabase.from("order_items").insert(items);
+
+    // Fallback if Supabase database schema does not have 'color' column yet
+    if (itemsErr && (itemsErr.message.includes("color") || itemsErr.code === "PGRST204")) {
+      const legacyItems = items.map(({ color, ...rest }) => rest);
+      const retryRes = await supabase.from("order_items").insert(legacyItems);
+      itemsErr = retryRes.error;
+    }
+
     if (itemsErr) throw new Error(itemsErr.message);
 
     // 4. Atomically decrement inventory for each product in the order

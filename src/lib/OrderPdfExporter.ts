@@ -1,4 +1,5 @@
 import { formatPrice } from "@/lib/format";
+import { escapeHtml } from "@/lib/security";
 
 interface OrderItem {
   id: string;
@@ -41,7 +42,7 @@ export function exportOrderToPdf(order: OrderExportData) {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Order Manifest #${order.id.slice(0, 8).toUpperCase()} — WEEKDAYZ</title>
+        <title>Order Manifest #${escapeHtml(order.id.slice(0, 8).toUpperCase())} — WEEKDAYZ</title>
         <style>
           @page { size: A4; margin: 20mm; }
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; line-height: 1.5; font-size: 13px; margin: 0; padding: 20px; }
@@ -79,25 +80,25 @@ export function exportOrderToPdf(order: OrderExportData) {
           </div>
           <div style="text-align: right;">
             <div class="sub">Order ID</div>
-            <div class="order-id">#${order.id.slice(0, 8).toUpperCase()}</div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">${formattedDate}</div>
+            <div class="order-id">#${escapeHtml(order.id.slice(0, 8).toUpperCase())}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 3px;">${escapeHtml(formattedDate)}</div>
           </div>
         </div>
 
         <div class="grid">
           <div class="col">
             <h3>Shipping Details</h3>
-            <div><strong>${shipping.full_name || "Customer"}</strong></div>
-            <div>${shipping.phone || ""}</div>
-            <div>${shipping.line1 || ""} ${shipping.line2 || ""}</div>
-            <div>${shipping.city || ""}, ${shipping.state || ""} ${shipping.postal_code || ""}</div>
-            <div>${shipping.country || "India"}</div>
+            <div><strong>${escapeHtml(shipping.full_name || "Customer")}</strong></div>
+            <div>${escapeHtml(shipping.phone || "")}</div>
+            <div>${escapeHtml(shipping.line1 || "")} ${escapeHtml(shipping.line2 || "")}</div>
+            <div>${escapeHtml(shipping.city || "")}, ${escapeHtml(shipping.state || "")} ${escapeHtml(shipping.postal_code || "")}</div>
+            <div>${escapeHtml(shipping.country || "India")}</div>
           </div>
           <div class="col">
             <h3>Order Status & Tracking</h3>
-            <div>Payment: <span class="badge">${order.payment_status}</span></div>
-            <div style="margin-top: 6px;">Fulfillment: <span class="badge">${order.fulfillment_status}</span></div>
-            <div style="margin-top: 6px;">Tracking ID: <strong>${order.tracking_number || "Pending"}</strong></div>
+            <div>Payment: <span class="badge">${escapeHtml(order.payment_status)}</span></div>
+            <div style="margin-top: 6px;">Fulfillment: <span class="badge">${escapeHtml(order.fulfillment_status)}</span></div>
+            <div style="margin-top: 6px;">Tracking ID: <strong>${escapeHtml(order.tracking_number || "Pending")}</strong></div>
           </div>
         </div>
 
@@ -118,11 +119,11 @@ export function exportOrderToPdf(order: OrderExportData) {
                 (it) => `
               <tr>
                 <td>
-                  <div class="item-title">${it.title_snapshot || "T-Shirt Item"}</div>
-                  ${it.custom_designs?.base_color ? `<div style="font-size: 10px; color: #64748b;">Custom print base: ${it.custom_designs.base_color}</div>` : ""}
+                  <div class="item-title">${escapeHtml(it.title_snapshot || "T-Shirt Item")}</div>
+                  ${it.custom_designs?.base_color ? `<div style="font-size: 10px; color: #64748b;">Custom print base: ${escapeHtml(it.custom_designs.base_color)}</div>` : ""}
                 </td>
-                <td>${it.size || "—"}</td>
-                <td>${it.color || "—"}</td>
+                <td>${escapeHtml(it.size || "—")}</td>
+                <td>${escapeHtml(it.color || "—")}</td>
                 <td>${it.quantity}</td>
                 <td>${formatPrice(it.unit_price_cents)}</td>
                 <td style="text-align: right;">${formatPrice(it.unit_price_cents * it.quantity)}</td>
