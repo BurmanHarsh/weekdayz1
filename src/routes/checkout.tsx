@@ -4,7 +4,16 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useServerFn } from "@tanstack/react-start";
-import { Check, CreditCard, Loader2, MapPin, ShieldCheck, Lock, Smartphone, ArrowLeft } from "lucide-react";
+import {
+  Check,
+  CreditCard,
+  Loader2,
+  MapPin,
+  ShieldCheck,
+  Lock,
+  Smartphone,
+  ArrowLeft,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { useCart, cartSubtotal } from "@/lib/cart-store";
@@ -60,7 +69,7 @@ function Checkout() {
 
   const subtotal = cartSubtotal(items);
   const shippingCost = shipping ? calculateShippingCost(shipping) : 9900;
-  const freeShip = subtotal >= 200000;
+  const freeShip = true;
   const total = subtotal + (freeShip ? 0 : shippingCost);
 
   const form = useForm<Shipping>({
@@ -84,7 +93,7 @@ function Checkout() {
         try {
           const { latitude, longitude } = position.coords;
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
           );
           if (!res.ok) throw new Error("Failed to get address");
           const data = await res.json();
@@ -97,7 +106,7 @@ function Checkout() {
               addr.suburb || addr.neighbourhood,
             ].filter(Boolean);
             const line1 = streetParts.join(", ") || addr.amenity || "";
-            
+
             const city = addr.city || addr.town || addr.village || addr.municipality || "";
             const state = addr.state || "";
             const postcode = addr.postcode || "";
@@ -111,12 +120,18 @@ function Checkout() {
 
             if (postcode) {
               const result = await checkServiceabilityFn({
-                data: { postal_code: postcode, country }
+                data: { postal_code: postcode, country },
               });
               if (!result.valid) {
-                form.setError("postal_code", { type: "manual", message: result.error || "Invalid pincode" });
+                form.setError("postal_code", {
+                  type: "manual",
+                  message: result.error || "Invalid pincode",
+                });
               } else if (!result.serviceable) {
-                form.setError("postal_code", { type: "manual", message: result.error || "Not serviceable" });
+                form.setError("postal_code", {
+                  type: "manual",
+                  message: result.error || "Not serviceable",
+                });
               } else {
                 form.clearErrors("postal_code");
                 toast.success("Address and serviceability details populated!");
@@ -137,9 +152,13 @@ function Checkout() {
       (error) => {
         console.error("Geolocation error:", error);
         if (!window.isSecureContext) {
-          toast.error("Geolocation requires a secure connection (HTTPS). On mobile, please connect via HTTPS/tunnel or enter the address manually.");
+          toast.error(
+            "Geolocation requires a secure connection (HTTPS). On mobile, please connect via HTTPS/tunnel or enter the address manually.",
+          );
         } else if (error.code === 1) {
-          toast.error("Location permission denied. Please allow location access in your browser settings.");
+          toast.error(
+            "Location permission denied. Please allow location access in your browser settings.",
+          );
         } else if (error.code === 2) {
           toast.error("Location unavailable. Please check if device GPS/Location is enabled.");
         } else if (error.code === 3) {
@@ -149,7 +168,7 @@ function Checkout() {
         }
         setLocating(false);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 
@@ -208,7 +227,12 @@ function Checkout() {
     return (
       <div className="py-24 text-center">
         <h1 className="text-display text-4xl">Nothing to check out.</h1>
-        <Link to="/shop" className="inline-block mt-6 bg-accent text-accent-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold">Shop</Link>
+        <Link
+          to="/shop"
+          className="inline-block mt-6 bg-accent text-accent-foreground px-6 py-3 text-sm uppercase tracking-widest font-semibold"
+        >
+          Shop
+        </Link>
       </div>
     );
   }
@@ -337,7 +361,9 @@ function Checkout() {
               disabled={!isClickable && !active}
               className={`flex items-center gap-2 ${active ? "text-accent font-semibold" : done ? "text-foreground hover:text-accent cursor-pointer font-semibold" : "text-muted-foreground cursor-not-allowed"}`}
             >
-              <div className={`w-7 h-7 grid place-items-center border ${active ? "border-accent bg-accent text-accent-foreground" : done ? "border-foreground bg-foreground text-background" : "border-border"}`}>
+              <div
+                className={`w-7 h-7 grid place-items-center border ${active ? "border-accent bg-accent text-accent-foreground" : done ? "border-foreground bg-foreground text-background" : "border-border"}`}
+              >
                 {done ? <Check className="h-3.5 w-3.5" /> : n}
               </div>
               {label}
@@ -350,12 +376,11 @@ function Checkout() {
       <div className="grid lg:grid-cols-[1fr_360px] gap-10">
         <div>
           {step === 1 && (
-            <form
-              onSubmit={form.handleSubmit(handleShippingSubmit)}
-              className="space-y-6"
-            >
+            <form onSubmit={form.handleSubmit(handleShippingSubmit)} className="space-y-6">
               <div className="flex justify-between items-center pb-2 border-b border-border">
-                <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Contact & Shipping</h2>
+                <h2 className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                  Contact & Shipping
+                </h2>
                 <button
                   type="button"
                   onClick={handleUseCurrentLocation}
@@ -374,32 +399,42 @@ function Checkout() {
               <div className="space-y-4">
                 {/* Full name */}
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Full name</label>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Full name
+                  </label>
                   <input
                     {...form.register("full_name")}
                     className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                     placeholder="Your name"
                   />
                   {form.formState.errors.full_name && (
-                    <p className="text-xs text-destructive mt-1">{form.formState.errors.full_name.message}</p>
+                    <p className="text-xs text-destructive mt-1">
+                      {form.formState.errors.full_name.message}
+                    </p>
                   )}
                 </div>
 
                 {/* Email and Phone Grid */}
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Email</label>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Email
+                    </label>
                     <input
                       {...form.register("email")}
                       className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                       placeholder="your-email@example.com"
                     />
                     {form.formState.errors.email && (
-                      <p className="text-xs text-destructive mt-1">{form.formState.errors.email.message}</p>
+                      <p className="text-xs text-destructive mt-1">
+                        {form.formState.errors.email.message}
+                      </p>
                     )}
                   </div>
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Phone</label>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Phone
+                    </label>
                     <input
                       {...form.register("phone")}
                       type="tel"
@@ -408,40 +443,52 @@ function Checkout() {
                       placeholder="9876543210"
                     />
                     {form.formState.errors.phone && (
-                      <p className="text-xs text-destructive mt-1">{form.formState.errors.phone.message}</p>
+                      <p className="text-xs text-destructive mt-1">
+                        {form.formState.errors.phone.message}
+                      </p>
                     )}
                   </div>
                 </div>
 
                 {/* Address Lines */}
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Address line 1</label>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Address line 1
+                  </label>
                   <input
                     {...form.register("line1")}
                     className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                     placeholder="House number, Street name, Apartment"
                   />
                   {form.formState.errors.line1 && (
-                    <p className="text-xs text-destructive mt-1">{form.formState.errors.line1.message}</p>
+                    <p className="text-xs text-destructive mt-1">
+                      {form.formState.errors.line1.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
-                  <label className="text-xs uppercase tracking-widest text-muted-foreground">Address line 2 (optional)</label>
+                  <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Address line 2 (optional)
+                  </label>
                   <input
                     {...form.register("line2")}
                     className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                     placeholder="Landmark, Area, Suite"
                   />
                   {form.formState.errors.line2 && (
-                    <p className="text-xs text-destructive mt-1">{form.formState.errors.line2.message}</p>
+                    <p className="text-xs text-destructive mt-1">
+                      {form.formState.errors.line2.message}
+                    </p>
                   )}
                 </div>
 
                 {/* City, State, Pincode Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="col-span-1">
-                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Postal code</label>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Postal code
+                    </label>
                     <input
                       {...form.register("postal_code", {
                         onBlur: async (e) => {
@@ -450,12 +497,18 @@ function Checkout() {
                           if (val && val.length >= 3) {
                             try {
                               const res = await checkServiceabilityFn({
-                                data: { postal_code: val, country }
+                                data: { postal_code: val, country },
                               });
                               if (!res.valid) {
-                                form.setError("postal_code", { type: "manual", message: res.error || "Invalid pincode" });
+                                form.setError("postal_code", {
+                                  type: "manual",
+                                  message: res.error || "Invalid pincode",
+                                });
                               } else if (!res.serviceable) {
-                                form.setError("postal_code", { type: "manual", message: res.error || "Not serviceable" });
+                                form.setError("postal_code", {
+                                  type: "manual",
+                                  message: res.error || "Not serviceable",
+                                });
                               } else {
                                 form.clearErrors("postal_code");
                                 if (res.city && !form.getValues("city")) {
@@ -472,49 +525,63 @@ function Checkout() {
                               console.error(err);
                             }
                           }
-                        }
+                        },
                       })}
                       className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                       placeholder="560001"
                     />
                     {form.formState.errors.postal_code && (
-                      <p className="text-xs text-destructive mt-1">{form.formState.errors.postal_code.message}</p>
+                      <p className="text-xs text-destructive mt-1">
+                        {form.formState.errors.postal_code.message}
+                      </p>
                     )}
                   </div>
 
                   <div className="col-span-1">
-                    <label className="text-xs uppercase tracking-widest text-muted-foreground">City</label>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                      City
+                    </label>
                     <input
                       {...form.register("city")}
                       className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                       placeholder="Bengaluru"
                     />
                     {form.formState.errors.city && (
-                      <p className="text-xs text-destructive mt-1">{form.formState.errors.city.message}</p>
+                      <p className="text-xs text-destructive mt-1">
+                        {form.formState.errors.city.message}
+                      </p>
                     )}
                   </div>
 
                   <div className="col-span-1">
-                    <label className="text-xs uppercase tracking-widest text-muted-foreground">State / Region</label>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                      State / Region
+                    </label>
                     <input
                       {...form.register("state")}
                       className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                       placeholder="Karnataka"
                     />
                     {form.formState.errors.state && (
-                      <p className="text-xs text-destructive mt-1">{form.formState.errors.state.message}</p>
+                      <p className="text-xs text-destructive mt-1">
+                        {form.formState.errors.state.message}
+                      </p>
                     )}
                   </div>
 
                   <div className="col-span-1">
-                    <label className="text-xs uppercase tracking-widest text-muted-foreground">Country</label>
+                    <label className="text-xs uppercase tracking-widest text-muted-foreground">
+                      Country
+                    </label>
                     <input
                       {...form.register("country")}
                       className="mt-1 w-full bg-card border border-border px-3 py-3 text-sm focus:outline-none focus:border-accent"
                       placeholder="IN"
                     />
                     {form.formState.errors.country && (
-                      <p className="text-xs text-destructive mt-1">{form.formState.errors.country.message}</p>
+                      <p className="text-xs text-destructive mt-1">
+                        {form.formState.errors.country.message}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -540,25 +607,44 @@ function Checkout() {
           {step === 2 && shipping && (
             <div className="space-y-6">
               <div className="bg-card border border-border p-5 text-sm space-y-1">
-                <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-semibold">Shipping to</h3>
+                <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-2 font-semibold">
+                  Shipping to
+                </h3>
                 <p className="font-semibold text-foreground">{shipping.full_name}</p>
-                <p className="text-xs text-muted-foreground">Phone: {shipping.phone} · {shipping.email}</p>
-                <p className="pt-1">{shipping.line1}{shipping.line2 ? `, ${shipping.line2}` : ""}</p>
-                <p>{shipping.city}, {shipping.state} {shipping.postal_code}</p>
+                <p className="text-xs text-muted-foreground">
+                  Phone: {shipping.phone} · {shipping.email}
+                </p>
+                <p className="pt-1">
+                  {shipping.line1}
+                  {shipping.line2 ? `, ${shipping.line2}` : ""}
+                </p>
+                <p>
+                  {shipping.city}, {shipping.state} {shipping.postal_code}
+                </p>
                 <p>{shipping.country}</p>
-                <button onClick={() => setStep(1)} className="text-xs text-accent uppercase tracking-widest pt-2 font-semibold hover:underline block">Edit Details</button>
+                <button
+                  onClick={() => setStep(1)}
+                  className="text-xs text-accent uppercase tracking-widest pt-2 font-semibold hover:underline block"
+                >
+                  Edit Details
+                </button>
               </div>
               <ul className="divide-y divide-border border border-border">
                 {items.map((i) => (
                   <li key={i.key} className="p-4 flex gap-3 items-center">
-                    <div className="w-12 h-14 bg-muted overflow-hidden"><img src={i.image} alt="" className="w-full h-full object-cover" /></div>
+                    <div className="w-12 h-14 bg-muted overflow-hidden">
+                      <img src={i.image} alt="" className="w-full h-full object-cover" />
+                    </div>
                     <div className="flex-1 text-sm">
                       <p className="font-semibold">{i.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        Size {i.size}{i.color ? ` · ${i.color}` : ""} · Qty {i.quantity}
+                        Size {i.size}
+                        {i.color ? ` · ${i.color}` : ""} · Qty {i.quantity}
                       </p>
                     </div>
-                    <span className="text-sm font-semibold">{formatPrice(i.unit_price_cents * i.quantity)}</span>
+                    <span className="text-sm font-semibold">
+                      {formatPrice(i.unit_price_cents * i.quantity)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -587,7 +673,9 @@ function Checkout() {
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-5 w-5 text-accent" />
                     <div>
-                      <h3 className="text-sm font-semibold uppercase tracking-wider">Razorpay Secure Checkout</h3>
+                      <h3 className="text-sm font-semibold uppercase tracking-wider">
+                        Razorpay Secure Checkout
+                      </h3>
                       <p className="text-xs text-muted-foreground">100% Encrypted & Safe Payment</p>
                     </div>
                   </div>
@@ -595,7 +683,9 @@ function Checkout() {
                 </div>
 
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Select your preferred payment method to launch <strong className="text-foreground">Razorpay</strong> directly for <strong className="text-foreground">Pay {formatPrice(total)}</strong>:
+                  Select your preferred payment method to launch{" "}
+                  <strong className="text-foreground">Razorpay</strong> directly for{" "}
+                  <strong className="text-foreground">Pay {formatPrice(total)}</strong>:
                 </p>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
@@ -618,7 +708,9 @@ function Checkout() {
                   >
                     <CreditCard className="h-5 w-5 text-accent group-hover:scale-110 transition-transform" />
                     <span className="text-xs font-semibold">Cards</span>
-                    <span className="text-[10px] text-muted-foreground">Visa, Mastercard, RuPay</span>
+                    <span className="text-[10px] text-muted-foreground">
+                      Visa, Mastercard, RuPay
+                    </span>
                   </button>
 
                   <button
@@ -648,13 +740,22 @@ function Checkout() {
                   disabled={loading}
                   className="flex-1 min-w-[240px] inline-flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-5 text-sm uppercase tracking-widest font-semibold disabled:opacity-50 hover:bg-accent/90 transition-colors"
                 >
-                  {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing order...</> : <>Pay {formatPrice(total)} with Razorpay</>}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Processing order...
+                    </>
+                  ) : (
+                    <>Pay {formatPrice(total)} with Razorpay</>
+                  )}
                 </button>
               </div>
 
               {!user && (
                 <p className="text-xs text-center text-muted-foreground">
-                  <Link to="/auth" className="text-accent underline">Sign in</Link> to complete your order.
+                  <Link to="/auth" className="text-accent underline">
+                    Sign in
+                  </Link>{" "}
+                  to complete your order.
                 </p>
               )}
             </div>
@@ -663,9 +764,20 @@ function Checkout() {
 
         <aside className="bg-card border border-border p-6 h-fit lg:sticky lg:top-24 space-y-3 text-sm">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground">Order summary</h3>
-          <div className="flex justify-between"><span>Items</span><span>{formatPrice(subtotal)}</span></div>
-          <div className="flex justify-between"><span>Shipping</span><span>{freeShip ? <span className="text-accent">FREE</span> : formatPrice(shippingCost)}</span></div>
-          <div className="border-t border-border pt-3 flex justify-between text-base font-semibold"><span>Total</span><span>{formatPrice(total)}</span></div>
+          <div className="flex justify-between">
+            <span>Items</span>
+            <span>{formatPrice(subtotal)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Shipping</span>
+            <span>
+              {freeShip ? <span className="text-accent">FREE</span> : formatPrice(shippingCost)}
+            </span>
+          </div>
+          <div className="border-t border-border pt-3 flex justify-between text-base font-semibold">
+            <span>Total</span>
+            <span>{formatPrice(total)}</span>
+          </div>
         </aside>
       </div>
     </div>

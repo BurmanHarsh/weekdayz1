@@ -23,10 +23,26 @@ export const isAdmin = createServerFn({ method: "GET" })
     return { admin: Boolean(data) };
   });
 
+import { checkRateLimit } from "./rate-limiter";
+import { sanitizeInput } from "./security";
+
 export const bootstrapAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data) => z.object({ secret: z.string() }).parse(data))
+  .inputValidator((data) => z.object({ secret: z.string().max(100) }).parse(data))
   .handler(async ({ data, context }) => {
+    // Security Restriction: Rate-limit bootstrap attempts to max 3 / hour per user
+    checkRateLimit(
+      `bootstrap_admin_${context.userId}`,
+      3,
+      60 * 60 * 1000,
+      "Too many admin bootstrap attempts. Request blocked for security."
+    );
+
+    const isEnabled = process.env.ENABLE_ADMIN_BOOTSTRAP === "true";
+    if (!isEnabled) {
+      throw new Error("Admin bootstrap endpoint is disabled in production for security compliance.");
+    }
+
     const expected = process.env.ADMIN_BOOTSTRAP_SECRET;
     if (!expected) {
       throw new Error("Admin bootstrap secret is not configured on the server");
@@ -139,15 +155,15 @@ export const createProduct = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        slug: z.string().min(1),
-        title: z.string().min(1),
-        description: z.string().default(""),
-        price_cents: z.number().int().nonnegative(),
-        inventory_count: z.number().int().nonnegative(),
-        image_urls: z.array(z.string()).default([]),
-        sizes: z.array(z.string()).default(["S", "M", "L", "XL", "XXL"]),
-        colors: z.array(z.string()).default([]),
-        category: z.string().default("tee"),
+        slug: z.string().min(1).max(150),
+        title: z.string().min(1).max(200),
+        description: z.string().max(5000).default(""),
+        price_cents: z.number().int().nonnegative().max(100000000),
+        inventory_count: z.number().int().nonnegative().max(1000000),
+        image_urls: z.array(z.string().max(1000)).max(20).default([]),
+        sizes: z.array(z.string().max(20)).max(20).default(["S", "M", "L", "XL", "XXL"]),
+        colors: z.array(z.string().max(50)).max(50).default([]),
+        category: z.string().max(100).default("tee"),
       })
       .parse(data),
   )

@@ -51,6 +51,9 @@ export const canUserReviewProduct = createServerFn({ method: "POST" })
     return { canReview: hasPurchased };
   });
 
+import { checkRateLimit } from "./rate-limiter";
+import { sanitizeInput } from "./security";
+
 export const submitReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
@@ -65,11 +68,21 @@ export const submitReview = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
+    // Rate limiting: Max 5 review submissions per hour per user
+    checkRateLimit(
+      `submit_review_${userId}`,
+      5,
+      60 * 60 * 1000,
+      "Too many review submissions. Please wait before submitting another review."
+    );
+
     // Verify user has purchased this item
     const hasPurchased = await verifyPurchase(supabase, userId, data.product_id);
     if (!hasPurchased) {
-      throw new Error("You can only review products you have purchased.");
+      throw new Error("Security Alert: You can only review products you have purchased.");
     }
+
+    const sanitizedBody = sanitizeInput(data.body);
 
     const { error } = await supabase
       .from("product_reviews")
@@ -78,7 +91,7 @@ export const submitReview = createServerFn({ method: "POST" })
           user_id: userId,
           product_id: data.product_id,
           rating: data.rating,
-          body: data.body,
+          body: sanitizedBody,
         },
         { onConflict: "user_id,product_id" }
       );

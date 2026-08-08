@@ -19,6 +19,7 @@ interface CartState {
   addItem: (item: Omit<CartItem, "quantity" | "key"> & { quantity?: number }) => void;
   removeItem: (key: string) => void;
   updateQty: (key: string, qty: number) => void;
+  syncItemPrices: (products: Array<{ id: string; price_cents: number }>) => void;
   clear: () => void;
   setDrawerOpen: (open: boolean) => void;
 }
@@ -40,7 +41,9 @@ export const useCart = create<CartState>()(
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.key === key ? { ...i, quantity: i.quantity + (item.quantity ?? 1) } : i,
+                i.key === key
+                  ? { ...i, unit_price_cents: item.unit_price_cents, quantity: i.quantity + (item.quantity ?? 1) }
+                  : i,
               ),
               drawerOpen: true,
             };
@@ -57,6 +60,18 @@ export const useCart = create<CartState>()(
             .map((i) => (i.key === key ? { ...i, quantity: Math.max(1, qty) } : i))
             .filter((i) => i.quantity > 0),
         })),
+      syncItemPrices: (products) =>
+        set((state) => {
+          const priceMap = new Map(products.map((p) => [p.id, p.price_cents]));
+          return {
+            items: state.items.map((i) => {
+              if (i.product_id && priceMap.has(i.product_id)) {
+                return { ...i, unit_price_cents: priceMap.get(i.product_id)! };
+              }
+              return i;
+            }),
+          };
+        }),
       clear: () => set({ items: [] }),
     }),
     { name: "weekdayz-cart" },
