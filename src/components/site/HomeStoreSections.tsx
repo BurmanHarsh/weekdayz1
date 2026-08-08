@@ -1,17 +1,17 @@
 import React, { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { motion } from "framer-motion";
-import { 
-  Award, 
-  Truck, 
-  RotateCcw, 
-  ShieldCheck, 
-  ArrowRight, 
-  Building2, 
-  Mail, 
-  Phone, 
-  CheckCircle2, 
-  Send
+import { motion } from "motion/react";
+import {
+  Award,
+  Truck,
+  RotateCcw,
+  ShieldCheck,
+  ArrowRight,
+  Building2,
+  Mail,
+  Phone,
+  CheckCircle2,
+  Send,
 } from "lucide-react";
 import FlowArt, { FlowSection } from "@/components/ui/story-scroll";
 import { TestimonialsColumn, type TestimonialItem } from "@/components/ui/testimonials-columns-1";
@@ -41,14 +41,14 @@ export function StoreHeroPromoBanner() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 my-10">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-500 text-white p-8 md:p-14 shadow-2xl">
-        <div 
-          className="absolute inset-0 opacity-15 pointer-events-none" 
-          style={{ 
-            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", 
-            backgroundSize: "24px 24px" 
-          }} 
+        <div
+          className="absolute inset-0 opacity-15 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
         />
-        
+
         <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto py-4">
           <span className="text-xs font-bold tracking-[0.25em] uppercase bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-white/90 mb-4">
             Upgrade Your Streetwear Game
@@ -57,7 +57,7 @@ export function StoreHeroPromoBanner() {
             Get up to 30% OFF all Products
           </h2>
           <p className="mt-4 text-base sm:text-lg text-purple-100 max-w-xl font-medium leading-relaxed">
-            Save up to 30% on selected heavy-cotton oversized tees, hoodies & fan merch this week. 
+            Save up to 30% on selected heavy-cotton oversized tees, hoodies & fan merch this week.
             Visit our collection page and buy now.
           </p>
           <div className="mt-8">
@@ -94,10 +94,15 @@ export function ValuePropsStoryScroll() {
 
       <FlowArt aria-label="Weekdayz Brand Promises">
         {/* Section 1: Premium Quality */}
-        <FlowSection aria-label="Premium Quality" style={{ backgroundColor: '#111827', color: '#ffffff' }}>
+        <FlowSection
+          aria-label="Premium Quality"
+          style={{ backgroundColor: "#111827", color: "#ffffff" }}
+        >
           <div className="flex items-center gap-3">
             <Award className="h-6 w-6 text-amber-400" />
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">01 — Premium Quality</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-400">
+              01 — Premium Quality
+            </p>
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/20" />
           <div>
@@ -111,30 +116,48 @@ export function ValuePropsStoryScroll() {
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/20" />
           <p className="max-w-[55ch] text-[clamp(1.1rem,2vw,1.8rem)] font-medium leading-relaxed text-white/90">
-            Built with 240+ GSM heavyweight cotton for long-lasting durability. Pre-shrunk, bio-washed, and drop-shoulder boxy fits engineered to hold shape wash after wash.
+            Built with 240+ GSM heavyweight cotton for long-lasting durability. Pre-shrunk,
+            bio-washed, and drop-shoulder boxy fits engineered to hold shape wash after wash.
           </p>
           <hr className="my-[1.5vw] border-none border-t border-white/20" />
           <div className="flex flex-wrap gap-[3vw]">
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-400">240 GSM Fabric</p>
-              <p className="text-sm leading-relaxed text-white/70">Heavyweight luxury feel with breathable, soft combed cotton texture.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-400">
+                240 GSM Fabric
+              </p>
+              <p className="text-sm leading-relaxed text-white/70">
+                Heavyweight luxury feel with breathable, soft combed cotton texture.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-400">Bio-Washed Finish</p>
-              <p className="text-sm leading-relaxed text-white/70">Anti-pilling treatment for ultra-smooth texture and vibrant color retention.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-400">
+                Bio-Washed Finish
+              </p>
+              <p className="text-sm leading-relaxed text-white/70">
+                Anti-pilling treatment for ultra-smooth texture and vibrant color retention.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-400">Precision Stitching</p>
-              <p className="text-sm leading-relaxed text-white/70">Double-needle neckband & reinforced shoulder taping for active wear.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-amber-400">
+                Precision Stitching
+              </p>
+              <p className="text-sm leading-relaxed text-white/70">
+                Double-needle neckband & reinforced shoulder taping for active wear.
+              </p>
             </div>
           </div>
         </FlowSection>
 
         {/* Section 2: Fast Shipping */}
-        <FlowSection aria-label="Fast Shipping" style={{ backgroundColor: '#0284c7', color: '#ffffff' }}>
+        <FlowSection
+          aria-label="Fast Shipping"
+          style={{ backgroundColor: "#0284c7", color: "#ffffff" }}
+        >
           <div className="flex items-center gap-3">
             <Truck className="h-6 w-6 text-sky-200" />
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-sky-200">02 — Fast Shipping</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-sky-200">
+              02 — Fast Shipping
+            </p>
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <div>
@@ -148,30 +171,48 @@ export function ValuePropsStoryScroll() {
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <p className="max-w-[55ch] text-[clamp(1.1rem,2vw,1.8rem)] font-medium leading-relaxed text-white/95">
-            Quick and secure delivery, wherever you are across India. Orders leave our fulfillment center within 24 hours with real-time WhatsApp & SMS tracking.
+            Quick and secure delivery, wherever you are across India. Orders leave our fulfillment
+            center within 24 hours with real-time WhatsApp & SMS tracking.
           </p>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <div className="flex flex-wrap gap-[3vw]">
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-sky-200">2-4 Day Transit</p>
-              <p className="text-sm leading-relaxed text-white/80">Express air shipping to all major metros and Tier 1 cities.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-sky-200">
+                2-4 Day Transit
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                Express air shipping to all major metros and Tier 1 cities.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-sky-200">Live WhatsApp Alerts</p>
-              <p className="text-sm leading-relaxed text-white/80">Automated dispatch, out-for-delivery, and delivery updates.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-sky-200">
+                Live WhatsApp Alerts
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                Automated dispatch, out-for-delivery, and delivery updates.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-sky-200">Free Over ₹999</p>
-              <p className="text-sm leading-relaxed text-white/80">Zero shipping fee on all orders above ₹999 across India.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-sky-200">
+                Free Over ₹999
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                Zero shipping fee on all orders above ₹999 across India.
+              </p>
             </div>
           </div>
         </FlowSection>
 
         {/* Section 3: Easy Returns */}
-        <FlowSection aria-label="Easy Returns" style={{ backgroundColor: '#166534', color: '#ffffff' }}>
+        <FlowSection
+          aria-label="Easy Returns"
+          style={{ backgroundColor: "#166534", color: "#ffffff" }}
+        >
           <div className="flex items-center gap-3">
             <RotateCcw className="h-6 w-6 text-emerald-300" />
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-300">03 — Easy Returns</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-emerald-300">
+              03 — Easy Returns
+            </p>
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <div>
@@ -185,30 +226,48 @@ export function ValuePropsStoryScroll() {
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <p className="max-w-[55ch] text-[clamp(1.1rem,2vw,1.8rem)] font-medium leading-relaxed text-white/95">
-            15-day hassle-free exchange and full refund policy. If the size isn't right or you want a different color, our courier picks it up directly from your doorstep.
+            15-day hassle-free exchange and full refund policy. If the size isn't right or you want
+            a different color, our courier picks it up directly from your doorstep.
           </p>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <div className="flex flex-wrap gap-[3vw]">
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300">Doorstep Pickup</p>
-              <p className="text-sm leading-relaxed text-white/80">No need to visit a post office — our agent collects the return from your home.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300">
+                Doorstep Pickup
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                No need to visit a post office — our agent collects the return from your home.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300">Instant Store Credit</p>
-              <p className="text-sm leading-relaxed text-white/80">Get store credit or bank refund credited immediately upon quality check.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300">
+                Instant Store Credit
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                Get store credit or bank refund credited immediately upon quality check.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300">Zero Exchange Fee</p>
-              <p className="text-sm leading-relaxed text-white/80">First size exchange is 100% free of charge for all customers.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-300">
+                Zero Exchange Fee
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                First size exchange is 100% free of charge for all customers.
+              </p>
             </div>
           </div>
         </FlowSection>
 
         {/* Section 4: Secure Checkout */}
-        <FlowSection aria-label="Secure Checkout" style={{ backgroundColor: '#4c1d95', color: '#ffffff' }}>
+        <FlowSection
+          aria-label="Secure Checkout"
+          style={{ backgroundColor: "#4c1d95", color: "#ffffff" }}
+        >
           <div className="flex items-center gap-3">
             <ShieldCheck className="h-6 w-6 text-purple-300" />
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-purple-300">04 — Secure Checkout</p>
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-purple-300">
+              04 — Secure Checkout
+            </p>
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <div>
@@ -222,21 +281,34 @@ export function ValuePropsStoryScroll() {
           </div>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <p className="max-w-[55ch] text-[clamp(1.1rem,2vw,1.8rem)] font-medium leading-relaxed text-white/95">
-            Protected payments with UPI, NetBanking & COD options. Powered by Razorpay with end-to-end 256-bit SSL encryption.
+            Protected payments with UPI, NetBanking & COD options. Powered by Razorpay with
+            end-to-end 256-bit SSL encryption.
           </p>
           <hr className="my-[1.5vw] border-none border-t border-white/30" />
           <div className="flex flex-wrap gap-[3vw]">
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-purple-300">Instant UPI & Cards</p>
-              <p className="text-sm leading-relaxed text-white/80">Google Pay, PhonePe, Paytm, Visa, Mastercard, and Rupay supported.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-purple-300">
+                Instant UPI & Cards
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                Google Pay, PhonePe, Paytm, Visa, Mastercard, and Rupay supported.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-purple-300">COD Option Available</p>
-              <p className="text-sm leading-relaxed text-white/80">Pay cash upon delivery anywhere in India with verified OTP check.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-purple-300">
+                COD Option Available
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                Pay cash upon delivery anywhere in India with verified OTP check.
+              </p>
             </div>
             <div className="min-w-[180px] flex-1">
-              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-purple-300">Buyer Protection</p>
-              <p className="text-sm leading-relaxed text-white/80">100% money-back guarantee if an order is delayed or damaged.</p>
+              <p className="mb-2 text-sm font-bold uppercase tracking-wider text-purple-300">
+                Buyer Protection
+              </p>
+              <p className="text-sm leading-relaxed text-white/80">
+                100% money-back guarantee if an order is delayed or damaged.
+              </p>
             </div>
           </div>
         </FlowSection>
@@ -251,63 +323,72 @@ export function ValuePropsStoryScroll() {
 export const storeTestimonials: TestimonialItem[] = [
   {
     text: "The 240 GSM oversized tees from Weekdayz are insane. The structure stays intact even after multiple washes, and the drop shoulder fit is perfection.",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
     name: "Briana Patton",
     role: "Verified Buyer · Bengaluru",
     stars: 5,
   },
   {
     text: "Ordered RCB official merch for match day. The print quality is top notch and delivery reached in 2 days. Highly recommended for true cricket fans!",
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
     name: "Bilal Ahmed",
     role: "Matchday Crew · Delhi",
     stars: 5,
   },
   {
     text: "Customer support handled my size exchange effortlessly. 10/10 service and premium heavyweight cotton quality that rivals luxury brands.",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
     name: "Saman Malik",
     role: "Fashion Enthusiast · Mumbai",
     stars: 5,
   },
   {
     text: "The F1 Pit-Lane graphic hoodie is hands down my favorite buy this season. Bold prints, ultra-soft fleece inside, and super warm.",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
     name: "Omar Raza",
     role: "Motorsport Fan · Hyderabad",
     stars: 5,
   },
   {
     text: "Placed a bulk order of 50 custom oversized hoodies for our college fest team. The sales team gave us great discounts and delivered ahead of schedule!",
-    image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80",
     name: "Zainab Hussain",
     role: "College Fest Lead · Pune",
     stars: 5,
   },
   {
     text: "Clean minimalist design, heavyweight fabric, and perfect boxy fit. Fits true to size and looks aesthetic in every street style outfit.",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80",
     name: "Aliza Khan",
     role: "Content Creator · Jaipur",
     stars: 5,
   },
   {
     text: "Fast shipping and sleek packaging. Shopping here feels reliable and effortless every single time.",
-    image: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80",
     name: "Farhan Siddiqui",
     role: "Sneakerhead · Kolkata",
     stars: 5,
   },
   {
     text: "The custom graphic tee printing is razor sharp. No peeling or fading after washing. Will definitely buy again!",
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&auto=format&fit=crop&q=80",
     name: "Sana Sheikh",
     role: "Designer · Chandigarh",
     stars: 5,
   },
   {
     text: "Loved the seamless checkout with UPI and instant tracking updates on WhatsApp. Weekdayz set the bar high for D2C apparel.",
-    image: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
+    image:
+      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80",
     name: "Hassan Ali",
     role: "Verified Buyer · Chennai",
     stars: 5,
@@ -339,7 +420,8 @@ export function StoreTestimonialsSection() {
             What our customers say
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base leading-relaxed">
-            Real reviews from streetwear fans, sports enthusiasts, and crew who trust Weekdayz quality, design, and style.
+            Real reviews from streetwear fans, sports enthusiasts, and crew who trust Weekdayz
+            quality, design, and style.
           </p>
         </motion.div>
 
@@ -394,7 +476,7 @@ export function BulkOrdersSection() {
     <section className="mx-auto max-w-7xl px-4 sm:px-6 my-24">
       <div className="relative overflow-hidden rounded-3xl bg-card border border-border p-8 md:p-14 shadow-xl">
         <div className="absolute top-0 right-0 -mt-10 -mr-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
@@ -406,7 +488,9 @@ export function BulkOrdersSection() {
             </h2>
 
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl">
-              Whether it’s for college fests, corporate events, sports clubs, or wholesale merch — Weekdayz offers custom screen printing, puff prints, embroidery, and tiered wholesale pricing. Contact our sales team today.
+              Whether it’s for college fests, corporate events, sports clubs, or wholesale merch —
+              Weekdayz offers custom screen printing, puff prints, embroidery, and tiered wholesale
+              pricing. Contact our sales team today.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -414,28 +498,40 @@ export function BulkOrdersSection() {
                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-sm text-foreground">Tiered Volume Discounts</h4>
-                  <p className="text-xs text-muted-foreground">Special pricing starting at 15+ pieces.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Special pricing starting at 15+ pieces.
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-sm text-foreground">Custom Prints & Puff Merch</h4>
-                  <p className="text-xs text-muted-foreground">Upload your designs or let our artists assist.</p>
+                  <h4 className="font-semibold text-sm text-foreground">
+                    Custom Prints & Puff Merch
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Upload your designs or let our artists assist.
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-sm text-foreground">Dedicated Account Manager</h4>
-                  <p className="text-xs text-muted-foreground">Personalized support from order to delivery.</p>
+                  <h4 className="font-semibold text-sm text-foreground">
+                    Dedicated Account Manager
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Personalized support from order to delivery.
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <h4 className="font-semibold text-sm text-foreground">Sample Proofing</h4>
-                  <p className="text-xs text-muted-foreground">Physical fabric & sample review before full run.</p>
+                  <p className="text-xs text-muted-foreground">
+                    Physical fabric & sample review before full run.
+                  </p>
                 </div>
               </div>
             </div>
@@ -443,7 +539,10 @@ export function BulkOrdersSection() {
             <div className="pt-4 flex flex-wrap items-center gap-4">
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="lg" className="bg-primary text-primary-foreground font-bold px-8 py-6 text-sm rounded-xl shadow-lg hover:shadow-primary/25">
+                  <Button
+                    size="lg"
+                    className="bg-primary text-primary-foreground font-bold px-8 py-6 text-sm rounded-xl shadow-lg hover:shadow-primary/25"
+                  >
                     Contact Sales Team <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </DialogTrigger>
@@ -451,7 +550,8 @@ export function BulkOrdersSection() {
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">Contact Bulk Sales</DialogTitle>
                     <DialogDescription>
-                      Fill in your requirement and our sales representative will get back to you with custom catalog & pricing within 24 hours.
+                      Fill in your requirement and our sales representative will get back to you
+                      with custom catalog & pricing within 24 hours.
                     </DialogDescription>
                   </DialogHeader>
 
@@ -461,7 +561,9 @@ export function BulkOrdersSection() {
                         <CheckCircle2 className="h-6 w-6" />
                       </div>
                       <h3 className="font-bold text-lg">Inquiry Received!</h3>
-                      <p className="text-xs text-muted-foreground">Our sales representative will reach out to you shortly.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Our sales representative will reach out to you shortly.
+                      </p>
                     </div>
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -503,7 +605,9 @@ export function BulkOrdersSection() {
                           <Input
                             placeholder="Tech Corp / Club"
                             value={formData.organization}
-                            onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                            onChange={(e) =>
+                              setFormData({ ...formData, organization: e.target.value })
+                            }
                           />
                         </div>
                         <div className="space-y-1">

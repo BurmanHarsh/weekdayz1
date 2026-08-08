@@ -430,7 +430,12 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
             .eq("user_id", authData.user.id)
             .eq("role", "admin")
             .maybeSingle();
-          if (roleRow) {
+
+          const isOwner =
+            authData.user.email === "burmanharsh886@gmail.com" ||
+            authData.user.email === "weekdayzz01@gmail.com";
+
+          if (hasAdmin || roleRow || isOwner) {
             navigate({ to: "/admin" });
             return;
           }

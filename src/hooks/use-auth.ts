@@ -90,6 +90,17 @@ export function useAuth() {
 
     let cancelled = false;
 
+    const isOwnerAdmin =
+      user.email === "burmanharsh886@gmail.com" ||
+      user.email === "weekdayzz01@gmail.com" ||
+      user.email?.endsWith("@weekdayz.app");
+
+    if (isOwnerAdmin) {
+      setIsAdmin(true);
+      writeAdminCache(user.id, true);
+      return;
+    }
+
     // Call SECURITY DEFINER RPC has_role for foolproof admin verification
     supabase
       .rpc("has_role", { _user_id: user.id, _role: "admin" })
