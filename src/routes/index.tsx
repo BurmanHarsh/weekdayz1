@@ -8,6 +8,13 @@ import { Reveal } from "@/components/site/Reveal";
 import { Stars } from "@/components/site/Stars";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
+import {
+  StoreHeroPromoBanner,
+  ValuePropsStoryScroll,
+  StoreTestimonialsSection,
+  BulkOrdersSection,
+  StoreFaqSection,
+} from "@/components/site/HomeStoreSections";
 
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
@@ -54,7 +61,8 @@ function Home() {
     <div className="w-full">
       <HeroCarousel />
       <CategoryStrip />
-      <DealBanner />
+      <StoreHeroPromoBanner />
+      <ValuePropsStoryScroll />
       <RcbBlock />
       <F1Block />
 
@@ -79,7 +87,11 @@ function Home() {
         </div>
       </section>
 
-      <ReviewsMarquee reviews={reviews} />
+      <StoreTestimonialsSection />
+
+      <BulkOrdersSection />
+
+      <StoreFaqSection />
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
         <Reveal className="text-center">
@@ -103,8 +115,8 @@ function HeroCarousel() {
     return () => clearInterval(t);
   }, []);
   return (
-    <section className="relative overflow-hidden bg-black text-white group">
-      <div className="relative h-[75vh] min-h-[560px] w-full">
+    <section className="relative overflow-hidden bg-black text-white group z-0">
+      <div className="relative h-[calc(100vh-112px)] min-h-[600px] w-full">
         {HERO.map((s, idx) => (
           <div
             key={s.title}
@@ -215,25 +227,18 @@ function RcbBlock() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-20 md:py-28 relative">
           <div className="absolute top-10 right-10 opacity-10 text-[10rem] font-black leading-none uppercase select-none pointer-events-none hidden lg:block">PLAY<br />BOLD</div>
           <Reveal>
-            <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6 relative z-10">
+            <div className="flex flex-col mb-12 relative z-10">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 mb-3">
-                  <span className="bg-primary text-primary-foreground text-[10px] px-2 py-1 font-bold uppercase tracking-widest rounded-sm">BRAND SPOTLIGHT</span>
-                  <span className="text-xs font-bold tracking-[0.4em] text-white/80 uppercase">RCB × WEEKDAYZ</span>
-                </div>
-                <h2 className="text-display text-5xl md:text-7xl mt-2 font-black leading-[0.9]">Red never leaves.</h2>
+                <h2 className="text-display text-5xl md:text-7xl font-black leading-[0.9]">Red never leaves.</h2>
                 <p className="mt-4 text-white/70 text-lg">The 2026 limited edition collection. Exclusively on Weekdayz.</p>
               </div>
-              <Link to="/collections/$slug" params={{ slug: "rcb" }} className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 text-xs font-bold tracking-widest uppercase hover:bg-primary hover:text-white transition-all shadow-lg shrink-0">
-                SHOP COLLECTION <ArrowRight className="h-4 w-4" />
-              </Link>
             </div>
           </Reveal>
           <div className="grid gap-12 md:grid-cols-[5fr_7fr] relative z-10">
             <div className="md:sticky md:top-24 md:self-start group cursor-pointer">
               <Reveal>
-                <Link to="/collections/$slug" params={{ slug: "rcb" }} className="block relative aspect-[4/5] overflow-hidden rounded-xl border border-white/20 shadow-2xl">
-                  <img src={rcbFeature} alt="RCB collection" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                <Link to="/collections/$slug" params={{ slug: "rcb" }} className="block relative aspect-[4/5] overflow-hidden rounded-xl border border-white/20 shadow-2xl bg-black/40 p-6 flex items-center justify-center">
+                  <img src="/rcb-seeklogo.png" alt="RCB collection" className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
                   <div className="absolute bottom-6 left-6 right-6">
                     <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-lg flex items-center justify-between hover:bg-white/20 transition-colors">
@@ -258,6 +263,14 @@ function RcbBlock() {
                   </div>
                 </Reveal>
               ))}
+
+              <Reveal delay={400}>
+                <div className="pt-4">
+                  <Link to="/collections/$slug" params={{ slug: "rcb" }} className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 text-xs font-bold tracking-widest uppercase hover:bg-primary hover:text-white transition-all shadow-lg shrink-0 rounded-md">
+                    SHOP COLLECTION <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </Reveal>
             </div>
           </div>
         </div>
@@ -300,7 +313,7 @@ function F1Block() {
           <div className="mb-12 overflow-hidden relative rounded-2xl group cursor-pointer border border-white/10 shadow-2xl">
             <Reveal>
               <Link to="/collections/$slug" params={{ slug: "f1" }} className="block relative">
-                <img src={f1Feature} alt="F1 feature" loading="lazy" className="w-full object-cover h-72 md:h-[500px] transition-transform duration-1000 group-hover:scale-105" />
+                <img src="/_ (19).jpeg" alt="F1 feature" loading="lazy" className="w-full object-cover h-72 md:h-[500px] transition-transform duration-1000 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                 <div className="absolute bottom-8 left-8">
                   <h3 className="text-4xl md:text-6xl font-black italic text-white drop-shadow-lg">THE RACING EDIT</h3>

@@ -88,11 +88,15 @@ export function Navbar() {
       </div>
 
       {/* ── Main navbar ── */}
-      <div className="backdrop-blur-xl bg-background/80 border-b border-border">
+      <div className="backdrop-blur-xl bg-background/90 border-b border-border shadow-sm">
         <div className="mx-auto max-w-7xl flex items-center justify-between px-4 sm:px-6 h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Weekdayz" className="h-16 w-auto" />
+          <Link to="/" className="flex items-center group py-1">
+            <img 
+              src="/logo.png" 
+              alt="Weekdayz" 
+              className="h-16 sm:h-18 md:h-20 w-auto object-contain max-h-18 md:max-h-20 transition-transform duration-300 group-hover:scale-105 filter drop-shadow-md" 
+            />
           </Link>
 
           {/* Desktop nav */}
