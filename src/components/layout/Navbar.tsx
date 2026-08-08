@@ -1,5 +1,5 @@
 import { Link, useRouter, useNavigate } from "@tanstack/react-router";
-import { ShoppingBag, Menu, X, User, Search, Heart } from "lucide-react";
+import { ShoppingBag, Menu, X, User, Search, Heart, ShieldCheck } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useCart } from "@/lib/cart-store";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,9 +55,7 @@ export function Navbar() {
     if (!term) return [] as typeof products;
     return products
       .filter(
-        (p) =>
-          p.title.toLowerCase().includes(term) ||
-          p.category.toLowerCase().includes(term),
+        (p) => p.title.toLowerCase().includes(term) || p.category.toLowerCase().includes(term),
       )
       .slice(0, 6);
   }, [q, products]);
@@ -111,7 +109,18 @@ export function Navbar() {
                 {l.label}
               </Link>
             ))}
-
+            {(isAdmin || pathname.startsWith("/admin")) && (
+              <Link
+                to="/admin"
+                className={cn(
+                  "text-sm uppercase tracking-widest font-bold text-accent px-3 py-1 bg-accent/15 border border-accent/40 rounded transition-all hover:bg-accent hover:text-accent-foreground flex items-center gap-1.5 shadow-sm",
+                  pathname.startsWith("/admin") && "bg-accent text-accent-foreground border-accent font-black shadow-md",
+                )}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
           </nav>
 
           {/* Right icons */}
@@ -163,16 +172,12 @@ export function Navbar() {
                               className="h-12 w-10 object-cover border border-border"
                             />
                             <div className="min-w-0 flex-1">
-                              <div className="truncate text-sm font-semibold">
-                                {p.title}
-                              </div>
+                              <div className="truncate text-sm font-semibold">{p.title}</div>
                               <div className="text-xs text-muted-foreground uppercase tracking-widest">
                                 {p.category}
                               </div>
                             </div>
-                            <div className="text-sm font-bold">
-                              {formatPrice(p.price_cents)}
-                            </div>
+                            <div className="text-sm font-bold">{formatPrice(p.price_cents)}</div>
                           </Link>
                         </li>
                       ))}
@@ -281,6 +286,17 @@ export function Navbar() {
                 {l.label}
               </Link>
             ))}
+
+            {(isAdmin || pathname.startsWith("/admin") || !!user) && (
+              <Link
+                to="/admin"
+                onClick={() => setOpen(false)}
+                className="text-xs uppercase tracking-widest font-black text-accent bg-accent/15 border-2 border-accent px-3 py-2 flex items-center gap-1.5 w-fit my-1"
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Admin
+              </Link>
+            )}
 
             {/* Mobile currency Switcher */}
             <div className="flex gap-2 pt-2 border-t border-border">

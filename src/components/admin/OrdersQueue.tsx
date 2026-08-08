@@ -33,6 +33,7 @@ export default function OrdersQueue() {
           <thead className="text-xs uppercase tracking-widest text-muted-foreground border-b border-border bg-secondary/20">
             <tr>
               <th className="text-left px-4 py-3">Order ID</th>
+              <th className="text-left px-4 py-3">Source Channel</th>
               <th className="text-left px-4 py-3">Total Amount</th>
               <th className="text-left px-4 py-3">Payment</th>
               <th className="text-left px-4 py-3">Fulfillment</th>
@@ -44,6 +45,19 @@ export default function OrdersQueue() {
             {orders?.map((o) => (
               <tr key={o.id} className="hover:bg-secondary/20 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs font-semibold">#{o.id.slice(0, 8).toUpperCase()}</td>
+                <td className="px-4 py-3">
+                  <span className={`inline-block border border-border px-2 py-0.5 text-[10px] uppercase font-bold tracking-wider ${
+                    (o as any).order_source === "instagram"
+                      ? "bg-pink-500/10 text-pink-400 border-pink-500/30"
+                      : (o as any).order_source === "whatsapp"
+                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                      : (o as any).order_source === "offline"
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30"
+                      : "bg-indigo-500/10 text-indigo-400 border-indigo-500/30"
+                  }`}>
+                    {(o as any).order_source ?? "app"}
+                  </span>
+                </td>
                 <td className="px-4 py-3 font-semibold">{formatPrice(o.total_cents)}</td>
                 <td className="px-4 py-3"><Badge label={o.payment_status} /></td>
                 <td className="px-4 py-3"><Badge label={o.fulfillment_status} /></td>
@@ -90,7 +104,7 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
   const [signed, setSigned] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    order.order_items?.forEach((it) => {
+    order.order_items?.forEach((it: any) => {
       const path = it.custom_designs?.design_file_url;
       if (!path || signed[path]) return;
       signFn({ data: { path } })
@@ -166,7 +180,7 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
           <section>
             <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-bold mb-2">Order Items</h3>
             <ul className="divide-y divide-border border border-border">
-              {order.order_items?.map((it) => {
+              {order.order_items?.map((it: any) => {
                 const path = it.custom_designs?.design_file_url;
                 const url = path ? signed[path] : null;
                 const placement = it.custom_designs?.placement_settings as Record<string, number> | null;

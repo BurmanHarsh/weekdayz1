@@ -99,11 +99,29 @@ export const listAllOrders = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("orders")
       .select(
-        "id, user_id, total_cents, payment_status, fulfillment_status, tracking_number, shipping_details, created_at, order_items(id, product_id, custom_design_id, quantity, size, color, unit_price_cents, title_snapshot, image_snapshot, custom_designs(id, design_file_url, base_color, placement_settings))",
+        "id, user_id, total_cents, cost_cents, order_source, payment_status, fulfillment_status, tracking_number, shipping_details, created_at, order_items(id, product_id, custom_design_id, quantity, size, color, unit_price_cents, title_snapshot, image_snapshot, custom_designs(id, design_file_url, base_color, placement_settings))",
       )
       .order("created_at", { ascending: false });
-    if (error) throw new Error(error.message);
-    return data;
+    if (error) {
+      // Fallback if cost_cents or order_source column doesn't exist yet on DB
+      const legacyRes = await context.supabase
+        .from("orders")
+        .select(
+          "id, user_id, total_cents, payment_status, fulfillment_status, tracking_number, shipping_details, created_at, order_items(id, product_id, custom_design_id, quantity, size, color, unit_price_cents, title_snapshot, image_snapshot, custom_designs(id, design_file_url, base_color, placement_settings))",
+        )
+        .order("created_at", { ascending: false });
+      if (legacyRes.error) throw new Error(legacyRes.error.message);
+      return (legacyRes.data ?? []).map((o: any) => ({
+        ...o,
+        order_source: o.order_source ?? "app",
+        cost_cents: o.cost_cents ?? Math.round(o.total_cents * 0.45), // Default 45% COGS estimate if not set
+      }));
+    }
+    return (data ?? []).map((o: any) => ({
+      ...o,
+      order_source: o.order_source ?? "app",
+      cost_cents: o.cost_cents ?? Math.round(o.total_cents * 0.45),
+    }));
   });
 
 export const updateOrderStatus = createServerFn({ method: "POST" })
@@ -446,3 +464,253 @@ export const deletePromoCode = createServerFn({ method: "POST" })
     MEMORY_PROMO_CODES = MEMORY_PROMO_CODES.filter((p) => p.id !== data.id);
     return { ok: true };
   });
+
+/* ─── Social Media & Multi-Channel Profit Analytics ─── */
+
+export const OrderSourceEnum = z.enum(["app", "instagram", "whatsapp", "facebook", "offline", "other"]);
+export type OrderSource = z.infer<typeof OrderSourceEnum>;
+
+export const recordExternalSale = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        order_source: OrderSourceEnum,
+        customer_name: z.string().min(1).max(150),
+        customer_email: z.string().email().optional().or(z.literal("")),
+        total_cents: z.number().int().positive(),
+        cost_cents: z.number().int().nonnegative().default(0),
+        product_name: z.string().min(1).max(250).default("Social Sale Item"),
+        quantity: z.number().int().positive().default(1),
+        notes: z.string().max(1000).optional(),
+        created_at: z.string().optional(), // ISO date string if logging historical sales
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabase, userId } = context;
+
+    const shipping_details = {
+      full_name: sanitizeInput(data.customer_name),
+      email: data.customer_email ? sanitizeInput(data.customer_email) : `${data.order_source}_customer@weekdayz.internal`,
+      phone: "N/A",
+      line1: `Direct Sale via ${data.order_source.toUpperCase()}`,
+      city: "N/A",
+      state: "N/A",
+      postal_code: "000000",
+      country: "India",
+      notes: data.notes ? sanitizeInput(data.notes) : "",
+    };
+
+    const createdAtDate = data.created_at ? new Date(data.created_at).toISOString() : new Date().toISOString();
+
+    // 1. Insert order with explicit order_source and cost_cents
+    const { data: order, error } = await (supabase as any)
+      .from("orders")
+      .insert({
+        user_id: userId,
+        total_cents: data.total_cents,
+        cost_cents: data.cost_cents,
+        order_source: data.order_source,
+        payment_status: "paid",
+        fulfillment_status: "delivered",
+        shipping_details,
+        created_at: createdAtDate,
+      })
+      .select("id")
+      .single();
+
+    if (error || !order) {
+      // Fallback: If DB insertion fails (e.g., column schema mismatch), attempt insert without custom columns
+      const fallbackRes = await supabase
+        .from("orders")
+        .insert({
+          user_id: userId,
+          total_cents: data.total_cents,
+          payment_status: "paid",
+          fulfillment_status: "delivered",
+          shipping_details,
+          created_at: createdAtDate,
+        })
+        .select("id")
+        .single();
+      if (fallbackRes.error || !fallbackRes.data) {
+        throw new Error(error?.message ?? fallbackRes.error?.message ?? "Failed to log external sale");
+      }
+      return { id: fallbackRes.data.id, ok: true };
+    }
+
+    // 2. Insert order item snapshot
+    await supabase.from("order_items").insert({
+      order_id: order.id,
+      quantity: data.quantity,
+      size: "STD",
+      unit_price_cents: Math.round(data.total_cents / data.quantity),
+      title_snapshot: `[${data.order_source.toUpperCase()}] ${data.product_name}`,
+    });
+
+    return { id: order.id, ok: true };
+  });
+
+export interface MonthlyProfitSummary {
+  monthKey: string; // YYYY-MM
+  monthLabel: string; // e.g. "Aug 2026"
+  revenue_cents: number;
+  cost_cents: number;
+  net_profit_cents: number;
+  margin_pct: number;
+  order_count: number;
+  channel_breakdown: Record<OrderSource, { revenue_cents: number; order_count: number }>;
+}
+
+export const getProfitAnalyticsData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+
+    // Fetch all paid orders
+    let queryRes = await (context.supabase as any)
+      .from("orders")
+      .select("id, total_cents, cost_cents, order_source, created_at, payment_status")
+      .eq("payment_status", "paid")
+      .order("created_at", { ascending: true });
+
+    if (queryRes.error) {
+      // Fallback query if columns don't exist yet
+      queryRes = await (context.supabase as any)
+        .from("orders")
+        .select("id, total_cents, created_at, payment_status")
+        .eq("payment_status", "paid")
+        .order("created_at", { ascending: true });
+    }
+
+    const orders = queryRes.data ?? [];
+
+    const monthMap = new Map<string, MonthlyProfitSummary>();
+    let lifetimeRevenue = 0;
+    let lifetimeCost = 0;
+    const channelTotals: Record<OrderSource, { revenue_cents: number; order_count: number }> = {
+      app: { revenue_cents: 0, order_count: 0 },
+      instagram: { revenue_cents: 0, order_count: 0 },
+      whatsapp: { revenue_cents: 0, order_count: 0 },
+      facebook: { revenue_cents: 0, order_count: 0 },
+      offline: { revenue_cents: 0, order_count: 0 },
+      other: { revenue_cents: 0, order_count: 0 },
+    };
+
+    orders.forEach((o: any) => {
+      const date = new Date(o.created_at ?? Date.now());
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      const monthLabel = date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+      const rev = Number(o.total_cents ?? 0);
+      // If cost_cents was explicitly saved, use it; otherwise estimate 45% default COGS
+      const cost = o.cost_cents !== undefined && o.cost_cents !== null && o.cost_cents !== 0
+        ? Number(o.cost_cents)
+        : Math.round(rev * 0.45);
+
+      const rawSource = String(o.order_source ?? "app").toLowerCase();
+      const source: OrderSource = ["app", "instagram", "whatsapp", "facebook", "offline", "other"].includes(rawSource)
+        ? (rawSource as OrderSource)
+        : "other";
+
+      lifetimeRevenue += rev;
+      lifetimeCost += cost;
+
+      channelTotals[source].revenue_cents += rev;
+      channelTotals[source].order_count += 1;
+
+      if (!monthMap.has(monthKey)) {
+        monthMap.set(monthKey, {
+          monthKey,
+          monthLabel,
+          revenue_cents: 0,
+          cost_cents: 0,
+          net_profit_cents: 0,
+          margin_pct: 0,
+          order_count: 0,
+          channel_breakdown: {
+            app: { revenue_cents: 0, order_count: 0 },
+            instagram: { revenue_cents: 0, order_count: 0 },
+            whatsapp: { revenue_cents: 0, order_count: 0 },
+            facebook: { revenue_cents: 0, order_count: 0 },
+            offline: { revenue_cents: 0, order_count: 0 },
+            other: { revenue_cents: 0, order_count: 0 },
+          },
+        });
+      }
+
+      const m = monthMap.get(monthKey)!;
+      m.revenue_cents += rev;
+      m.cost_cents += cost;
+      m.net_profit_cents = m.revenue_cents - m.cost_cents;
+      m.margin_pct = m.revenue_cents > 0 ? Math.round((m.net_profit_cents / m.revenue_cents) * 1000) / 10 : 0;
+      m.order_count += 1;
+      m.channel_breakdown[source].revenue_cents += rev;
+      m.channel_breakdown[source].order_count += 1;
+    });
+
+    // Ensure current month is initialized if no orders exist yet for this month
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const currentMonthLabel = now.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+
+    if (!monthMap.has(currentMonthKey)) {
+      monthMap.set(currentMonthKey, {
+        monthKey: currentMonthKey,
+        monthLabel: currentMonthLabel,
+        revenue_cents: 0,
+        cost_cents: 0,
+        net_profit_cents: 0,
+        margin_pct: 0,
+        order_count: 0,
+        channel_breakdown: {
+          app: { revenue_cents: 0, order_count: 0 },
+          instagram: { revenue_cents: 0, order_count: 0 },
+          whatsapp: { revenue_cents: 0, order_count: 0 },
+          facebook: { revenue_cents: 0, order_count: 0 },
+          offline: { revenue_cents: 0, order_count: 0 },
+          other: { revenue_cents: 0, order_count: 0 },
+        },
+      });
+    }
+
+    const monthlyData = Array.from(monthMap.values()).sort((a, b) => a.monthKey.localeCompare(b.monthKey));
+
+    const netProfit = lifetimeRevenue - lifetimeCost;
+    const marginPct = lifetimeRevenue > 0 ? Math.round((netProfit / lifetimeRevenue) * 1000) / 10 : 0;
+
+    let topChannel: OrderSource = "app";
+    let maxChannelRev = -1;
+    (Object.keys(channelTotals) as OrderSource[]).forEach((ch) => {
+      if (channelTotals[ch].revenue_cents > maxChannelRev) {
+        maxChannelRev = channelTotals[ch].revenue_cents;
+        topChannel = ch;
+      }
+    });
+
+    const socialRevenueCents =
+      channelTotals.instagram.revenue_cents +
+      channelTotals.whatsapp.revenue_cents +
+      channelTotals.facebook.revenue_cents;
+
+    return {
+      monthlyData,
+      summary: {
+        lifetime_revenue_cents: lifetimeRevenue,
+        lifetime_cost_cents: lifetimeCost,
+        lifetime_profit_cents: netProfit,
+        lifetime_margin_pct: marginPct,
+        total_orders: orders.length || monthlyData.reduce((acc, m) => acc + m.order_count, 0),
+        top_channel: topChannel,
+        channel_totals: channelTotals,
+        social_vs_app_ratio: {
+          app_revenue_cents: channelTotals.app.revenue_cents,
+          social_revenue_cents: socialRevenueCents,
+          offline_revenue_cents: channelTotals.offline.revenue_cents,
+        },
+      },
+    };
+  });
+

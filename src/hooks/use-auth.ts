@@ -21,6 +21,8 @@ function readAdminCache(userId: string): boolean | null {
       sessionStorage.removeItem(ADMIN_CACHE_KEY);
       return null;
     }
+    // If cached as non-admin, always bypass cache to detect newly granted admin roles immediately
+    if (!entry.isAdmin) return null;
     return entry.isAdmin;
   } catch {
     return null;
@@ -87,19 +89,34 @@ export function useAuth() {
     }
 
     let cancelled = false;
+
+    // Call SECURITY DEFINER RPC has_role for foolproof admin verification
     supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!cancelled) {
-          const result = Boolean(data);
-          setIsAdmin(result);
-          writeAdminCache(user.id, result);
+      .rpc("has_role", { _user_id: user.id, _role: "admin" })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (!error && data === true) {
+          setIsAdmin(true);
+          writeAdminCache(user.id, true);
+          return;
         }
+
+        // Direct table fallback check
+        supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .eq("role", "admin")
+          .maybeSingle()
+          .then(({ data: tableData }) => {
+            if (!cancelled) {
+              const result = Boolean(tableData);
+              setIsAdmin(result);
+              writeAdminCache(user.id, result);
+            }
+          });
       });
+
     return () => {
       cancelled = true;
     };

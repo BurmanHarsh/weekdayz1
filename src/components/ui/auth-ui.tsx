@@ -69,17 +69,7 @@ export function Typewriter({
     );
 
     return () => clearTimeout(timeout);
-  }, [
-    currentIndex,
-    isDeleting,
-    currentText,
-    loop,
-    speed,
-    deleteSpeed,
-    delay,
-    displayText,
-    text,
-  ]);
+  }, [currentIndex, isDeleting, currentText, loop, speed, deleteSpeed, delay, displayText, text]);
 
   return (
     <span className={className}>
@@ -90,19 +80,14 @@ export function Typewriter({
 }
 
 const labelVariants = cva(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
 );
 
 const Label = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> &
-    VariantProps<typeof labelVariants>
+  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> & VariantProps<typeof labelVariants>
 >(({ className, ...props }, ref) => (
-  <LabelPrimitive.Root
-    ref={ref}
-    className={cn(labelVariants(), className)}
-    {...props}
-  />
+  <LabelPrimitive.Root ref={ref} className={cn(labelVariants(), className)} {...props} />
 ));
 Label.displayName = LabelPrimitive.Root.displayName;
 
@@ -113,7 +98,8 @@ const buttonVariants = cva(
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input dark:border-input/50 bg-background hover:bg-accent hover:text-accent-foreground",
+        outline:
+          "border border-input dark:border-input/50 bg-background hover:bg-accent hover:text-accent-foreground",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary-foreground/60 underline-offset-4 hover:underline",
@@ -129,16 +115,19 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
+  },
 );
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
-  }
+    return (
+      <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+    );
+  },
 );
 Button.displayName = "Button";
 
@@ -149,18 +138,18 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
         type={type}
         className={cn(
           "flex h-10 w-full rounded-lg border border-input dark:border-input/50 bg-background px-3 py-3 text-sm text-foreground shadow-sm shadow-black/5 transition-shadow placeholder:text-muted-foreground/70 focus-visible:bg-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          className
+          className,
         )}
         ref={ref}
         {...props}
       />
     );
-  }
+  },
 );
 Input.displayName = "Input";
 
 export interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-    label?: string;
+  label?: string;
 }
 const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
   ({ className, label, ...props }, ref) => {
@@ -171,14 +160,29 @@ const PasswordInput = React.forwardRef<HTMLInputElement, PasswordInputProps>(
       <div className="grid w-full items-center gap-2">
         {label && <Label htmlFor={id}>{label}</Label>}
         <div className="relative">
-          <Input id={id} type={showPassword ? "text" : "password"} className={cn("pe-10", className)} ref={ref} {...props} />
-          <button type="button" onClick={togglePasswordVisibility} className="absolute inset-y-0 end-0 flex h-full w-10 items-center justify-center text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50" aria-label={showPassword ? "Hide password" : "Show password"}>
-            {showPassword ? (<EyeOff className="size-4" aria-hidden="true" />) : (<Eye className="size-4" aria-hidden="true" />)}
+          <Input
+            id={id}
+            type={showPassword ? "text" : "password"}
+            className={cn("pe-10", className)}
+            ref={ref}
+            {...props}
+          />
+          <button
+            type="button"
+            onClick={togglePasswordVisibility}
+            className="absolute inset-y-0 end-0 flex h-full w-10 items-center justify-center text-muted-foreground/80 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOff className="size-4" aria-hidden="true" />
+            ) : (
+              <Eye className="size-4" aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>
     );
-  }
+  },
 );
 PasswordInput.displayName = "PasswordInput";
 
@@ -192,14 +196,29 @@ function SignInForm({ loading, onSubmit }: FormProps) {
     <form onSubmit={onSubmit} autoComplete="on" className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Sign in to your account</h1>
-        <p className="text-balance text-sm text-muted-foreground">Enter your email below to sign in</p>
+        <p className="text-balance text-sm text-muted-foreground">
+          Enter your email below to sign in
+        </p>
       </div>
       <div className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="email" />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="m@example.com"
+            required
+            autoComplete="email"
+          />
         </div>
-        <PasswordInput name="password" label="Password" required autoComplete="current-password" placeholder="Password" />
+        <PasswordInput
+          name="password"
+          label="Password"
+          required
+          autoComplete="current-password"
+          placeholder="Password"
+        />
         <Button type="submit" variant="outline" className="mt-2" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading ? "Signing In..." : "Sign In"}
@@ -214,18 +233,40 @@ function SignUpForm({ loading, onSubmit }: FormProps) {
     <form onSubmit={onSubmit} autoComplete="on" className="flex flex-col gap-6">
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="text-2xl font-bold">Create an account</h1>
-        <p className="text-balance text-sm text-muted-foreground">Enter your details below to sign up</p>
+        <p className="text-balance text-sm text-muted-foreground">
+          Enter your details below to sign up
+        </p>
       </div>
       <div className="grid gap-4">
         <div className="grid gap-1">
           <Label htmlFor="name">Full Name</Label>
-          <Input id="name" name="name" type="text" placeholder="John Doe" required autoComplete="name" />
+          <Input
+            id="name"
+            name="name"
+            type="text"
+            placeholder="John Doe"
+            required
+            autoComplete="name"
+          />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="m@example.com" required autoComplete="email" />
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            placeholder="m@example.com"
+            required
+            autoComplete="email"
+          />
         </div>
-        <PasswordInput name="password" label="Password" required autoComplete="new-password" placeholder="Password"/>
+        <PasswordInput
+          name="password"
+          label="Password"
+          required
+          autoComplete="new-password"
+          placeholder="Password"
+        />
         <Button type="submit" variant="outline" className="mt-2" disabled={loading}>
           {loading && <Loader2 className="h-4 w-4 animate-spin" />}
           {loading ? "Signing Up..." : "Sign Up"}
@@ -279,10 +320,16 @@ function AuthFormContainer({
         </Button>
       </div>
       <div className="relative text-center text-sm my-3 after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border">
-        <span className="relative z-10 bg-background px-2 text-muted-foreground">Or continue with</span>
+        <span className="relative z-10 bg-background px-2 text-muted-foreground">
+          Or continue with
+        </span>
       </div>
       <Button variant="outline" type="button" onClick={handleGoogleLogin}>
-        <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google icon" className="mr-2 h-4 w-4" />
+        <img
+          src="https://www.svgrepo.com/show/475656/google-color.svg"
+          alt="Google icon"
+          className="mr-2 h-4 w-4"
+        />
         Continue with Google
       </Button>
     </div>
@@ -297,7 +344,7 @@ interface AuthContentProps {
   quote?: {
     text: string;
     author: string;
-  }
+  };
 }
 
 interface AuthUIProps {
@@ -308,23 +355,23 @@ interface AuthUIProps {
 const defaultSignInContent = {
   image: {
     src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?q=80&w=1400&auto=format&fit=crop",
-    alt: "Premium Storefront"
+    alt: "Premium Storefront",
   },
   quote: {
     text: "Welcome Back! The drop continues.",
-    author: "Weekdayz Creator Hub"
-  }
+    author: "Weekdayz Creator Hub",
+  },
 };
 
 const defaultSignUpContent = {
   image: {
     src: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1400&auto=format&fit=crop",
-    alt: "Streetwear Workspace"
+    alt: "Streetwear Workspace",
   },
   quote: {
     text: "Create an account. Enter the creator studio.",
-    author: "Weekdayz Creator Hub"
-  }
+    author: "Weekdayz Creator Hub",
+  },
 };
 
 export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) {
@@ -365,11 +412,18 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
         if (error) throw error;
         toast.success("Account created! Please check your email for confirmation.");
       } else {
-        const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data: authData, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
         toast.success("Welcome back!");
-        
+
         if (authData?.user) {
+          const { data: hasAdmin } = await supabase.rpc("has_role", {
+            _user_id: authData.user.id,
+            _role: "admin",
+          });
           const { data: roleRow } = await supabase
             .from("user_roles")
             .select("role")
@@ -399,7 +453,12 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
         }
       `}</style>
       <div className="flex h-screen items-center justify-center p-6 md:h-auto md:p-0 md:py-12">
-        <AuthFormContainer isSignIn={isSignIn} onToggle={toggleForm} loading={loading} onSubmit={handleSubmit} />
+        <AuthFormContainer
+          isSignIn={isSignIn}
+          onToggle={toggleForm}
+          loading={loading}
+          onSubmit={handleSubmit}
+        />
       </div>
 
       <div
@@ -409,15 +468,17 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
       >
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-x-0 bottom-0 h-[200px] bg-gradient-to-t from-background via-background/50 to-transparent" />
-        
+
         <div className="relative z-10 flex h-full flex-col items-center justify-end p-2 pb-16">
           <blockquote className="space-y-2 text-center text-foreground max-w-md bg-background/20 backdrop-blur-md p-6 border border-white/10">
             <p className="text-lg font-medium text-white">
-              “<Typewriter
-                  key={currentContent.quote.text}
-                  text={currentContent.quote.text}
-                  speed={60}
-                />”
+              “
+              <Typewriter
+                key={currentContent.quote.text}
+                text={currentContent.quote.text}
+                speed={60}
+              />
+              ”
             </p>
             <cite className="block text-sm font-light text-white/80 not-italic">
               — {currentContent.quote.author}
