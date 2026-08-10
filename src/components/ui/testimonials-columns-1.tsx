@@ -42,18 +42,9 @@ export const TestimonialsColumn = (props: {
                     ))}
                   </div>
                   <div className="text-sm leading-relaxed text-muted-foreground">{text}</div>
-                  <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border/60">
-                    <img
-                      width={40}
-                      height={40}
-                      src={image}
-                      alt={name}
-                      className="h-10 w-10 rounded-full object-cover border border-border"
-                    />
-                    <div className="flex flex-col">
-                      <div className="font-semibold tracking-tight text-sm leading-5 text-foreground">{name}</div>
-                      <div className="text-xs leading-5 text-muted-foreground tracking-tight">{role}</div>
-                    </div>
+                  <div className="flex flex-col mt-5 pt-4 border-t border-border/60">
+                    <div className="font-semibold tracking-tight text-sm leading-5 text-foreground">{name}</div>
+                    <div className="text-xs leading-5 text-muted-foreground tracking-tight">{role}</div>
                   </div>
                 </div>
               ))}

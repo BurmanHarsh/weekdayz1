@@ -72,10 +72,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Weekdayz — Premium Gen-Z Streetwear" },
-      { name: "description", content: "Weekdayz drops premium streetwear every week. Shop the latest tees, hoodies, and design your own custom prints." },
-      { name: "author", content: "Weekdayz" },
-      { property: "og:title", content: "Weekdayz — Premium Gen-Z Streetwear" },
+      { title: "WEEKDAYZZ — Premium Gen-Z Streetwear" },
+      { name: "description", content: "WEEKDAYZZ drops premium streetwear every week. Shop the latest tees, hoodies, and design your own custom prints." },
+      { name: "author", content: "WEEKDAYZZ" },
+      { property: "og:title", content: "WEEKDAYZZ — Premium Gen-Z Streetwear" },
       { property: "og:description", content: "Premium tees, hoodies, and custom prints. Built for the always-online generation." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -120,7 +120,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col">
         {!isAuthPage && <Navbar />}
-        <main className="flex-1">
+        <main className={`flex-1 ${!isAuthPage ? "pt-16 md:pt-20" : ""}`}>
           <Outlet />
         </main>
         {!isAuthPage && <Footer />}
