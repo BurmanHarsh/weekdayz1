@@ -1,13 +1,22 @@
+import { useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { X, Trash2, Minus, Plus } from "lucide-react";
 import { useCart, cartSubtotal } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
+import { getFallbackProducts } from "@/lib/fallback-data";
 
 export function CartDrawer() {
-  const { items, drawerOpen, setDrawerOpen, removeItem, updateQty } = useCart();
+  const { items, drawerOpen, setDrawerOpen, removeItem, updateQty, syncItemPrices } = useCart();
   const navigate = useNavigate();
   const subtotal = cartSubtotal(items);
+
+  useEffect(() => {
+    if (drawerOpen) {
+      const products = getFallbackProducts();
+      syncItemPrices(products);
+    }
+  }, [drawerOpen, syncItemPrices]);
 
   return (
     <AnimatePresence>
