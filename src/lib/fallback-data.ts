@@ -119,7 +119,54 @@ let fallbackProducts: FallbackProduct[] = [
   },
 ];
 
+import { getPublicClient } from "@/lib/supabase-server";
+
 let CUSTOM_FALLBACK_PRODUCTS: FallbackProduct[] = [];
+
+export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
+  try {
+    const supabase = getPublicClient();
+    const { data, error } = await supabase.storage
+      .from("user-graphics")
+      .download("custom_products.json");
+
+    if (!error && data) {
+      const text = await data.text();
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        CUSTOM_FALLBACK_PRODUCTS = parsed;
+        return parsed;
+      }
+    }
+  } catch (_) {}
+  return CUSTOM_FALLBACK_PRODUCTS;
+}
+
+export async function saveStorageCustomProducts(product: FallbackProduct): Promise<void> {
+  addCustomFallbackProduct(product);
+  try {
+    const supabase = getPublicClient();
+    const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+
+    await supabase.storage
+      .from("user-graphics")
+      .upload("custom_products.json", blob, { upsert: true, contentType: "application/json" });
+  } catch (_) {}
+}
+
+export async function removeStorageCustomProduct(id: string): Promise<void> {
+  deleteCustomFallbackProduct(id);
+  try {
+    const supabase = getPublicClient();
+    const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
+    const blob = new Blob([jsonStr], { type: "application/json" });
+
+    await supabase.storage
+      .from("user-graphics")
+      .upload("custom_products.json", blob, { upsert: true, contentType: "application/json" });
+  } catch (_) {}
+}
 
 export function getFallbackProducts(): FallbackProduct[] {
   return [...CUSTOM_FALLBACK_PRODUCTS, ...fallbackProducts];

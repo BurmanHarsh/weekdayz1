@@ -1,11 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
-import { getFallbackProductBySlug, getFallbackProducts } from "@/lib/fallback-data";
+import { getFallbackProductBySlug, getFallbackProducts, fetchStorageCustomProducts } from "@/lib/fallback-data";
 import { getPublicClient } from "@/lib/supabase-server";
 
-
 export const listProducts = createServerFn({ method: "GET" }).handler(async () => {
+  await fetchStorageCustomProducts();
   try {
     const supabase = getPublicClient();
     const { data, error } = await supabase
@@ -41,6 +41,8 @@ export const getProductBySlug = createServerFn({ method: "GET" })
     const rawSlug = data.slug;
     const decodedSlug = decodeURIComponent(rawSlug).trim();
     const cleanSlug = decodedSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+
+    await fetchStorageCustomProducts();
 
     try {
       const supabase = getPublicClient();

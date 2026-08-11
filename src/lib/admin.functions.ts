@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { sendShipped, sendDelivered } from "./email";
-import { getFallbackProducts, addCustomFallbackProduct, updateCustomFallbackProduct, deleteCustomFallbackProduct, FallbackProduct } from "@/lib/fallback-data";
+import { getFallbackProducts, addCustomFallbackProduct, updateCustomFallbackProduct, deleteCustomFallbackProduct, saveStorageCustomProducts, removeStorageCustomProduct, fetchStorageCustomProducts, FallbackProduct } from "@/lib/fallback-data";
 
 const ADMIN_EMAILS = [
   "burmanharsh886@gmail.com",
@@ -328,7 +328,7 @@ export const createProduct = createServerFn({ method: "POST" })
       is_active: true,
       created_at: new Date().toISOString(),
     };
-    addCustomFallbackProduct(newProduct);
+    await saveStorageCustomProducts(newProduct);
     return { id: newId };
   });
 
@@ -348,6 +348,7 @@ export const listAdminProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
+    await fetchStorageCustomProducts();
     let data: any[] | null = null;
 
     const adminClient = await getAdminSupabaseClient();
@@ -459,7 +460,7 @@ export const deleteProduct = createServerFn({ method: "POST" })
       if (error) console.warn("Database product delete:", error.message);
     } catch (_) {}
 
-    deleteCustomFallbackProduct(data.id);
+    await removeStorageCustomProduct(data.id);
     return { ok: true };
   });
 
