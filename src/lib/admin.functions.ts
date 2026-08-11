@@ -201,9 +201,12 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
   });
 
 async function getAdminSupabaseClient() {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return null;
+  }
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    return supabaseAdmin;
+    return supabaseAdmin ?? null;
   } catch (_) {
     return null;
   }
