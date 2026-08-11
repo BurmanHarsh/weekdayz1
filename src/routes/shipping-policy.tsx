@@ -30,14 +30,14 @@ function ShippingPolicyPage() {
           <p>
             • Standard catalog drops ship within 24–48 hours.<br />
             • Custom printed orders ship within 2–3 business days.<br />
-            • Estimated delivery time is 3–5 business days depending on destination pincode (via Shiprocket courier partners).
+            • Estimated delivery time is 5–7 business days depending on destination pincode (via DTDC Express).
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">3. Order Tracking</h2>
           <p>
-            As soon as your shipment is dispatched, you will receive an automated email with your Shiprocket tracking ID and live tracking link. You can also view live tracking details under <Link to="/account" className="text-accent underline font-semibold">Your Account</Link>.
+            As soon as your shipment is dispatched, you will receive an automated email with your DTDC tracking ID and live tracking link. You can also view live tracking details under <Link to="/account" className="text-accent underline font-semibold">Your Account</Link>.
           </p>
         </section>
       </div>

@@ -1,6 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 import { getPublicClient } from "@/lib/supabase-server";
 
 export interface ShippingAddress {
@@ -15,48 +14,22 @@ export interface ShippingAddress {
   country: string;
 }
 
-let shiprocketToken: string | null = null;
-let tokenExpiry: number | null = null;
+/** Pickup pincode — Weekdayz warehouse (Lucknow) */
+const PICKUP_PINCODE = "226023";
 
-async function getShiprocketToken(): Promise<string | null> {
-  const email = process.env.SHIPROCKET_EMAIL;
-  const password = process.env.SHIPROCKET_PASSWORD;
-
-  if (!email || !password) {
-    return null;
-  }
-
-  if (shiprocketToken && tokenExpiry && Date.now() < tokenExpiry) {
-    return shiprocketToken;
-  }
-
-  try {
-    const res = await fetch("https://apiv2.shiprocket.in/v2/crypto/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!res.ok) {
-      console.error("Shiprocket authentication failed:", await res.text());
-      return null;
-    }
-
-    const json = await res.json();
-    shiprocketToken = json.token;
-    tokenExpiry = Date.now() + 9 * 24 * 60 * 60 * 1000; // 9 days expiration
-    return shiprocketToken;
-  } catch (error) {
-    console.error("Shiprocket authentication error:", error);
-    return null;
-  }
+/**
+ * DTDC tracking URL builder.
+ * Customers can paste this link to track their DTDC consignment.
+ */
+export function getDtdcTrackingUrl(trackingId: string): string {
+  return `https://www.dtdc.in/tracking/tracking_results.asp?strCnno=${encodeURIComponent(trackingId)}`;
 }
 
 /**
  * Format date like Amazon: "Arrives by Wednesday, 22nd July"
  */
 export function formatEstimatedDeliveryDate(etdString: string | null): string {
-  const date = etdString ? new Date(etdString) : new Date(Date.now() + 4 * 24 * 60 * 60 * 1000);
+  const date = etdString ? new Date(etdString) : new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
   const dayName = new Intl.DateTimeFormat("en-IN", { weekday: "long" }).format(date);
   const day = date.getDate();
   const monthName = new Intl.DateTimeFormat("en-IN", { month: "long" }).format(date);
@@ -69,19 +42,32 @@ export function formatEstimatedDeliveryDate(etdString: string | null): string {
   return `Arrives by ${dayName}, ${day}${suffix} ${monthName}`;
 }
 
-
+/**
+ * Flat-rate DTDC shipping cost.
+ * Domestic (India): ₹99 flat | International: ₹999
+ */
 export function calculateShippingCost(address: ShippingAddress): number {
   const country = address.country?.toUpperCase() || "IN";
   return country === "IN" ? 9900 : 99900;
 }
 
-export function generateTrackingId(): string {
-  const ts = Date.now().toString(36).toUpperCase();
-  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `WKZ-${ts}-${rand}`;
+/**
+ * Estimate delivery window based on destination zone.
+ * Same state: 3–4 days, Adjacent/Metro: 4–5 days, Rest of India: 5–7 days
+ */
+function estimateDeliveryDays(destPincode: string): number {
+  const pickupZone = PICKUP_PINCODE.charAt(0); // "2" (UP zone)
+  const destZone = destPincode.charAt(0);
+
+  if (destZone === pickupZone) return 4; // Same zone (UP, Uttarakhand, etc.)
+  if (["1", "3"].includes(destZone)) return 5; // Adjacent zones (Delhi, Rajasthan, Gujarat)
+  return 6; // Rest of India
 }
 
-
+/**
+ * Server function: Get live shipping details (cost + estimated delivery).
+ * Uses flat DTDC rates since booking is manual via MyDTDC.in portal.
+ */
 export const getLiveShippingDetails = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -101,82 +87,12 @@ export const getLiveShippingDetails = createServerFn({ method: "POST" })
     const isDomestic = (address.country?.toUpperCase() || "IN") === "IN";
     const destPincode = address.postal_code;
 
-    let finalCostCents = isDomestic ? 9900 : 99900;
-    let etd: string | null = null;
+    const finalCostCents = isDomestic ? 9900 : 99900;
 
-    try {
-      const productIds = data.items.map((i) => i.product_id).filter(Boolean) as string[];
-      let totalWeight = 0;
-      let maxLength = 0;
-      let maxWidth = 0;
-      let maxHeight = 0;
-
-      if (productIds.length > 0) {
-        const supabase = getPublicClient();
-        const { data: dbProducts } = await supabase
-          .from("products")
-          .select("id, weight_g, length_cm, width_cm, height_cm")
-          .in("id", productIds);
-
-        const productMap = new Map(dbProducts?.map((p) => [p.id, p]) ?? []);
-
-        data.items.forEach((item) => {
-          const prod = item.product_id ? productMap.get(item.product_id) : null;
-          const weightG = (prod?.weight_g ?? 300) * item.quantity;
-          totalWeight += weightG;
-          maxLength = Math.max(maxLength, prod?.length_cm ? Number(prod.length_cm) : 30);
-          maxWidth = Math.max(maxWidth, prod?.width_cm ? Number(prod.width_cm) : 20);
-          maxHeight += (prod?.height_cm ? Number(prod.height_cm) : 3) * item.quantity;
-        });
-      } else {
-        data.items.forEach((item) => {
-          totalWeight += 300 * item.quantity;
-          maxLength = Math.max(maxLength, 30);
-          maxWidth = Math.max(maxWidth, 20);
-          maxHeight += 3 * item.quantity;
-        });
-      }
-
-      const totalWeightKg = totalWeight / 1000;
-      const pickupPostcode = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
-      const token = await getShiprocketToken();
-
-      if (token && isDomestic) {
-        const url = new URL("https://apiv2.shiprocket.in/v2/crypto/shipments/realtime-rate");
-        url.searchParams.append("pickup_postcode", pickupPostcode);
-        url.searchParams.append("delivery_postcode", destPincode);
-        url.searchParams.append("weight", totalWeightKg.toString());
-        url.searchParams.append("cod", "0");
-        url.searchParams.append("length", maxLength.toString());
-        url.searchParams.append("width", maxWidth.toString());
-        url.searchParams.append("height", maxHeight.toString());
-
-        const res = await fetch(url.toString(), {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (res.ok) {
-          const rateData = await res.json();
-          const couriers = rateData?.data?.available_courier_companies;
-          if (couriers && couriers.length > 0) {
-            let bestCourier = couriers[0];
-            for (const c of couriers) {
-              if (Number(c.rate) < Number(bestCourier.rate)) {
-                bestCourier = c;
-              }
-            }
-            finalCostCents = Math.round(Number(bestCourier.rate) * 100);
-            etd = bestCourier.etd || null;
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("Failed fetching live Shiprocket rates, using fallback standard rate:", e);
-    }
+    // Estimate delivery date based on zone distance
+    const deliveryDays = isDomestic ? estimateDeliveryDays(destPincode) : 14;
+    const etdDate = new Date(Date.now() + deliveryDays * 24 * 60 * 60 * 1000);
+    const etd = etdDate.toISOString();
 
     return {
       shipping_cost_cents: finalCostCents,
@@ -185,6 +101,20 @@ export const getLiveShippingDetails = createServerFn({ method: "POST" })
     };
   });
 
+export interface ServiceabilityResult {
+  valid: boolean;
+  serviceable: boolean;
+  city?: string;
+  state?: string;
+  area?: string;
+  details?: string;
+  error?: string;
+}
+
+/**
+ * Server function: Check if a pincode is valid and serviceable via DTDC.
+ * Uses India Post pincode API for validation. DTDC covers all major Indian pincodes.
+ */
 export const checkAddressServiceability = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
@@ -194,7 +124,7 @@ export const checkAddressServiceability = createServerFn({ method: "POST" })
       })
       .parse(data)
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<ServiceabilityResult> => {
     const { postal_code, country } = data;
     const isDomestic = country.toUpperCase() === "IN";
 
@@ -214,44 +144,6 @@ export const checkAddressServiceability = createServerFn({ method: "POST" })
             const postOffices = pinData[0].PostOffice;
             if (postOffices && postOffices.length > 0) {
               const info = postOffices[0];
-              const token = await getShiprocketToken();
-              if (token) {
-                try {
-                  const pickupPostcode = process.env.SHIPROCKET_PICKUP_POSTCODE || "560001";
-                  const url = new URL("https://apiv2.shiprocket.in/v1/external/courier/serviceability/");
-                  url.searchParams.append("pickup_postcode", pickupPostcode);
-                  url.searchParams.append("delivery_postcode", postal_code);
-                  url.searchParams.append("weight", "0.5");
-                  url.searchParams.append("cod", "0");
-
-                  const res = await fetch(url.toString(), {
-                    method: "GET",
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                      "Content-Type": "application/json",
-                    },
-                  });
-
-                  if (res.ok) {
-                    const serviceabilityData = await res.json();
-                    const availableCouriers = serviceabilityData?.data?.available_courier_companies;
-                    const isServiceable = serviceabilityData?.status === 200 && availableCouriers && availableCouriers.length > 0;
-                    if (!isServiceable) {
-                      return {
-                        valid: true,
-                        serviceable: false,
-                        city: info.District || info.Division,
-                        state: info.State,
-                        area: info.Name,
-                        error: "This location is currently not serviceable by our delivery partners.",
-                      };
-                    }
-                  }
-                } catch (err) {
-                  console.error("Error checking Shiprocket serviceability:", err);
-                }
-              }
-
               return {
                 valid: true,
                 serviceable: true,
@@ -273,82 +165,9 @@ export const checkAddressServiceability = createServerFn({ method: "POST" })
       }
     }
 
-    // Default return for international or when API fails / Shiprocket token is missing
+    // Default return for international or when India Post API fails
     return {
       valid: true,
       serviceable: true,
     };
   });
-
-/**
- * Handles creation of orders inside Shiprocket panel.
- */
-export async function createShiprocketOrder(params: {
-  orderId: string;
-  address: ShippingAddress;
-  totalCents: number;
-  items: Array<{ title: string; color?: string; quantity: number; unitPriceCents: number }>;
-  weightKg: number;
-  lengthCm: number;
-  widthCm: number;
-  heightCm: number;
-}): Promise<{ shiprocketOrderId: string; shiprocketShipmentId: string } | null> {
-  return null;
-  const token = await getShiprocketToken();
-  if (!token) return null;
-
-  try {
-    const pickupLocation = process.env.SHIPROCKET_PICKUP_LOCATION || "Primary";
-    const payload = {
-      order_id: params.orderId,
-      order_date: new Date().toISOString().replace(/T/, " ").replace(/\..+/, ""),
-      pickup_location: pickupLocation,
-      billing_customer_name: params.address.full_name.split(" ")[0] || "Customer",
-      billing_last_name: params.address.full_name.split(" ").slice(1).join(" ") || "Name",
-      billing_address: params.address.line1,
-      billing_address_2: params.address.line2 || "",
-      billing_city: params.address.city,
-      billing_pincode: params.address.postal_code,
-      billing_state: params.address.state,
-      billing_country: params.address.country || "India",
-      billing_email: params.address.email,
-      billing_phone: params.address.phone,
-      shipping_is_billing: true,
-      order_items: params.items.map((it) => ({
-        name: it.color ? `${it.title} (${it.color})` : it.title,
-        sku: `${it.title}${it.color ? `-${it.color}` : ""}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-        units: it.quantity,
-        selling_price: it.unitPriceCents / 100,
-      })),
-      payment_method: "Prepaid",
-      sub_total: params.totalCents / 100,
-      length: params.lengthCm,
-      width: params.widthCm,
-      height: params.heightCm,
-      weight: params.weightKg,
-    };
-
-    const res = await fetch("https://apiv2.shiprocket.in/v2/crypto/orders/create/adhoc", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      console.error("Failed to create adhoc order in Shiprocket:", await res.text());
-      return null;
-    }
-
-    const data = await res.json();
-    return {
-      shiprocketOrderId: String(data.order_id),
-      shiprocketShipmentId: String(data.shipment_id),
-    };
-  } catch (error) {
-    console.error("Error creating Shiprocket order:", error);
-    return null;
-  }
-}

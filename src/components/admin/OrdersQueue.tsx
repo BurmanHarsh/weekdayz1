@@ -10,7 +10,6 @@ import {
   updateOrderStatus,
   getSignedAdminDesignUrl,
 } from "@/lib/admin.functions";
-import { generateTrackingId } from "@/lib/shipping";
 import { formatPrice } from "@/lib/format";
 import { exportOrderToPdf } from "@/lib/OrderPdfExporter";
 import { Order, Badge, STATUSES, Status } from "./shared";
@@ -240,21 +239,14 @@ function OrderModal({ order, onClose }: { order: Order; onClose: () => void }) {
               </select>
             </div>
             <div>
-              <label className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Shiprocket Tracking Number</label>
-              <div className="mt-1 flex gap-2">
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-bold">DTDC Tracking Number</label>
+              <div className="mt-1">
                 <input
                   value={tracking}
                   onChange={(e) => setTracking(e.target.value)}
-                  placeholder="Enter tracking ID…"
-                  className="flex-1 bg-background border border-border px-3 py-2 text-sm font-mono"
+                  placeholder="Enter DTDC consignment number…"
+                  className="w-full bg-background border border-border px-3 py-2 text-sm font-mono"
                 />
-                <button
-                  type="button"
-                  onClick={() => setTracking(generateTrackingId())}
-                  className="text-xs uppercase tracking-widest border border-border px-3 font-semibold hover:bg-secondary"
-                >
-                  Generate
-                </button>
               </div>
             </div>
           </section>

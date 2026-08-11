@@ -1,11 +1,12 @@
 import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useSuspenseQuery, queryOptions, useQuery, useMutation } from "@tanstack/react-query";
+import { useSuspenseQuery, queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw, Ruler, X, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw, Ruler, X, Maximize2, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { getProductBySlug } from "@/lib/products.functions";
 import { getFallbackProducts } from "@/lib/fallback-data";
 import { getProductReviews, submitReview, deleteReview, canUserReviewProduct } from "@/lib/reviews.functions";
+import { toggleWishlist, getWishlistIds } from "@/lib/wishlist.functions";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
 import { useCurrencyStore } from "@/lib/currency-store";
@@ -170,9 +171,44 @@ function ProductPageInner() {
 
   const addItem = useCart((s) => s.addItem);
   const { user } = useAuth();
+  const qc = useQueryClient();
   
   // Reactively watch currency change
   useCurrencyStore((s) => s.currency);
+
+  const toggleWishlistFn = useServerFn(toggleWishlist);
+  const getWishlistIdsFn = useServerFn(getWishlistIds);
+
+  const { data: wishlistIds } = useQuery({
+    queryKey: ["wishlist-ids"],
+    queryFn: () => getWishlistIdsFn(),
+    enabled: !!user,
+  });
+
+  const isWishlisted = wishlistIds?.includes(product.id) ?? false;
+
+  const wishlistMutation = useMutation({
+    mutationFn: () => toggleWishlistFn({ data: { product_id: product.id } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["wishlist-ids"] });
+      qc.invalidateQueries({ queryKey: ["wishlist"] });
+      toast.success(res.wishlisted ? "Added to wishlist" : "Removed from wishlist");
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update wishlist");
+    },
+  });
+
+  const handleToggleWishlist = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (!user) {
+      toast.error("Please sign in to save items to your wishlist");
+      navigate({ to: "/auth" });
+      return;
+    }
+    wishlistMutation.mutate();
+  };
 
   const getProductReviewsFn = useServerFn(getProductReviews);
 
@@ -280,6 +316,18 @@ function ProductPageInner() {
                 transform: zoom.active ? "scale(1.8)" : "scale(1)",
               }}
             />
+
+            {/* Wishlist Overlay Button */}
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              disabled={wishlistMutation.isPending}
+              className="absolute top-3 left-3 p-2 bg-background/80 backdrop-blur border border-border text-foreground hover:text-accent hover:border-accent transition-colors z-20 shadow-sm"
+              title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+              aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <Heart className={`h-4 w-4 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
+            </button>
 
             {/* Expand / Fullscreen Button */}
             <button
@@ -534,18 +582,32 @@ function ProductPageInner() {
             </div>
           )}
 
-          <div className="mt-8 grid sm:grid-cols-2 gap-3">
+          <div className="mt-8 flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => handleAdd(false)}
-              className="flex items-center justify-center gap-2 bg-foreground text-background px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-foreground/90 transition"
+              className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-foreground/90 transition"
             >
               <ShoppingBag className="h-4 w-4" /> Add to bag
             </button>
             <button
               onClick={() => handleAdd(true)}
-              className="flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-accent/90 transition"
+              className="flex-1 flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-accent/90 transition"
             >
               <Zap className="h-4 w-4" /> Express buy
+            </button>
+            <button
+              type="button"
+              onClick={handleToggleWishlist}
+              disabled={wishlistMutation.isPending}
+              className={`flex items-center justify-center gap-2 px-6 py-4 text-sm uppercase tracking-widest font-semibold border transition ${
+                isWishlisted
+                  ? "bg-accent/10 border-accent text-accent hover:bg-accent/20"
+                  : "bg-card border-border text-foreground hover:border-foreground"
+              }`}
+              title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <Heart className={`h-4 w-4 transition-colors ${isWishlisted ? "fill-accent text-accent" : ""}`} />
+              <span>{isWishlisted ? "Wishlisted" : "Wishlist"}</span>
             </button>
           </div>
 

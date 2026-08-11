@@ -178,7 +178,7 @@ export const createProduct = createServerFn({ method: "POST" })
         description: z.string().max(5000).default(""),
         price_cents: z.number().int().nonnegative().max(100000000),
         inventory_count: z.number().int().nonnegative().max(1000000),
-        image_urls: z.array(z.string().max(1000)).max(20).default([]),
+        image_urls: z.array(z.string()).max(50).default([]),
         sizes: z.array(z.string().max(20)).max(20).default(["S", "M", "L", "XL", "XXL"]),
         colors: z.array(z.string().max(50)).max(50).default([]),
         category: z.string().max(100).default("tee"),

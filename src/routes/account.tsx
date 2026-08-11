@@ -1,7 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { LogOut, Package, Heart, Sparkles, ChevronRight, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,12 +8,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { myOrders } from "@/lib/orders.functions";
 import { myWishlist } from "@/lib/wishlist.functions";
 import { myDesigns } from "@/lib/designs.functions";
-import { bootstrapAdmin } from "@/lib/admin.functions";
 import { formatPrice } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { ProductCard } from "@/components/shop/ProductCard";
 
+type Tab = "orders" | "wishlist" | "designs";
+
 export const Route = createFileRoute("/account")({
+  validateSearch: (search: Record<string, unknown>): { tab?: Tab } => {
+    const tabStr = typeof search.tab === "string" ? search.tab : undefined;
+    return {
+      tab: tabStr === "wishlist" || tabStr === "designs" || tabStr === "orders" ? tabStr : undefined,
+    };
+  },
   head: () => ({
     meta: [
       { title: "Account — Weekdayz" },
@@ -23,8 +29,6 @@ export const Route = createFileRoute("/account")({
   }),
   component: AccountPage,
 });
-
-type Tab = "orders" | "wishlist" | "designs";
 
 function DesignImage({ path }: { path: string }) {
   const [url, setUrl] = useState<string | null>(null);
@@ -57,7 +61,14 @@ function AccountPage() {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const addItem = useCart((s) => s.addItem);
-  const [activeTab, setActiveTab] = useState<Tab>("orders");
+  const { tab: searchTab } = Route.useSearch();
+  const [activeTab, setActiveTab] = useState<Tab>(searchTab ?? "orders");
+
+  useEffect(() => {
+    if (searchTab) {
+      setActiveTab(searchTab);
+    }
+  }, [searchTab]);
 
   useEffect(() => {
     if (loading) return;
@@ -339,45 +350,7 @@ function AccountPage() {
             )}
           </div>
         )}
-
-        {/* Bootstrap Admin */}
-        <AdminBootstrap />
       </div>
     </div>
-  );
-}
-
-function AdminBootstrap() {
-  const [secret, setSecret] = useState("");
-  const bootstrapFn = useServerFn(bootstrapAdmin);
-
-  const handleBootstrap = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await bootstrapFn({ data: { secret } });
-      toast.success("You are now an admin!");
-      window.location.reload();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to bootstrap admin");
-    }
-  };
-
-  return (
-    <section className="border-t border-border mt-12 pt-8">
-      <h2 className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Bootstrap Admin</h2>
-      <p className="text-xs text-muted-foreground mb-4">Promote yourself to admin. Default secret: <code>weekdayz-secret-1337</code></p>
-      <form onSubmit={handleBootstrap} className="flex gap-2 max-w-md">
-        <input
-          type="password"
-          placeholder="Enter bootstrap secret"
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
-          className="flex-1 bg-background border border-border px-3 py-2 text-sm focus:outline-none focus:border-accent rounded-lg"
-        />
-        <button type="submit" className="bg-accent text-accent-foreground px-4 py-2 text-xs uppercase tracking-widest font-semibold rounded-lg">
-          Promote
-        </button>
-      </form>
-    </section>
   );
 }

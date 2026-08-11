@@ -27,7 +27,7 @@ function PrivacyPage() {
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">2. How We Use Your Information</h2>
           <p>
-            We use your personal information to process orders, process payment transactions through secure gateways (Razorpay), arrange shipping (Shiprocket), and communicate order updates and promotional drops.
+            We use your personal information to process orders, process payment transactions through secure gateways (Razorpay), arrange shipping (DTDC Express), and communicate order updates and promotional drops.
           </p>
         </section>
 

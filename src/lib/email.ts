@@ -4,7 +4,7 @@
  * Otherwise they are logged to console (dev/CI mode).
  */
 
-import { formatEstimatedDeliveryDate } from "./shipping";
+import { formatEstimatedDeliveryDate, getDtdcTrackingUrl } from "./shipping";
 import { escapeHtml } from "./security";
 
 interface EmailPayload {
@@ -80,7 +80,7 @@ export async function sendShipped(
 ): Promise<void> {
   const safeOrderId = escapeHtml(orderId.slice(0, 8).toUpperCase());
   const safeTrackingId = escapeHtml(trackingId);
-  const trackingUrl = `https://shiprocket.co/tracking/${encodeURIComponent(trackingId)}`;
+  const trackingUrl = getDtdcTrackingUrl(trackingId);
 
   await sendEmail({
     to,
@@ -88,12 +88,12 @@ export async function sendShipped(
     html: `
       <div style="font-family:sans-serif;max-width:600px;margin:0 auto">
         <h1 style="font-size:28px;margin-bottom:8px">It's on its way 📦</h1>
-        <p>Order <strong>#${safeOrderId}</strong> has shipped.</p>
+        <p>Order <strong>#${safeOrderId}</strong> has shipped via DTDC Express.</p>
         <p>Tracking ID: <strong>${safeTrackingId}</strong></p>
         <p style="margin:16px 0;">
-          <a href="${trackingUrl}" target="_blank" style="background-color:#000;color:#fff;padding:12px 24px;text-decoration:none;font-weight:bold;display:inline-block;">Track Shipment</a>
+          <a href="${trackingUrl}" target="_blank" style="background-color:#000;color:#fff;padding:12px 24px;text-decoration:none;font-weight:bold;display:inline-block;">Track on DTDC</a>
         </p>
-        <p style="color:#888">Should arrive in 3–5 business days.</p>
+        <p style="color:#888">Should arrive in 5–7 business days.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
         <p style="font-size:12px;color:#888">Weekdayz · Built for the always-online generation</p>
       </div>

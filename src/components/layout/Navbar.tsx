@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useCurrencyStore, type Currency } from "@/lib/currency-store";
 import { useQuery } from "@tanstack/react-query";
 import { listProducts } from "@/lib/products.functions";
-import { getWishlistIds } from "@/lib/wishlist.functions";
+import { getWishlistIds, myWishlist } from "@/lib/wishlist.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { formatPrice } from "@/lib/format";
 
@@ -35,6 +35,7 @@ export function Navbar() {
 
   const listProductsFn = useServerFn(listProducts);
   const getWishlistIdsFn = useServerFn(getWishlistIds);
+  const myWishlistFn = useServerFn(myWishlist);
 
   const { data: products = [] } = useQuery({
     queryKey: ["products"],
@@ -42,13 +43,13 @@ export function Navbar() {
     staleTime: 60_000,
   });
 
-  const { data: wishlistIds = [] } = useQuery({
-    queryKey: ["wishlist-ids"],
-    queryFn: () => getWishlistIdsFn(),
+  const { data: wishlist = [] } = useQuery({
+    queryKey: ["wishlist"],
+    queryFn: () => myWishlistFn(),
     enabled: !!user,
   });
 
-  const wishCount = wishlistIds.length;
+  const wishCount = wishlist.length;
 
   const suggestions = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -219,7 +220,7 @@ export function Navbar() {
 
             {/* Wishlist */}
             <Link
-              to={user ? "/account" : "/auth"}
+              to={user ? "/wishlist" : "/auth"}
               className="relative p-2 hover:text-accent transition-colors"
               aria-label="Wishlist"
             >
