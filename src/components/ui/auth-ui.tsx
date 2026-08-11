@@ -433,7 +433,8 @@ export function AuthUI({ signInContent = {}, signUpContent = {} }: AuthUIProps) 
 
           const isOwner =
             authData.user.email === "burmanharsh886@gmail.com" ||
-            authData.user.email === "weekdayzz01@gmail.com";
+            authData.user.email === "weekdayzz01@gmail.com" ||
+            authData.user.email === "krishnasingh15kks@gmail.com";
 
           if (hasAdmin || roleRow || isOwner) {
             navigate({ to: "/admin" });

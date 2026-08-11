@@ -4,18 +4,21 @@ import { z } from "zod";
 import { sendShipped, sendDelivered } from "./email";
 import { getFallbackProducts, addCustomFallbackProduct, updateCustomFallbackProduct, deleteCustomFallbackProduct, FallbackProduct } from "@/lib/fallback-data";
 
+const ADMIN_EMAILS = [
+  "burmanharsh886@gmail.com",
+  "weekdayzz01@gmail.com",
+  "krishnasingh15kks@gmail.com",
+];
+
 async function assertAdmin(ctx: { supabase: any; userId: string; claims?: any }) {
   const email = ctx.claims?.email;
-  if (
-    email === "burmanharsh886@gmail.com" ||
-    email === "weekdayzz01@gmail.com"
-  ) {
+  if (email && ADMIN_EMAILS.includes(email)) {
     return;
   }
 
   try {
     const { data } = await ctx.supabase.auth.getUser();
-    if (data?.user?.email === "burmanharsh886@gmail.com" || data?.user?.email === "weekdayzz01@gmail.com") {
+    if (data?.user?.email && ADMIN_EMAILS.includes(data.user.email)) {
       return;
     }
   } catch (_) {}

@@ -92,7 +92,8 @@ export function useAuth() {
 
     const isOwnerAdmin =
       user.email === "burmanharsh886@gmail.com" ||
-      user.email === "weekdayzz01@gmail.com";
+      user.email === "weekdayzz01@gmail.com" ||
+      user.email === "krishnasingh15kks@gmail.com";
 
     if (isOwnerAdmin) {
       setIsAdmin(true);
