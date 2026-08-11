@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { listProducts } from "@/lib/products.functions";
 import { listLatestReviews } from "@/lib/reviews.functions";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
 import { Stars } from "@/components/site/Stars";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, Users, TrendingUp, Star, Zap } from "lucide-react";
 import {
   StoreHeroPromoBanner,
   ValuePropsStoryScroll,
@@ -15,35 +15,86 @@ import {
   BulkOrdersSection,
   StoreFaqSection,
 } from "@/components/site/HomeStoreSections";
+import { AdmitOneTicket } from "@/components/ui/admit-one-ticket";
+import AutoLayoutCard from "@/components/ui/auto-layout-card";
 
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
-import rcbFeature from "@/assets/rcb-feature.jpg";
-import f1Feature from "@/assets/f1-feature.jpg";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
 });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(  {
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: Home,
 });
 
 const HERO = [
-  { img: hero1, kicker: "JUST DROPPED · LIMITED STOCK", title: "RCB EDITION '26", sub: "Cheer in style with the official oversized fit.", badge: "FLAT 20% OFF", to: "/collections/$slug" as const, params: { slug: "rcb" }, cta: "GRAB YOURS" },
-  { img: hero2, kicker: "BESTSELLER · SS26", title: "THE OVERSIZED EDIT", sub: "Premium heavyweight cotton. Minimal branding. Maximum comfort.", badge: "BUY 2 GET 10% OFF", to: "/shop" as const, params: undefined, cta: "SHOP THE LOOK" },
-  { img: hero3, kicker: "PREMIUM CAPSULE", title: "F1 PIT-LANE", sub: "Carbon detailing. Race-day ready. The ultimate speed aesthetic.", badge: "NEW ARRIVAL", to: "/collections/$slug" as const, params: { slug: "f1" }, cta: "EXPLORE NOW" },
+  {
+    img: hero1,
+    kicker: "JUST DROPPED · LIMITED STOCK",
+    title: "RCB EDITION '26",
+    sub: "Cheer in style with the official oversized fit.",
+    badge: "FLAT 20% OFF",
+    to: "/collections/$slug" as const,
+    params: { slug: "rcb" },
+    cta: "GRAB YOURS",
+  },
+  {
+    img: hero2,
+    kicker: "BESTSELLER · SS26",
+    title: "THE OVERSIZED EDIT",
+    sub: "Premium heavyweight cotton. Minimal branding. Maximum comfort.",
+    badge: "BUY 2 GET 10% OFF",
+    to: "/shop" as const,
+    params: undefined,
+    cta: "SHOP THE LOOK",
+  },
+  {
+    img: hero3,
+    kicker: "PREMIUM CAPSULE",
+    title: "F1 PIT-LANE",
+    sub: "Carbon detailing. Race-day ready. The ultimate speed aesthetic.",
+    badge: "NEW ARRIVAL",
+    to: "/collections/$slug" as const,
+    params: { slug: "f1" },
+    cta: "EXPLORE NOW",
+  },
 ];
 
+// Exactly 8 categories, 4 per row (2 rows)
 const CATS = [
-  { label: "Tees", cat: "tee" },
-  { label: "Oversized", cat: "hoodie" },
-  { label: "Hoodies", cat: "hoodie" },
-  { label: "Jerseys", cat: "jersey" },
-  { label: "Accessories", cat: "accessories" },
+  { label: "Tees", cat: "tee", emoji: "👕" },
+  { label: "Couple", cat: "couple", emoji: "💑" },
+  { label: "Statement", cat: "statement", emoji: "✌️" },
+  { label: "Pinterest", cat: "pinterest", emoji: "📌" },
+  { label: "Jackets", cat: "jacket", emoji: "🧥" },
+  { label: "Hoodies", cat: "hoodie", emoji: "🦔" },
+  { label: "Bottoms", cat: "bottom", emoji: "👖" },
+  { label: "Bulk", cat: "bulk", emoji: "📦" },
+];
+
+// Featured collections for grid
+const COLLECTIONS = [
+  {
+    label: "Couple Tees",
+    desc: "Match your vibe together",
+    slug: "couple",
+    bg: "from-rose-50 to-pink-100",
+    accent: "#e11d48",
+    emoji: "💑",
+  },
+  {
+    label: "Trending Now",
+    desc: "What everyone's wearing",
+    slug: "trending",
+    bg: "from-amber-50 to-orange-100",
+    accent: "#f97316",
+    emoji: "🔥",
+  },
 ];
 
 function Home() {
@@ -55,52 +106,30 @@ function Home() {
     staleTime: 5 * 60_000,
   });
 
-  const trending = products.slice(0, 8);
+  const shopAll = products.slice(0, 8);
 
   return (
     <div className="w-full">
       <HeroCarousel />
-      <CategoryStrip />
+      <CategoriesGrid />
+      <CustomizerBanner />
+      <CollectionsGrid />
+      <ShopAllSection products={shopAll} />
       <StoreHeroPromoBanner />
       <ValuePropsStoryScroll />
-      <RcbBlock />
-      <F1Block />
-
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
-        <Reveal>
-          <div className="mb-8 flex items-end justify-between">
-            <div>
-              <div className="text-xs font-bold tracking-widest text-primary uppercase">TRENDING NOW</div>
-              <h2 className="text-display text-3xl md:text-4xl mt-1">Fresh drops for the week</h2>
-            </div>
-            <Link to="/shop" className="hidden md:inline-flex items-center gap-1 text-sm font-bold text-primary">
-              View all <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </Reveal>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {trending.map((p, i) => (
-            <Reveal key={p.id} delay={i * 60}>
-              <ProductCard product={p} />
-            </Reveal>
-          ))}
-        </div>
-      </section>
-
       <StoreTestimonialsSection />
-
       <BulkOrdersSection />
-
       <StoreFaqSection />
 
+      {/* Newsletter */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
         <Reveal className="text-center">
           <div className="text-xs font-bold tracking-widest text-primary uppercase">STAY IN THE LOOP</div>
           <h2 className="mt-2 text-display text-3xl md:text-5xl">Get 10% off your first fit.</h2>
           <p className="mt-3 text-muted-foreground">Drops, discounts and matchday reveals — straight to your inbox.</p>
-          <form onSubmit={(e) => e.preventDefault()} className="mx-auto mt-6 flex max-w-md overflow-hidden rounded-md border border-border">
-            <input placeholder="you@weekdayz.in" className="flex-1 bg-background px-4 py-3 text-sm outline-none" />
-            <button className="bg-primary px-6 text-sm font-bold text-primary-foreground">JOIN</button>
+          <form onSubmit={(e) => e.preventDefault()} className="mx-auto mt-6 flex max-w-md overflow-hidden border border-border">
+            <input placeholder="you@weekdayzz.in" className="flex-1 bg-background px-4 py-3 text-sm outline-none" />
+            <button className="bg-foreground px-6 text-sm font-bold text-background">JOIN</button>
           </form>
         </Reveal>
       </section>
@@ -108,73 +137,140 @@ function Home() {
   );
 }
 
+/* ─── HERO CAROUSEL — Sliding animation, 3:4 on mobile, cinematic on desktop ─── */
 function HeroCarousel() {
-  const [i, setI] = useState(0);
+  const [current, setCurrent] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const goTo = (idx: number) => {
+    if (animating || idx === current) return;
+    setAnimating(true);
+    setCurrent(idx);
+    setTimeout(() => setAnimating(false), 700);
+  };
+
+  const goNext = () => goTo((current + 1) % HERO.length);
+  const goPrev = () => goTo((current - 1 + HERO.length) % HERO.length);
+
   useEffect(() => {
-    const t = setInterval(() => setI((v) => (v + 1) % HERO.length), 5000);
-    return () => clearInterval(t);
-  }, []);
+    timerRef.current = setInterval(goNext, 5000);
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [current, animating]);
+
+  const slide = HERO[current];
+
   return (
-    <section className="relative overflow-hidden bg-black text-white group z-0">
-      <div className="relative h-[calc(100vh-112px)] min-h-[600px] w-full">
+    <section className="relative bg-black text-white overflow-hidden group">
+      {/* 3:4 on mobile, tall cinematic on desktop */}
+      <div className="relative w-full" style={{ paddingBottom: "min(75%, 90vh)" }}>
         {HERO.map((s, idx) => (
           <div
             key={s.title}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${idx === i ? "opacity-100 z-10" : "opacity-0 z-0"}`}
+            className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === current ? "opacity-100 z-10" : "opacity-0 z-0"}`}
           >
-            <img src={s.img} alt="" className="h-full w-full object-cover object-center scale-105 transform transition-transform duration-[10000ms]" style={{ transform: idx === i ? "scale(1)" : "scale(1.05)" }} width={1920} height={960} />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-            <div className="absolute inset-0 flex items-center">
-              <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
-                <div className="max-w-lg">
+            <img
+              src={s.img}
+              alt={s.title}
+              className="h-full w-full object-cover object-center"
+              style={{ transform: idx === current ? "scale(1)" : "scale(1.04)", transition: "transform 8s ease-out" }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+            <div className="absolute inset-0 flex items-end pb-16 md:items-center md:pb-0">
+              <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
+                <div className="max-w-md">
                   {s.badge && (
-                    <div className="inline-block bg-primary text-primary-foreground font-bold uppercase tracking-widest text-[10px] px-3 py-1 rounded-sm shadow-md mb-4 transform -skew-x-6">
+                    <span className="inline-block bg-white text-black font-black uppercase tracking-widest text-[10px] px-3 py-1 mb-4 shadow-md">
                       {s.badge}
-                    </div>
+                    </span>
                   )}
-                  <div className="text-xs font-bold tracking-[0.3em] text-white/80 uppercase">{s.kicker}</div>
-                  <h1 className="mt-2 text-display text-5xl md:text-7xl leading-[0.95] font-black text-white">{s.title}</h1>
-                  <p className="mt-4 text-lg md:text-xl text-white/85 font-medium leading-relaxed">{s.sub}</p>
-                  {s.params ? (
-                    <Link to={s.to as any} params={s.params as any} className="mt-8 inline-flex items-center justify-center bg-white text-black px-10 py-4 text-xs font-black tracking-widest uppercase hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-[0_4px_14px_0_rgba(0,0,0,0.39)]">
-                      {s.cta} <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  ) : (
-                    <Link to={s.to as any} className="mt-8 inline-flex items-center justify-center bg-white text-black px-10 py-4 text-xs font-black tracking-widest uppercase hover:bg-primary hover:text-primary-foreground transition-all duration-300 shadow-[0_4px_14px_0_rgba(0,0,0,0.39)]">
-                      {s.cta} <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  )}
+                  <div className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase mb-2">{s.kicker}</div>
+                  <h1 className="text-display text-4xl md:text-6xl lg:text-7xl leading-[0.92] font-black text-white">{s.title}</h1>
+                  <p className="mt-4 text-base md:text-lg text-white/80 font-medium leading-relaxed">{s.sub}</p>
+                  <div className="mt-8">
+                    {s.params ? (
+                      <Link
+                        to={s.to as any}
+                        params={s.params as any}
+                        className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-foreground hover:text-white transition-all duration-300 shadow-lg"
+                      >
+                        {s.cta} <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <Link
+                        to={s.to as any}
+                        className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-foreground hover:text-white transition-all duration-300 shadow-lg"
+                      >
+                        {s.cta} <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         ))}
-        <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-3 z-20">
+
+        {/* Left / Right arrows */}
+        <button
+          onClick={goPrev}
+          aria-label="Previous slide"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 transition-all opacity-0 group-hover:opacity-100"
+        >
+          &lsaquo;
+        </button>
+        <button
+          onClick={goNext}
+          aria-label="Next slide"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 transition-all opacity-0 group-hover:opacity-100"
+        >
+          &rsaquo;
+        </button>
+
+        {/* Dots */}
+        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
           {HERO.map((_, idx) => (
             <button
               key={idx}
               aria-label={`Go to slide ${idx + 1}`}
-              onClick={() => setI(idx)}
-              className={`h-1.5 rounded-full transition-all duration-500 ${idx === i ? "w-12 bg-primary" : "w-4 bg-white/50 hover:bg-white/80"}`}
+              onClick={() => goTo(idx)}
+              className={`h-1 rounded-full transition-all duration-500 ${idx === current ? "w-10 bg-white" : "w-4 bg-white/40 hover:bg-white/70"}`}
             />
           ))}
+        </div>
+
+        {/* Slide counter */}
+        <div className="absolute bottom-6 right-6 z-20 text-white/60 text-xs font-bold tracking-widest">
+          {String(current + 1).padStart(2, "0")} / {String(HERO.length).padStart(2, "0")}
         </div>
       </div>
     </section>
   );
 }
 
-function CategoryStrip() {
+/* ─── CATEGORIES GRID — Exactly 4 per row, 2 rows, circular icons, NO carousel ─── */
+function CategoriesGrid() {
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
-      <div className="grid grid-cols-5 gap-3 sm:gap-6">
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
+      <Reveal className="mb-6 text-center">
+        <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase">BROWSE BY CATEGORY</div>
+        <h2 className="mt-1 text-display text-2xl font-bold">Shop Your Style</h2>
+      </Reveal>
+      {/* Strictly 4-column grid — static, no slider */}
+      <div className="grid grid-cols-4 gap-4 sm:gap-6">
         {CATS.map((c, i) => (
-          <Reveal key={c.label} delay={i * 80}>
-            <Link to="/shop" search={{ category: c.cat }} className="group flex flex-col items-center gap-2">
-              <div className="grid h-16 w-16 sm:h-24 sm:w-24 place-items-center rounded-full bg-secondary border border-border transition-colors group-hover:bg-primary/10">
-                <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-foreground">{c.label.slice(0, 2)}</span>
+          <Reveal key={c.label} delay={i * 50}>
+            <Link
+              to="/shop"
+              search={{ category: c.cat }}
+              className="group flex flex-col items-center gap-2 sm:gap-3"
+            >
+              <div className="h-14 w-14 sm:h-20 sm:w-20 flex items-center justify-center rounded-full bg-black text-white border border-black shadow-md transition-transform duration-300 group-hover:scale-105">
+                <span className="text-xl sm:text-3xl font-black">{c.label.charAt(0)}</span>
               </div>
-              <span className="text-xs sm:text-sm font-semibold text-foreground group-hover:text-primary transition-colors">{c.label}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-center uppercase tracking-wider text-foreground group-hover:text-foreground/70 transition-colors leading-tight">
+                {c.label}
+              </span>
             </Link>
           </Reveal>
         ))}
@@ -183,32 +279,114 @@ function CategoryStrip() {
   );
 }
 
-function DealBanner() {
+/* ─── CUSTOMIZER BANNER — Admit One Ticket Style ─── */
+function CustomizerBanner() {
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Reveal>
-          <Link to="/shop" search={{ category: "tee" }} className="relative block h-56 overflow-hidden bg-brand-ink text-white rounded-lg hover-lift">
-            <div className="absolute inset-0 flex items-center px-8">
-              <div>
-                <div className="text-xs tracking-[0.3em] text-primary uppercase font-bold">DEAL OF THE DAY</div>
-                <div className="mt-2 text-3xl font-black">Oversized tees<br />from ₹899</div>
-                <div className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-white">SHOP NOW <ArrowRight className="h-4 w-4" /></div>
-              </div>
-            </div>
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-4 pb-10">
+      <Reveal>
+        <AdmitOneTicket
+          title="CREATE YOUR OWN"
+          subtitle="Customise any type of print. Upload your graphic, pick a fit, print your vibe."
+          tags={["CUSTOM", "COUPLE", "TRENDING", "FESTIVE"]}
+          ctaText="START DESIGNING"
+          to="/create"
+        />
+      </Reveal>
+    </section>
+  );
+}
+
+/* ─── COLLECTIONS GRID — AutoLayoutCard featured blocks ─── */
+function CollectionsGrid() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-4 pb-12">
+      <Reveal className="mb-6">
+        <div className="flex items-end justify-between">
+          <div>
+            <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase">FEATURED</div>
+            <h2 className="mt-1 text-display text-2xl font-bold">Collections</h2>
+          </div>
+          <Link to="/shop" className="text-xs font-bold uppercase tracking-widest text-foreground hover:opacity-70 transition-opacity flex items-center gap-1">
+            View All <ArrowRight className="h-3.5 w-3.5" />
           </Link>
+        </div>
+      </Reveal>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        <Reveal delay={0}>
+          <AutoLayoutCard
+            title={
+              <>
+                Couple <br /> Collection
+              </>
+            }
+            subtitle="SS26 Match Edition • Oversized Fits"
+            badge="POPULAR"
+            mainImage="https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1740&auto=format&fit=crop"
+            logoImage="/logo.png"
+            extraImages={[
+              "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=1742&auto=format&fit=crop",
+              "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1740&auto=format&fit=crop",
+              "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1740&auto=format&fit=crop",
+            ]}
+            linkTo="/shop"
+            linkSearch={{ category: "couple" }}
+          />
         </Reveal>
-        <Reveal delay={100}>
-          <Link to="/shop" search={{ category: "hoodie" }} className="relative block h-56 overflow-hidden bg-primary text-primary-foreground rounded-lg hover-lift">
-            <div className="absolute inset-0 flex items-center px-8">
-              <div>
-                <div className="text-xs tracking-[0.3em] text-white/80 uppercase font-bold">WINTER READY</div>
-                <div className="mt-2 text-3xl font-black">Hoodies<br />flat 30% off</div>
-                <div className="mt-4 inline-flex items-center gap-1 text-sm font-bold text-primary-foreground">SHOP NOW <ArrowRight className="h-4 w-4" /></div>
-              </div>
-            </div>
+        <Reveal delay={120}>
+          <AutoLayoutCard
+            title={
+              <>
+                Trending <br /> Streetwear
+              </>
+            }
+            subtitle="Top Picked Drops • Heavyweight Cotton"
+            badge="HOT DROPS"
+            mainImage="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1740&auto=format&fit=crop"
+            logoImage="/logo.png"
+            extraImages={[
+              "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1740&auto=format&fit=crop",
+              "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=1740&auto=format&fit=crop",
+              "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?q=80&w=1740&auto=format&fit=crop",
+            ]}
+            linkTo="/shop"
+            linkSearch={{ category: "tee" }}
+          />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ─── SHOP ALL SECTION — 2-column product grid ─── */
+function ShopAllSection({ products }: { products: any[] }) {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 py-4 pb-16">
+      <Reveal>
+        <div className="mb-8 flex items-end justify-between">
+          <div>
+            <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase">SHOP ALL</div>
+            <h2 className="text-display text-3xl md:text-4xl mt-1 font-black">Fresh drops for the week</h2>
+          </div>
+          <Link to="/shop" className="hidden md:inline-flex items-center gap-1 text-sm font-bold text-foreground hover:opacity-70 transition-opacity">
+            View all <ArrowRight className="h-4 w-4" />
           </Link>
-        </Reveal>
+        </div>
+      </Reveal>
+      {/* 2-column grid */}
+      <div className="grid grid-cols-2 gap-4 md:gap-6">
+        {products.map((p, i) => (
+          <Reveal key={p.id} delay={i * 60}>
+            <ProductCard product={p} />
+          </Reveal>
+        ))}
+      </div>
+      <div className="mt-8 text-center">
+        <Link
+          to="/shop"
+          className="inline-flex items-center gap-2 border border-foreground bg-transparent text-foreground px-8 py-3.5 text-xs font-bold uppercase tracking-widest hover:bg-foreground hover:text-background transition-all duration-300"
+        >
+          View All Products <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
     </section>
   );
@@ -230,7 +408,7 @@ function RcbBlock() {
             <div className="flex flex-col mb-12 relative z-10">
               <div className="max-w-2xl">
                 <h2 className="text-display text-5xl md:text-7xl font-black leading-[0.9]">Red never leaves.</h2>
-                <p className="mt-4 text-white/70 text-lg">The 2026 limited edition collection. Exclusively on Weekdayz.</p>
+                <p className="mt-4 text-white/70 text-lg">The 2026 limited edition collection. Exclusively on WEEKDAYZZ.</p>
               </div>
             </div>
           </Reveal>
@@ -253,7 +431,7 @@ function RcbBlock() {
               {stories.map((s, i) => (
                 <Reveal key={s.k} delay={i * 120}>
                   <div className="flex gap-6 group">
-                    <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white/80 to-white/10 group-hover:from-primary group-hover:to-primary/30 transition-all duration-300 -mt-2">
+                    <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white/80 to-white/10 group-hover:from-white group-hover:to-white/30 transition-all duration-300 -mt-2">
                       {s.k}
                     </div>
                     <div>
@@ -263,10 +441,9 @@ function RcbBlock() {
                   </div>
                 </Reveal>
               ))}
-
               <Reveal delay={400}>
                 <div className="pt-4">
-                  <Link to="/collections/$slug" params={{ slug: "rcb" }} className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 text-xs font-bold tracking-widest uppercase hover:bg-primary hover:text-white transition-all shadow-lg shrink-0 rounded-md">
+                  <Link to="/collections/$slug" params={{ slug: "rcb" }} className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 text-xs font-bold tracking-widest uppercase hover:bg-foreground hover:text-white transition-all shadow-lg shrink-0 rounded-md">
                     SHOP COLLECTION <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -276,100 +453,5 @@ function RcbBlock() {
         </div>
       </section>
     </div>
-  );
-}
-
-function F1Block() {
-  const cards = [
-    { t: "Podium Chrome", d: "Metallic finishes.", n: "01", p: "₹1999", slug: "f1-racewear-graphic-tee" },
-    { t: "Pit Lane", d: "Utility & carbon.", n: "02", p: "₹2499", slug: "ferrari-scuderia-drop-tee" },
-    { t: "Speed Line", d: "Race-day graphics.", n: "03", p: "₹2299", slug: "redbull-pit-crew-tee" },
-    { t: "Driver Series", d: "Race-cut jackets.", n: "04", p: "₹1999", slug: "f1-racewear-graphic-tee" },
-    { t: "Chequer Pack", d: "Caps & socks.", n: "05", p: "₹1999", slug: "f1-racewear-graphic-tee" },
-  ];
-
-  return (
-    <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
-      <section className="f1-wash text-white mt-20 rounded-[2.5rem] md:rounded-[4rem] relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-overlay" style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)", backgroundSize: "20px 20px" }}></div>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-20 md:py-28 relative z-10">
-          <Reveal>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-              <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 mb-3">
-                  <span className="bg-[#E10600] text-white text-[10px] px-2 py-1 font-bold uppercase tracking-widest rounded-sm animate-pulse">NEW ARRIVAL</span>
-                  <span className="text-xs font-bold tracking-[0.4em] text-white/60 uppercase">FORMULA · WEEKDAYZ</span>
-                </div>
-                <h2 className="text-display text-5xl md:text-7xl mt-2 font-black italic tracking-tighter">Built for the pit lane.</h2>
-                <p className="mt-4 text-white/70 text-lg">Chrome, carbon and checker-flag details. A capsule inspired by 200mph decisions.</p>
-              </div>
-              <div className="hidden md:flex items-center gap-4 text-xs font-bold tracking-widest text-white/50 uppercase">
-                <span className="h-px w-16 bg-[#E10600]" />
-                <span>Swipe to explore</span>
-              </div>
-            </div>
-          </Reveal>
-
-          <div className="mb-12 overflow-hidden relative rounded-2xl group cursor-pointer border border-white/10 shadow-2xl">
-            <Reveal>
-              <Link to="/collections/$slug" params={{ slug: "f1" }} className="block relative">
-                <img src="/_ (19).jpeg" alt="F1 feature" loading="lazy" className="w-full object-cover h-72 md:h-[500px] transition-transform duration-1000 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                <div className="absolute bottom-8 left-8">
-                  <h3 className="text-4xl md:text-6xl font-black italic text-white drop-shadow-lg">THE RACING EDIT</h3>
-                  <div className="mt-4 inline-flex items-center gap-2 bg-[#E10600] text-white px-6 py-3 text-xs font-bold tracking-widest uppercase hover:bg-white hover:text-[#E10600] transition-colors shadow-lg">
-                    SHOP THE CAPSULE <ArrowRight className="h-4 w-4" />
-                  </div>
-                </div>
-              </Link>
-            </Reveal>
-          </div>
-
-          <div className="flex snap-x snap-mandatory gap-6 overflow-x-auto pb-8 -mx-4 px-4 no-scrollbar">
-            {cards.map((c, i) => (
-              <Reveal key={c.n} delay={i * 80}>
-                <Link to="/product/$slug" params={{ slug: c.slug }} className="block snap-start shrink-0 w-72 md:w-80 border border-white/10 bg-white/5 hover:bg-white/10 p-8 rounded-xl transition-all duration-300 hover:border-[#E10600] group shadow-xl">
-                  <div className="flex justify-between items-start mb-12">
-                    <div className="text-sm font-bold text-white/40 group-hover:text-[#E10600] transition-colors">VOL. {c.n}</div>
-                    <div className="text-xs font-bold bg-white/10 px-2 py-1 rounded-sm text-white/80 group-hover:bg-[#E10600] group-hover:text-white transition-colors">{c.p}</div>
-                  </div>
-                  <div>
-                    <h4 className="text-display text-2xl md:text-3xl font-bold italic">{c.t}</h4>
-                    <p className="mt-2 text-sm text-white/60">{c.d}</p>
-                    <div className="mt-6 flex items-center gap-2 text-xs font-bold tracking-widest text-white/40 uppercase group-hover:text-white transition-colors">
-                      VIEW PRODUCT <ArrowRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ReviewsMarquee({ reviews }: { reviews: Array<{ id: string; reviewer_name: string; rating: number; body: string }> }) {
-  if (!reviews.length) return null;
-  const doubled = [...reviews, ...reviews];
-  return (
-    <section className="border-y border-border bg-secondary py-12 overflow-hidden">
-      <Reveal>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 mb-6 text-center">
-          <div className="text-xs font-bold tracking-widest text-primary uppercase">LOVED BY OUR CREW</div>
-          <h2 className="text-display text-3xl md:text-4xl mt-1">15k+ 5-star reviews</h2>
-        </div>
-      </Reveal>
-      <div className="marquee flex gap-4 w-max">
-        {doubled.map((r, i) => (
-          <div key={r.id + i} className="w-80 shrink-0 border border-border bg-background p-5 rounded-lg shadow-sm">
-            <Stars value={r.rating} />
-            <p className="mt-3 text-sm text-muted-foreground line-clamp-3 leading-relaxed">{r.body}</p>
-            <div className="mt-3 text-[10px] uppercase tracking-widest text-muted-foreground font-semibold">— {r.reviewer_name}</div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }

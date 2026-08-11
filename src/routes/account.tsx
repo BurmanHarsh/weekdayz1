@@ -11,6 +11,7 @@ import { myDesigns } from "@/lib/designs.functions";
 import { formatPrice } from "@/lib/format";
 import { useCart } from "@/lib/cart-store";
 import { ProductCard } from "@/components/shop/ProductCard";
+import { LoyaltyStampCard } from "@/components/site/LoyaltyStampCard";
 
 type Tab = "orders" | "wishlist" | "designs";
 
@@ -23,8 +24,8 @@ export const Route = createFileRoute("/account")({
   },
   head: () => ({
     meta: [
-      { title: "Account — Weekdayz" },
-      { name: "description", content: "Your Weekdayz account, orders, and saved designs." },
+      { title: "Account — WEEKDAYZZ" },
+      { name: "description", content: "Your WEEKDAYZZ account, orders, and saved designs." },
     ],
   }),
   component: AccountPage,
@@ -155,10 +156,10 @@ function AccountPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex flex-col items-center gap-1.5 p-4 rounded-xl border transition-all ${
+                className={`flex flex-col items-center gap-1.5 p-4 border transition-all ${
                   activeTab === tab.id
-                    ? "bg-primary/10 border-primary/30 text-primary"
-                    : "border-border hover:border-primary/20 hover:bg-primary/5 text-muted-foreground"
+                    ? "bg-foreground/8 border-foreground text-foreground"
+                    : "border-border hover:border-foreground/30 text-muted-foreground"
                 }`}
               >
                 {tab.icon}
@@ -168,6 +169,11 @@ function AccountPage() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Loyalty Stamp Card */}
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-8">
+        <LoyaltyStampCard orderCount={orders?.length ?? 0} />
       </div>
 
       {/* Tab Bar */}

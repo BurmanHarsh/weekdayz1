@@ -64,37 +64,39 @@
 
 :root {
   --radius: 0.625rem;
-  --brand-ink: #282c3f;
-  --brand-pink: #ff3f6c;
-  --brand-soft: #f5f5f6;
+  --brand-ink: #1a1a1a;
+  --brand-pink: #1a1a1a;
+  --brand-soft: #f5f5f5;
 
-  /* Warm logo cream/white theme */
-  --background: #F4F0E6;
-  --foreground: oklch(0.19 0.02 264);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.19 0.02 264);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.19 0.02 264);
-  
-  --primary: oklch(0.66 0.24 6); /* Myntra-like pink accent */
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.965 0.005 264);
-  --secondary-foreground: oklch(0.19 0.02 264);
-  --muted: oklch(0.965 0.005 264);
-  --muted-foreground: oklch(0.46 0.02 264);
-  --accent: oklch(0.66 0.24 6);
-  --accent-foreground: oklch(1 0 0);
+  /* Clean crisp white neutral */
+  --background: #FAFAFA;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+
+  /* Primary: dark ink brand accent */
+  --primary: #1a1a1a;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f2f0;
+  --secondary-foreground: #1a1a1a;
+  --muted: #f2f2f0;
+  --muted-foreground: #6b6b6b;
+  /* Accent: sleek dark neutral */
+  --accent: #1a1a1a;
+  --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.92 0.005 264);
-  --input: oklch(0.92 0.005 264);
-  --ring: oklch(0.66 0.24 6);
+  --border: #e4e4e2;
+  --input: #e4e4e2;
+  --ring: #1a1a1a;
 
   /* Legacy mappings */
   --cream: #ffffff;
-  --ink: #282c3f;
+  --ink: #1a1a1a;
   --ink-foreground: #ffffff;
-  --navy: #282c3f;
+  --navy: #1a1a1a;
   --navy-foreground: #ffffff;
 }
 
@@ -186,6 +188,28 @@
   to   { transform: translateX(-50%); }
 }
 
+/* ─── Hero Carousel Slide Animation ─── */
+@keyframes heroSlideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0%); }
+}
+@keyframes heroSlideOut {
+  from { transform: translateX(0%); }
+  to   { transform: translateX(-100%); }
+}
+.hero-slide-in  { animation: heroSlideIn  0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+.hero-slide-out { animation: heroSlideOut 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+
+/* ─── Header scroll-hide ─── */
+.header-hide {
+  transform: translateY(-100%);
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.header-show {
+  transform: translateY(0);
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 /* ─── Scroll-reveal ─── */
 @utility reveal {
   opacity: 0;
@@ -219,8 +243,27 @@
   color: #D9D2BF;
 }
 
+/* ─── Loyalty Stamp Card ─── */
+@keyframes stampDrop {
+  0%   { transform: scale(2) rotate(-15deg); opacity: 0; }
+  60%  { transform: scale(0.9) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+.stamp-animate {
+  animation: stampDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+@keyframes unlockGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(26, 26, 26, 0.25); }
+  50%       { box-shadow: 0 0 22px 8px rgba(26, 26, 26, 0.18); }
+}
+.stamp-unlock-glow {
+  animation: unlockGlow 2s ease-in-out infinite;
+}
+
 /* ─── Reduced motion ─── */
 @media (prefers-reduced-motion: reduce) {
   .marquee { animation: none; }
   .reveal  { opacity: 1; transform: none; }
+  .hero-slide-in, .hero-slide-out { animation: none; }
+  .stamp-animate { animation: none; }
 }

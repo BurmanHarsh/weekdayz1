@@ -34,6 +34,37 @@ export const Route = createFileRoute("/shop")({
 const CATEGORIES = ["tee", "hoodie"] as const;
 const SIZES = ["S", "M", "L", "XL", "XXL"];
 
+function ShopHeaderBanner() {
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl bg-[#ebebeb] border border-border shadow-md mb-10">
+      <div className="grid grid-cols-1 md:grid-cols-12 items-center min-h-[280px] md:min-h-[340px]">
+        {/* Left Side: Clothing Hangers Image */}
+        <div className="md:col-span-7 relative h-64 md:h-full w-full overflow-hidden">
+          <img
+            src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1600&auto=format&fit=crop"
+            alt="WEEKDAYZZ Collection"
+            className="h-full w-full object-cover object-left"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#ebebeb] hidden md:block" />
+        </div>
+
+        {/* Right Side: Typography */}
+        <div className="md:col-span-5 p-8 md:p-12 space-y-3 text-foreground z-10">
+          <div className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+            — Collections
+          </div>
+          <h2 className="text-display text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight text-foreground">
+            Explore The Various Collection of WEEKDAYZZ Collection
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
+            Don&apos;t miss out to shopping collection from us! you&apos;ll not be let down.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Shop() {
   const { data } = useSuspenseQuery(productsQ);
   const { category: initialCategory } = Route.useSearch();
@@ -82,7 +113,7 @@ function Shop() {
               key={c}
               onClick={() => setCategory(category === c ? null : c)}
               className={`px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
-                category === c ? "bg-accent text-accent-foreground border-accent" : "border-border hover:border-accent"
+                category === c ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"
               }`}
             >
               {c}
@@ -98,7 +129,7 @@ function Shop() {
               key={s}
               onClick={() => setSize(size === s ? null : s)}
               className={`min-w-10 px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
-                size === s ? "bg-accent text-accent-foreground border-accent" : "border-border hover:border-accent"
+                size === s ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"
               }`}
             >
               {s}
@@ -116,7 +147,7 @@ function Shop() {
                 key={c}
                 onClick={() => setColor(color === c ? null : c)}
                 className={`px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
-                  color === c ? "bg-accent text-accent-foreground border-accent" : "border-border hover:border-accent"
+                  color === c ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"
                 }`}
               >
                 {c}
@@ -134,7 +165,7 @@ function Shop() {
           step={100}
           value={maxPrice}
           onChange={(e) => setMaxPrice(Number(e.target.value))}
-          className="w-full accent-[var(--color-accent)]"
+          className="w-full accent-[var(--color-foreground)]"
         />
       </div>
       {(category || size || maxPrice < 5000 || searchTerm) && (
@@ -145,7 +176,7 @@ function Shop() {
             setMaxPrice(5000);
             setSearchTerm("");
           }}
-          className="text-xs uppercase tracking-widest text-accent hover:underline"
+          className="text-xs uppercase tracking-widest text-foreground hover:underline"
         >
           Clear all
         </button>
@@ -154,12 +185,15 @@ function Shop() {
   );
 
   return (
-    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10">
+      {/* Top Store Banner */}
+      <ShopHeaderBanner />
+
       <div className="flex flex-wrap items-end justify-between gap-4 mb-10">
         <div>
-          <span className="text-xs uppercase tracking-[0.3em] text-accent">Shop</span>
-          <h1 className="text-display text-5xl sm:text-7xl mt-2">All Drops.</h1>
-          <p className="text-muted-foreground mt-2">{filtered.length} pieces available</p>
+          <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Store</span>
+          <h1 className="text-display text-4xl sm:text-6xl mt-1 font-black">All Drops.</h1>
+          <p className="text-muted-foreground text-sm mt-1">{filtered.length} pieces available</p>
         </div>
         <div className="flex items-center gap-3">
           {/* Sort */}

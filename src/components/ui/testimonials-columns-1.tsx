@@ -33,10 +33,7 @@ export const TestimonialsColumn = (props: {
           ...new Array(2).fill(0).map((_, index) => (
             <React.Fragment key={index}>
               {props.testimonials.map(({ text, image, name, role, stars = 5 }, i) => (
-                <div
-                  className="p-8 sm:p-10 rounded-3xl border border-border bg-card text-card-foreground shadow-lg shadow-primary/5 max-w-xs w-full hover:border-primary/40 transition-colors"
-                  key={i}
-                >
+                <div className="p-8 sm:p-10 rounded-3xl border border-border bg-card text-card-foreground shadow-lg shadow-primary/5 max-w-xs w-full hover:border-primary/40 transition-colors" key={i}>
                   <div className="flex items-center gap-1 text-amber-400 mb-3">
                     {Array.from({ length: stars }).map((_, sIdx) => (
                       <svg key={sIdx} className="w-4 h-4 fill-current" viewBox="0 0 20 20">
@@ -45,22 +42,9 @@ export const TestimonialsColumn = (props: {
                     ))}
                   </div>
                   <div className="text-sm leading-relaxed text-muted-foreground">{text}</div>
-                  <div className="flex items-center gap-3 mt-5 pt-4 border-t border-border/60">
-                    <img
-                      width={40}
-                      height={40}
-                      src={image}
-                      alt={name}
-                      className="h-10 w-10 rounded-full object-cover border border-border"
-                    />
-                    <div className="flex flex-col">
-                      <div className="font-semibold tracking-tight text-sm leading-5 text-foreground">
-                        {name}
-                      </div>
-                      <div className="text-xs leading-5 text-muted-foreground tracking-tight">
-                        {role}
-                      </div>
-                    </div>
+                  <div className="flex flex-col mt-5 pt-4 border-t border-border/60">
+                    <div className="font-semibold tracking-tight text-sm leading-5 text-foreground">{name}</div>
+                    <div className="text-xs leading-5 text-muted-foreground tracking-tight">{role}</div>
                   </div>
                 </div>
               ))}

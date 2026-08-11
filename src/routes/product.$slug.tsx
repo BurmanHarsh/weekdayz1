@@ -1,9 +1,9 @@
 import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSuspenseQuery, queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw, Ruler, X, Maximize2, ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { getProductBySlug } from "@/lib/products.functions";
+import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw, Ruler, X, Maximize2, ChevronLeft, ChevronRight, ArrowRight, Heart } from "lucide-react";
+import { getProductBySlug, listProducts } from "@/lib/products.functions";
 import { getFallbackProducts } from "@/lib/fallback-data";
 import { getProductReviews, submitReview, deleteReview, canUserReviewProduct } from "@/lib/reviews.functions";
 import { toggleWishlist, getWishlistIds } from "@/lib/wishlist.functions";
@@ -123,6 +123,16 @@ function ProductPageInner() {
   const [zoom, setZoom] = useState({ x: 50, y: 50, active: false });
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  // Couple variant: separate config for male & female
+  const isCouple = product.category?.toLowerCase().includes("couple") ||
+    product.title?.toLowerCase().includes("couple") ||
+    availableColors.some(c => c.toLowerCase().includes("couple"));
+  const [maleSize, setMaleSize] = useState(product.sizes[1] ?? product.sizes[0]);
+  const [maleColor, setMaleColor] = useState<"White" | "Black">("White");
+  const [femaleSize, setFemaleSize] = useState(product.sizes[0]);
+  const [femaleColor, setFemaleColor] = useState<"White" | "Black">("White");
+  const [openAccordion, setOpenAccordion] = useState<string | null>(null);
 
   // Sync when searchColor changes (e.g. user edits URL bar or navigates back)
   useEffect(() => {
@@ -237,15 +247,17 @@ function ProductPageInner() {
       toast.error("Pick a color variant");
       return;
     }
-    addItem({
-      product_id: product.id,
-      title: product.title,
-      image: product.image_urls[0] ?? "",
-      size,
-      color: color || undefined,
-      unit_price_cents: product.price_cents,
-    });
-    toast.success("Added to bag");
+    for (let q = 0; q < quantity; q++) {
+      addItem({
+        product_id: product.id,
+        title: product.title,
+        image: product.image_urls[0] ?? "",
+        size: isCouple ? `M:${maleSize} F:${femaleSize}` : size,
+        color: isCouple ? `M:${maleColor} F:${femaleColor}` : (color || undefined),
+        unit_price_cents: product.price_cents,
+      });
+    }
+    toast.success(`Added ${quantity} to bag`);
     if (express) navigate({ to: "/checkout" });
   };
 
@@ -341,27 +353,32 @@ function ProductPageInner() {
           </div>
         </div>
 
-        <div className="lg:pl-8 flex flex-col justify-center">
-          <span className="text-xs uppercase tracking-[0.3em] text-accent">{product.category}</span>
-          <h1 className="text-display text-4xl sm:text-6xl mt-2">{product.title}</h1>
-          
-          <div className="flex items-center gap-4 mt-4">
-            <p className="text-2xl font-semibold">{formatPrice(product.price_cents)}</p>
-            {reviews && reviews.length > 0 && (
-              <a href="#reviews" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                <div className="flex text-accent">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star
-                      key={s}
-                      className={`h-3.5 w-3.5 ${s <= Math.round(avgRating) ? "fill-accent text-accent" : "text-border"}`}
-                    />
-                  ))}
-                </div>
-                <span className="font-semibold text-foreground">{avgRating.toFixed(1)}</span>
-                <span>({reviews.length} {reviews.length === 1 ? "review" : "reviews"})</span>
-              </a>
-            )}
-          </div>
+          <div className="lg:pl-8 flex flex-col justify-center">
+            <span className="text-xs uppercase tracking-[0.3em] text-muted-foreground">{product.category}</span>
+            <h1 className="text-display text-4xl sm:text-6xl mt-2">{product.title}</h1>
+
+            <div className="flex items-center gap-3 mt-4 flex-wrap">
+              {/* Sale badge */}
+              <span className="bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1">SALE</span>
+              {/* Strikethrough original price */}
+              <p className="text-lg text-muted-foreground line-through">{formatPrice(Math.round(product.price_cents * 1.25))}</p>
+              <p className="text-2xl font-black">{formatPrice(product.price_cents)}</p>
+              {reviews && reviews.length > 0 && (
+                <a href="#reviews" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                  <div className="flex text-amber-400">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star
+                        key={s}
+                        className={`h-3.5 w-3.5 ${s <= Math.round(avgRating) ? "fill-amber-400 text-amber-400" : "text-border"}`}
+                      />
+                    ))}
+                  </div>
+                  <span className="font-semibold text-foreground">{avgRating.toFixed(1)}</span>
+                  <span>({reviews.length})</span>
+                </a>
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">Inclusive of all taxes · Free shipping on orders ₹999+</p>
 
           {/* Color selector */}
           {availableColors.length > 0 && (
@@ -399,14 +416,64 @@ function ProductPageInner() {
             </div>
           )}
 
-          <div className="mt-6">
+          {/* Couple Dual-Variant Controls */}
+          {isCouple && (
+            <div className="mt-6 space-y-5 p-4 bg-secondary/40 border border-border">
+              <div className="text-xs font-black uppercase tracking-widest border-b border-border pb-2">COUPLE CONFIGURATION</div>
+
+              {/* Male */}
+              <div>
+                <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">His Size</div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {["S", "M", "L", "XL", "XXL"].map((s) => (
+                    <button key={s} onClick={() => setMaleSize(s)}
+                      className={`min-w-10 py-2 text-xs font-bold border ${ maleSize === s ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {(["White", "Black"] as const).map((c) => (
+                    <button key={c} onClick={() => setMaleColor(c)}
+                      className={`px-3 py-1.5 text-xs font-bold border transition-all ${ maleColor === c ? "bg-foreground text-background border-foreground" : "border-border"}`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Female */}
+              <div>
+                <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Her Size</div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {["S", "M", "L", "XL", "XXL"].map((s) => (
+                    <button key={s} onClick={() => setFemaleSize(s)}
+                      className={`min-w-10 py-2 text-xs font-bold border ${ femaleSize === s ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"}`}>
+                      {s}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  {(["White", "Black"] as const).map((c) => (
+                    <button key={c} onClick={() => setFemaleColor(c)}
+                      className={`px-3 py-1.5 text-xs font-bold border transition-all ${ femaleColor === c ? "bg-foreground text-background border-foreground" : "border-border"}`}>
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Standard Size selector (non-couple) */}
+          {!isCouple && (<div className="mt-6">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
                 <h3 className="text-xs uppercase tracking-widest font-semibold">Size</h3>
                 <button
                   type="button"
                   onClick={() => setShowSizeChart(true)}
-                  className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-medium"
+                  className="inline-flex items-center gap-1 text-xs text-foreground hover:underline font-medium"
                 >
                   <Ruler className="h-3.5 w-3.5" /> Size Guide
                 </button>
@@ -428,7 +495,7 @@ function ProductPageInner() {
                 </button>
               ))}
             </div>
-          </div>
+          </div>)}
 
           {/* Size Chart Modal */}
           {showSizeChart && (
@@ -582,18 +649,38 @@ function ProductPageInner() {
             </div>
           )}
 
-          <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          {/* Quantity Selector */}
+          <div className="mt-6">
+            <h3 className="text-xs uppercase tracking-widest font-semibold mb-3">Quantity</h3>
+            <div className="flex items-center gap-0 border border-border w-fit">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                className="h-10 w-10 flex items-center justify-center text-lg font-bold hover:bg-secondary transition-colors"
+                aria-label="Decrease quantity"
+              >−</button>
+              <span className="h-10 w-12 flex items-center justify-center text-sm font-bold border-x border-border">{quantity}</span>
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => q + 1)}
+                className="h-10 w-10 flex items-center justify-center text-lg font-bold hover:bg-secondary transition-colors"
+                aria-label="Increase quantity"
+              >+</button>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => handleAdd(false)}
-              className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-foreground/90 transition"
+              className="flex-1 flex items-center justify-center gap-2 bg-foreground text-background px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:opacity-85 transition"
             >
-              <ShoppingBag className="h-4 w-4" /> Add to bag
+              <ShoppingBag className="h-4 w-4" /> Add to Cart
             </button>
             <button
               onClick={() => handleAdd(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-accent text-accent-foreground px-6 py-4 text-sm uppercase tracking-widest font-semibold hover:bg-accent/90 transition"
             >
-              <Zap className="h-4 w-4" /> Express buy
+              <Zap className="h-4 w-4" /> Buy Now
             </button>
             <button
               type="button"
@@ -612,20 +699,44 @@ function ProductPageInner() {
           </div>
 
           {/* Trust badges */}
-          <div className="mt-8 grid grid-cols-3 gap-3 border-t border-border pt-6">
+          <div className="mt-6 grid grid-cols-3 gap-3 border-t border-border pt-5">
             <div className="flex flex-col items-center gap-2 text-center">
-              <Truck className="h-5 w-5 text-accent" />
+              <Truck className="h-5 w-5 text-foreground" />
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Free ship ₹999+</span>
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
-              <RotateCcw className="h-5 w-5 text-accent" />
+              <RotateCcw className="h-5 w-5 text-foreground" />
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">15-day returns</span>
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
-              <ShieldCheck className="h-5 w-5 text-accent" />
+              <ShieldCheck className="h-5 w-5 text-foreground" />
               <span className="text-[10px] uppercase tracking-widest text-muted-foreground leading-tight">Secure checkout</span>
             </div>
           </div>
+
+          {/* Accordions */}
+          {([
+            { id: "offers", title: "Offers & Discounts", content: "• Use code FIRST10 for 10% off your first order.\n• Buy 2 and save 10% automatically.\n• Free shipping on orders above ₹999.\n• COD available across India." },
+            { id: "desc", title: "Description", content: product.description ?? "Premium quality garment crafted with 240+ GSM heavyweight cotton. Boxy oversized fit with drop shoulders. Pre-shrunk and bio-washed for long-lasting comfort." },
+            { id: "care", title: "Care Instructions", content: "• Machine wash cold at 30°C with similar colors.\n• Do not bleach.\n• Tumble dry on low heat.\n• Iron inside out at medium heat.\n• Do not dry clean." },
+            { id: "shipping", title: "Shipping", content: "• Standard delivery: 2–4 business days (Metro cities).\n• Remote areas: 4–7 business days.\n• Free shipping on orders above ₹999.\n• Express delivery available at checkout.\n• Cash on Delivery (COD) available." },
+            { id: "payment", title: "Payment", content: "• UPI: Google Pay, PhonePe, Paytm.\n• Cards: Visa, Mastercard, Rupay.\n• Net Banking.\n• Cash on Delivery (COD) — OTP verified.\n• 100% secured by Razorpay SSL encryption." },
+          ]).map(({ id, title, content }) => (
+            <div key={id} className="border-b border-border">
+              <button
+                onClick={() => setOpenAccordion(openAccordion === id ? null : id)}
+                className="w-full flex items-center justify-between py-4 text-sm font-semibold text-left hover:text-foreground/70 transition-colors"
+              >
+                {title}
+                <span className="text-lg font-light ml-2">{openAccordion === id ? "−" : "+"}</span>
+              </button>
+              {openAccordion === id && (
+                <div className="pb-4 text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                  {content}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -711,6 +822,9 @@ function ProductPageInner() {
           </div>
         </div>
       </div>
+
+      {/* You May Also Like Section */}
+      <YouMayAlsoLikeSection currentProductId={product.id} category={product.category} />
     </div>
   );
 }
@@ -873,5 +987,83 @@ function ReviewForm({
         {submitMutation.isPending ? "Saving..." : existingReview ? "Update Review" : "Submit Review"}
       </button>
     </form>
+  );
+}
+
+function YouMayAlsoLikeSection({ currentProductId, category }: { currentProductId: string; category: string }) {
+  const listProductsFn = useServerFn(listProducts);
+  const { data: allProducts = [] } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => listProductsFn(),
+    staleTime: 60_000,
+  });
+
+  const related = useMemo(() => {
+    const others = allProducts.filter((p) => p.id !== currentProductId);
+    const sameCat = others.filter((p) => p.category === category);
+    const pool = sameCat.length >= 4 ? sameCat : [...sameCat, ...others.filter((p) => p.category !== category)];
+    return pool.slice(0, 4);
+  }, [allProducts, currentProductId, category]);
+
+  if (related.length === 0) return null;
+
+  return (
+    <section className="border-t border-border pt-14 mt-16 pb-6">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-display text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+          You May Also Like
+        </h2>
+        <Link
+          to="/shop"
+          className="text-xs font-bold uppercase tracking-widest text-foreground hover:opacity-70 transition-opacity flex items-center gap-1.5"
+        >
+          View All <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        {related.map((p) => (
+          <Link
+            key={p.id}
+            to="/product/$slug"
+            params={{ slug: p.slug }}
+            className="group block rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+          >
+            {/* Image Container */}
+            <div className="relative aspect-[3/4] w-full overflow-hidden bg-secondary">
+              <img
+                src={p.image_urls[0]}
+                alt={p.title}
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+            </div>
+
+            {/* Content Bar matching attached design */}
+            <div className="p-4 flex items-center justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <h3 className="text-sm font-bold text-foreground truncate group-hover:text-foreground/70 transition-colors">
+                  {p.title}
+                </h3>
+                <p className="text-xs font-semibold text-muted-foreground mt-0.5">
+                  {formatPrice(p.price_cents)}
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="Wishlist"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toast.success("Added to wishlist");
+                }}
+                className="p-1.5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
+              >
+                <Heart className="h-4 w-4" />
+              </button>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </section>
   );
 }
