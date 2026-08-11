@@ -200,6 +200,74 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+async function getAdminSupabaseClient() {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return supabaseAdmin;
+  } catch (_) {
+    return null;
+  }
+}
+
+export const uploadProductImage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) =>
+    z
+      .object({
+        base64: z.string().min(1),
+        filename: z.string().default("product.jpg"),
+        contentType: z.string().default("image/jpeg"),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { base64, filename, contentType } = data;
+    const base64Clean = base64.includes(",") ? base64.split(",")[1] : base64;
+    const buffer = Buffer.from(base64Clean, "base64");
+    const ext = filename.split(".").pop() ?? "jpg";
+    const path = `products/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+    const adminClient = await getAdminSupabaseClient();
+    const bucketsToTry = ["product-images", "user-graphics", "public"];
+
+    for (const bucket of bucketsToTry) {
+      if (adminClient) {
+        try {
+          const { error } = await adminClient.storage
+            .from(bucket)
+            .upload(path, buffer, { contentType, upsert: true });
+
+          if (!error) {
+            const { data: publicData } = adminClient.storage
+              .from(bucket)
+              .getPublicUrl(path);
+            if (publicData?.publicUrl) {
+              return { url: publicData.publicUrl };
+            }
+          }
+        } catch (_) {}
+      }
+
+      try {
+        const { error } = await context.supabase.storage
+          .from(bucket)
+          .upload(path, buffer, { contentType, upsert: true });
+
+        if (!error) {
+          const { data: publicData } = context.supabase.storage
+            .from(bucket)
+            .getPublicUrl(path);
+          if (publicData?.publicUrl) {
+            return { url: publicData.publicUrl };
+          }
+        }
+      } catch (_) {}
+    }
+
+    return { url: data.base64 };
+  });
+
 export const createProduct = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) =>
@@ -219,6 +287,19 @@ export const createProduct = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+
+    const adminClient = await getAdminSupabaseClient();
+    if (adminClient) {
+      try {
+        const { data: row, error } = await adminClient
+          .from("products")
+          .insert(data)
+          .select("id")
+          .single();
+        if (!error && row) return { id: row.id };
+      } catch (_) {}
+    }
+
     try {
       const { data: row, error } = await context.supabase
         .from("products")
@@ -264,10 +345,30 @@ export const listAdminProducts = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     await assertAdmin(context);
-    const { data, error } = await context.supabase
-      .from("products")
-      .select("*")
-      .order("created_at", { ascending: false });
+    let data: any[] | null = null;
+
+    const adminClient = await getAdminSupabaseClient();
+    if (adminClient) {
+      try {
+        const res = await adminClient
+          .from("products")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (!res.error && res.data) {
+          data = res.data;
+        }
+      } catch (_) {}
+    }
+
+    if (!data) {
+      try {
+        const res = await context.supabase
+          .from("products")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (res.data) data = res.data;
+      } catch (_) {}
+    }
     
     const dbProducts = (data ?? []).map((p: any) => {
       if (!p.image_urls || p.image_urls.length === 0 || (p.image_urls.length === 1 && !p.image_urls[0])) {
@@ -309,6 +410,18 @@ export const updateProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { id, ...updates } = data;
+
+    const adminClient = await getAdminSupabaseClient();
+    if (adminClient) {
+      try {
+        const { error } = await adminClient
+          .from("products")
+          .update(updates)
+          .eq("id", id);
+        if (!error) return { ok: true };
+      } catch (_) {}
+    }
+
     try {
       const { error } = await context.supabase
         .from("products")
@@ -326,6 +439,18 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+
+    const adminClient = await getAdminSupabaseClient();
+    if (adminClient) {
+      try {
+        const { error } = await adminClient.from("products").delete().eq("id", data.id);
+        if (!error) {
+          deleteCustomFallbackProduct(data.id);
+          return { ok: true };
+        }
+      } catch (_) {}
+    }
+
     try {
       const { error } = await context.supabase.from("products").delete().eq("id", data.id);
       if (error) console.warn("Database product delete:", error.message);

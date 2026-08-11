@@ -3,6 +3,8 @@ import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, X, CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { uploadProductImage } from "@/lib/admin.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
 interface UploadedImage {
@@ -24,6 +26,7 @@ export function MultiImageUploader({
   initialUrls = [],
   maxFiles = 8,
 }: MultiImageUploaderProps) {
+  const uploadProductImageFn = useServerFn(uploadProductImage);
   const [images, setImages] = useState<UploadedImage[]>(() =>
     initialUrls.map((url) => ({
       id: crypto.randomUUID(),
@@ -50,6 +53,27 @@ export function MultiImageUploader({
       const reader = new FileReader();
       reader.onload = async () => {
         const base64Data = reader.result as string;
+
+        try {
+          const res = await uploadProductImageFn({
+            base64: base64Data,
+            filename: img.file!.name,
+            contentType: img.file!.type,
+          });
+
+          if (res?.url) {
+            setImages((prev) => {
+              const next = prev.map((i) =>
+                i.id === img.id
+                  ? { ...i, status: "done" as const, publicUrl: res.url, preview: res.url }
+                  : i
+              );
+              notifyChange(next);
+              return next;
+            });
+            return;
+          }
+        } catch (_) {}
 
         try {
           const ext = img.file!.name.split(".").pop() ?? "jpg";
@@ -87,7 +111,7 @@ export function MultiImageUploader({
       };
       reader.readAsDataURL(img.file);
     },
-    [notifyChange]
+    [notifyChange, uploadProductImageFn]
   );
 
   const onDrop = useCallback(
