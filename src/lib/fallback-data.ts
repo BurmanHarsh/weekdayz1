@@ -123,12 +123,16 @@ import { getPublicClient } from "@/lib/supabase-server";
 
 let CUSTOM_FALLBACK_PRODUCTS: FallbackProduct[] = [];
 
+const STORAGE_BUCKET = "product-images";
+const STORAGE_PATH = "custom_products.json";
+
 export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
   try {
     const supabase = getPublicClient();
+    // product-images bucket is public readable per RLS policy
     const { data, error } = await supabase.storage
-      .from("user-graphics")
-      .download("custom_products.json");
+      .from(STORAGE_BUCKET)
+      .download(STORAGE_PATH);
 
     if (!error && data) {
       const text = await data.text();
@@ -138,42 +142,66 @@ export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
         return parsed;
       }
     }
-  } catch (_) {}
+    if (error) {
+      console.warn("[fetchStorageCustomProducts]", error.message);
+    }
+  } catch (e: any) {
+    console.warn("[fetchStorageCustomProducts] exception:", e?.message);
+  }
   return CUSTOM_FALLBACK_PRODUCTS;
 }
 
 export async function saveStorageCustomProducts(product: FallbackProduct, client?: any): Promise<void> {
   addCustomFallbackProduct(product);
-  try {
-    const supabase = client || getPublicClient();
-    const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
-    const buffer = Buffer.from(jsonStr, "utf-8");
+  // First fetch existing products from storage to merge
+  await fetchStorageCustomProducts();
+  // Re-add after fetch to ensure it's in the list
+  addCustomFallbackProduct(product);
+  
+  const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
+  const buffer = Buffer.from(jsonStr, "utf-8");
 
-    const { error } = await supabase.storage
-      .from("user-graphics")
-      .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
-
-    if (error && !client) {
-      // Retry with public client if needed
-      const pub = getPublicClient();
-      await pub.storage
-        .from("user-graphics")
-        .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
+  // Try with authenticated client first (required by RLS: admin role check)
+  if (client) {
+    try {
+      const { error } = await client.storage
+        .from(STORAGE_BUCKET)
+        .upload(STORAGE_PATH, buffer, { upsert: true, contentType: "application/json" });
+      if (!error) return;
+      console.warn("[saveStorageCustomProducts] auth client error:", error.message);
+    } catch (e: any) {
+      console.warn("[saveStorageCustomProducts] auth client exception:", e?.message);
     }
-  } catch (_) {}
+  }
+
+  // Fallback: try public client
+  try {
+    const supabase = getPublicClient();
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(STORAGE_PATH, buffer, { upsert: true, contentType: "application/json" });
+    if (error) {
+      console.warn("[saveStorageCustomProducts] public client error:", error.message);
+    }
+  } catch (e: any) {
+    console.warn("[saveStorageCustomProducts] public exception:", e?.message);
+  }
 }
 
 export async function removeStorageCustomProduct(id: string, client?: any): Promise<void> {
   deleteCustomFallbackProduct(id);
-  try {
-    const supabase = client || getPublicClient();
-    const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
-    const buffer = Buffer.from(jsonStr, "utf-8");
+  
+  const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
+  const buffer = Buffer.from(jsonStr, "utf-8");
+  const supabase = client || getPublicClient();
 
+  try {
     await supabase.storage
-      .from("user-graphics")
-      .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
-  } catch (_) {}
+      .from(STORAGE_BUCKET)
+      .upload(STORAGE_PATH, buffer, { upsert: true, contentType: "application/json" });
+  } catch (e: any) {
+    console.warn("[removeStorageCustomProduct] error:", e?.message);
+  }
 }
 
 export function getFallbackProducts(): FallbackProduct[] {

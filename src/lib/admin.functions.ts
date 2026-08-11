@@ -13,12 +13,15 @@ const ADMIN_EMAILS = [
 async function assertAdmin(ctx: { supabase: any; userId: string; claims?: any }) {
   const email = ctx.claims?.email;
   if (email && ADMIN_EMAILS.includes(email)) {
+    // Auto-grant admin role in DB so RLS policies (has_role) work for this user
+    await ensureAdminRole(ctx);
     return;
   }
 
   try {
     const { data } = await ctx.supabase.auth.getUser();
     if (data?.user?.email && ADMIN_EMAILS.includes(data.user.email)) {
+      await ensureAdminRole(ctx);
       return;
     }
   } catch (_) {}
@@ -42,6 +45,26 @@ async function assertAdmin(ctx: { supabase: any; userId: string; claims?: any })
   } catch (_) {}
 
   throw new Error("Forbidden");
+}
+
+/** Ensures the admin role row exists in user_roles so RLS has_role() checks pass */
+async function ensureAdminRole(ctx: { supabase: any; userId: string }) {
+  try {
+    // Check if role already exists
+    const { data } = await ctx.supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", ctx.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (data) return; // already has admin role
+
+    // Call SECURITY DEFINER function that auto-grants admin role if email is approved
+    await ctx.supabase.rpc("ensure_admin_role");
+    console.log("[ensureAdminRole] Granted admin role to user:", ctx.userId);
+  } catch (e: any) {
+    console.warn("[ensureAdminRole] Could not auto-grant admin role:", e?.message);
+  }
 }
 
 export const isAdmin = createServerFn({ method: "GET" })
