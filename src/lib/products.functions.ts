@@ -49,7 +49,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
       const { data: product, error } = await supabase
         .from("products")
         .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
-        .or(`slug.eq."${rawSlug}",slug.eq."${cleanSlug}",slug.ilike."${cleanSlug}"`)
+        .or(`id.eq."${rawSlug}",slug.eq."${rawSlug}",slug.eq."${cleanSlug}",slug.ilike."${cleanSlug}"`)
         .eq("is_active", true)
         .maybeSingle();
 
@@ -67,10 +67,15 @@ export const getProductBySlug = createServerFn({ method: "GET" })
     const fallbacks = getFallbackProducts();
     const found = fallbacks.find(
       (p) =>
+        p.id === rawSlug ||
+        p.id === cleanSlug ||
+        p.id.toLowerCase() === rawSlug.toLowerCase() ||
         p.slug.toLowerCase() === rawSlug.toLowerCase() ||
         p.slug.toLowerCase() === cleanSlug ||
+        p.slug.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug ||
         p.slug.toLowerCase().replace(/-/g, " ") === decodedSlug.toLowerCase().replace(/-/g, " ")
     );
+
     if (found) return found;
     throw new Error("Product not found");
   });

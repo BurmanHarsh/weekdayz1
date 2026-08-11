@@ -147,11 +147,11 @@ export async function saveStorageCustomProducts(product: FallbackProduct): Promi
   try {
     const supabase = getPublicClient();
     const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
+    const buffer = Buffer.from(jsonStr, "utf-8");
 
     await supabase.storage
       .from("user-graphics")
-      .upload("custom_products.json", blob, { upsert: true, contentType: "application/json" });
+      .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
   } catch (_) {}
 }
 
@@ -160,11 +160,11 @@ export async function removeStorageCustomProduct(id: string): Promise<void> {
   try {
     const supabase = getPublicClient();
     const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
-    const blob = new Blob([jsonStr], { type: "application/json" });
+    const buffer = Buffer.from(jsonStr, "utf-8");
 
     await supabase.storage
       .from("user-graphics")
-      .upload("custom_products.json", blob, { upsert: true, contentType: "application/json" });
+      .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
   } catch (_) {}
 }
 
