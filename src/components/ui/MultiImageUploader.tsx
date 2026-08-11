@@ -56,9 +56,11 @@ export function MultiImageUploader({
 
         try {
           const res = await uploadProductImageFn({
-            base64: base64Data,
-            filename: img.file!.name,
-            contentType: img.file!.type,
+            data: {
+              base64: base64Data,
+              filename: img.file!.name,
+              contentType: img.file!.type,
+            },
           });
 
           if (res?.url) {
