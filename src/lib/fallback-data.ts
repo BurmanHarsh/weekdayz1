@@ -142,23 +142,31 @@ export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
   return CUSTOM_FALLBACK_PRODUCTS;
 }
 
-export async function saveStorageCustomProducts(product: FallbackProduct): Promise<void> {
+export async function saveStorageCustomProducts(product: FallbackProduct, client?: any): Promise<void> {
   addCustomFallbackProduct(product);
   try {
-    const supabase = getPublicClient();
+    const supabase = client || getPublicClient();
     const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
     const buffer = Buffer.from(jsonStr, "utf-8");
 
-    await supabase.storage
+    const { error } = await supabase.storage
       .from("user-graphics")
       .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
+
+    if (error && !client) {
+      // Retry with public client if needed
+      const pub = getPublicClient();
+      await pub.storage
+        .from("user-graphics")
+        .upload("custom_products.json", buffer, { upsert: true, contentType: "application/json" });
+    }
   } catch (_) {}
 }
 
-export async function removeStorageCustomProduct(id: string): Promise<void> {
+export async function removeStorageCustomProduct(id: string, client?: any): Promise<void> {
   deleteCustomFallbackProduct(id);
   try {
-    const supabase = getPublicClient();
+    const supabase = client || getPublicClient();
     const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
     const buffer = Buffer.from(jsonStr, "utf-8");
 

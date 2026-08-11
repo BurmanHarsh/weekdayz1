@@ -312,7 +312,7 @@ export const createProduct = createServerFn({ method: "POST" })
       if (!error && row) return { id: row.id };
     } catch (_) {}
 
-    // Store in fallback memory list so product creation succeeds even if database insert is blocked
+    // Store in fallback memory list and persistent Supabase storage
     const newId = `admin-prod-${Date.now()}`;
     const newProduct: FallbackProduct = {
       id: newId,
@@ -328,7 +328,7 @@ export const createProduct = createServerFn({ method: "POST" })
       is_active: true,
       created_at: new Date().toISOString(),
     };
-    await saveStorageCustomProducts(newProduct);
+    await saveStorageCustomProducts(newProduct, context.supabase);
     return { id: newId };
   });
 
