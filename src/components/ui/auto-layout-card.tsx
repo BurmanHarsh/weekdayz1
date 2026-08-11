@@ -77,7 +77,7 @@ const cardVariants = {
   },
 };
 
-export interface AutoLayoutCardProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface AutoLayoutCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
   title?: React.ReactNode;
   subtitle?: string;
   badge?: string;

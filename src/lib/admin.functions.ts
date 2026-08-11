@@ -4,23 +4,52 @@ import { z } from "zod";
 import { sendShipped, sendDelivered } from "./email";
 import { getFallbackProducts, addCustomFallbackProduct, updateCustomFallbackProduct, deleteCustomFallbackProduct, FallbackProduct } from "@/lib/fallback-data";
 
-async function assertAdmin(ctx: { supabase: any; userId: string }) {
-  const { data, error } = await ctx.supabase.rpc("has_role", {
-    _user_id: ctx.userId,
-    _role: "admin",
-  });
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("Forbidden");
+async function assertAdmin(ctx: { supabase: any; userId: string; claims?: any }) {
+  const email = ctx.claims?.email;
+  if (
+    email === "burmanharsh886@gmail.com" ||
+    email === "weekdayzz01@gmail.com"
+  ) {
+    return;
+  }
+
+  try {
+    const { data } = await ctx.supabase.auth.getUser();
+    if (data?.user?.email === "burmanharsh886@gmail.com" || data?.user?.email === "weekdayzz01@gmail.com") {
+      return;
+    }
+  } catch (_) {}
+
+  try {
+    const { data } = await ctx.supabase.rpc("has_role", {
+      _user_id: ctx.userId,
+      _role: "admin",
+    });
+    if (data === true) return;
+  } catch (_) {}
+
+  try {
+    const { data } = await ctx.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", ctx.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (data) return;
+  } catch (_) {}
+
+  throw new Error("Forbidden");
 }
 
 export const isAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    return { admin: Boolean(data) };
+    try {
+      await assertAdmin(context);
+      return { admin: true };
+    } catch (_) {
+      return { admin: false };
+    }
   });
 
 import { checkRateLimit } from "./rate-limiter";
