@@ -467,23 +467,33 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
 
+    // Also find and delete by slug to cover fallback products
+    let slug = data.id;
+    try {
+      const { data: product } = await context.supabase
+        .from("products")
+        .select("slug")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (product?.slug) slug = product.slug;
+    } catch (_) {}
+
     const adminClient = await getAdminSupabaseClient();
     if (adminClient) {
       try {
-        const { error } = await adminClient.from("products").delete().eq("id", data.id);
-        if (!error) {
-          deleteCustomFallbackProduct(data.id);
-          return { ok: true };
-        }
+        await adminClient.from("products").delete().eq("id", data.id);
       } catch (_) {}
     }
 
     try {
-      const { error } = await context.supabase.from("products").delete().eq("id", data.id);
-      if (error) console.warn("Database product delete:", error.message);
+      await context.supabase.from("products").delete().eq("id", data.id);
     } catch (_) {}
 
-    await removeStorageCustomProduct(data.id);
+    // Remove from persistent storage + add to deleted set
+    await removeStorageCustomProduct(data.id, context.supabase);
+    if (slug !== data.id) {
+      await removeStorageCustomProduct(slug, context.supabase);
+    }
     return { ok: true };
   });
 

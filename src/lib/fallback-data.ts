@@ -122,6 +122,7 @@ let fallbackProducts: FallbackProduct[] = [
 import { getPublicClient } from "@/lib/supabase-server";
 
 let CUSTOM_FALLBACK_PRODUCTS: FallbackProduct[] = [];
+let DELETED_PRODUCT_IDS: Set<string> = new Set();
 
 const STORAGE_BUCKET = "product-images";
 const STORAGE_PATH = "custom_products.json";
@@ -137,9 +138,15 @@ export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
     if (!error && data) {
       const text = await data.text();
       const parsed = JSON.parse(text);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        CUSTOM_FALLBACK_PRODUCTS = parsed;
-        return parsed;
+      if (parsed && typeof parsed === "object") {
+        // Support both array format (legacy) and object format { products, deletedIds }
+        if (Array.isArray(parsed)) {
+          CUSTOM_FALLBACK_PRODUCTS = parsed;
+        } else {
+          CUSTOM_FALLBACK_PRODUCTS = parsed.products || [];
+          DELETED_PRODUCT_IDS = new Set(parsed.deletedIds || []);
+        }
+        return CUSTOM_FALLBACK_PRODUCTS;
       }
     }
     if (error) {
@@ -151,15 +158,25 @@ export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
   return CUSTOM_FALLBACK_PRODUCTS;
 }
 
+function getStoragePayload(): string {
+  return JSON.stringify({
+    products: CUSTOM_FALLBACK_PRODUCTS,
+    deletedIds: [...DELETED_PRODUCT_IDS],
+  }, null, 2);
+}
+
 export async function saveStorageCustomProducts(product: FallbackProduct, client?: any): Promise<void> {
   addCustomFallbackProduct(product);
-  // First fetch existing products from storage to merge
+  // Remove from deleted set if re-adding
+  DELETED_PRODUCT_IDS.delete(product.id);
+  DELETED_PRODUCT_IDS.delete(product.slug);
+  // Fetch existing to merge
   await fetchStorageCustomProducts();
-  // Re-add after fetch to ensure it's in the list
   addCustomFallbackProduct(product);
+  DELETED_PRODUCT_IDS.delete(product.id);
+  DELETED_PRODUCT_IDS.delete(product.slug);
   
-  const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
-  const buffer = Buffer.from(jsonStr, "utf-8");
+  const buffer = Buffer.from(getStoragePayload(), "utf-8");
 
   // Try with authenticated client first (required by RLS: admin role check)
   if (client) {
@@ -189,10 +206,11 @@ export async function saveStorageCustomProducts(product: FallbackProduct, client
 }
 
 export async function removeStorageCustomProduct(id: string, client?: any): Promise<void> {
+  // Add to deleted set so it stays hidden across serverless restarts
+  DELETED_PRODUCT_IDS.add(id);
   deleteCustomFallbackProduct(id);
   
-  const jsonStr = JSON.stringify(CUSTOM_FALLBACK_PRODUCTS, null, 2);
-  const buffer = Buffer.from(jsonStr, "utf-8");
+  const buffer = Buffer.from(getStoragePayload(), "utf-8");
   const supabase = client || getPublicClient();
 
   try {
@@ -205,7 +223,9 @@ export async function removeStorageCustomProduct(id: string, client?: any): Prom
 }
 
 export function getFallbackProducts(): FallbackProduct[] {
-  return [...CUSTOM_FALLBACK_PRODUCTS, ...fallbackProducts];
+  return [...CUSTOM_FALLBACK_PRODUCTS, ...fallbackProducts].filter(
+    (p) => !DELETED_PRODUCT_IDS.has(p.id) && !DELETED_PRODUCT_IDS.has(p.slug)
+  );
 }
 
 export function getFallbackProductBySlug(slug: string): FallbackProduct | undefined {
