@@ -7,9 +7,20 @@ import type { Database } from "@/integrations/supabase/types";
  * (e.g. listing products, fetching reviews).
  */
 export function getPublicClient() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    console.error("[getPublicClient] Missing Supabase URL or Key environment variables.");
+  }
+
   return createClient<Database>(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
+    url!,
+    key!,
     { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
   );
 }
