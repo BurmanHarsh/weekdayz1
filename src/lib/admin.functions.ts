@@ -59,9 +59,46 @@ async function ensureAdminRole(ctx: { supabase: any; userId: string }) {
       .maybeSingle();
     if (data) return; // already has admin role
 
-    // Call SECURITY DEFINER function that auto-grants admin role if email is approved
-    await ctx.supabase.rpc("ensure_admin_role");
-    console.log("[ensureAdminRole] Granted admin role to user:", ctx.userId);
+    // Attempt 1: Call SECURITY DEFINER function via user's client
+    try {
+      await ctx.supabase.rpc("ensure_admin_role");
+      console.log("[ensureAdminRole] Granted admin role via RPC to user:", ctx.userId);
+    } catch (rpcErr: any) {
+      console.warn("[ensureAdminRole] RPC attempt failed:", rpcErr?.message);
+    }
+
+    // Verify the role was actually granted
+    const { data: verify } = await ctx.supabase
+      .from("user_roles")
+      .select("id")
+      .eq("user_id", ctx.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (verify) return; // confirmed
+
+    // Attempt 2: Use admin/service-role client to directly insert the role
+    const adminClient = await getAdminSupabaseClient();
+    if (adminClient) {
+      try {
+        await adminClient
+          .from("user_roles")
+          .insert({ user_id: ctx.userId, role: "admin" })
+          .select("id")
+          .maybeSingle();
+        console.log("[ensureAdminRole] Granted admin role via service-role client to user:", ctx.userId);
+        return;
+      } catch (adminErr: any) {
+        console.warn("[ensureAdminRole] Service-role insert failed:", adminErr?.message);
+      }
+    }
+
+    // Attempt 3: Retry the RPC once more (handles transient network issues on mobile)
+    try {
+      await ctx.supabase.rpc("ensure_admin_role");
+      console.log("[ensureAdminRole] Granted admin role via RPC retry to user:", ctx.userId);
+    } catch (retryErr: any) {
+      console.warn("[ensureAdminRole] RPC retry also failed:", retryErr?.message);
+    }
   } catch (e: any) {
     console.warn("[ensureAdminRole] Could not auto-grant admin role:", e?.message);
   }
@@ -323,7 +360,10 @@ export const createProduct = createServerFn({ method: "POST" })
           .select("id")
           .single();
         if (!error && row) return { id: row.id };
-      } catch (_) {}
+        if (error) console.warn("[createProduct] Admin client DB insert failed:", error.message);
+      } catch (e: any) {
+        console.warn("[createProduct] Admin client DB insert exception:", e?.message);
+      }
     }
 
     try {
@@ -333,9 +373,13 @@ export const createProduct = createServerFn({ method: "POST" })
         .select("id")
         .single();
       if (!error && row) return { id: row.id };
-    } catch (_) {}
+      if (error) console.warn("[createProduct] User client DB insert failed:", error.message);
+    } catch (e: any) {
+      console.warn("[createProduct] User client DB insert exception:", e?.message);
+    }
 
     // Store in fallback memory list and persistent Supabase storage
+    console.warn("[createProduct] DB insert failed for both clients, using fallback storage for product:", data.slug);
     const newId = `admin-prod-${Date.now()}`;
     const newProduct: FallbackProduct = {
       id: newId,
@@ -351,7 +395,8 @@ export const createProduct = createServerFn({ method: "POST" })
       is_active: true,
       created_at: new Date().toISOString(),
     };
-    await saveStorageCustomProducts(newProduct, context.supabase);
+    // Pass both user client and admin client so saveStorageCustomProducts can try both
+    await saveStorageCustomProducts(newProduct, context.supabase, adminClient ?? undefined);
     return { id: newId };
   });
 

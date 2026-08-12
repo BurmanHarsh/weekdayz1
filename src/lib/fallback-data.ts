@@ -139,13 +139,30 @@ export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
       const text = await data.text();
       const parsed = JSON.parse(text);
       if (parsed && typeof parsed === "object") {
+        let storageProducts: FallbackProduct[] = [];
+        let storageDeletedIds: string[] = [];
+
         // Support both array format (legacy) and object format { products, deletedIds }
         if (Array.isArray(parsed)) {
-          CUSTOM_FALLBACK_PRODUCTS = parsed;
+          storageProducts = parsed;
         } else {
-          CUSTOM_FALLBACK_PRODUCTS = parsed.products || [];
-          DELETED_PRODUCT_IDS = new Set(parsed.deletedIds || []);
+          storageProducts = parsed.products || [];
+          storageDeletedIds = parsed.deletedIds || [];
         }
+
+        // Merge: keep any in-memory products that aren't in storage yet
+        // (handles the case where a product was added to memory but the storage upload failed)
+        const storageIds = new Set(storageProducts.map((p) => p.id));
+        const storageSlugs = new Set(storageProducts.map((p) => p.slug));
+        const memoryOnlyProducts = CUSTOM_FALLBACK_PRODUCTS.filter(
+          (p) => !storageIds.has(p.id) && !storageSlugs.has(p.slug)
+        );
+
+        CUSTOM_FALLBACK_PRODUCTS = [...memoryOnlyProducts, ...storageProducts];
+        // Merge deleted IDs — keep any already-tracked deletions
+        const mergedDeletedIds = new Set([...DELETED_PRODUCT_IDS, ...storageDeletedIds]);
+        DELETED_PRODUCT_IDS = mergedDeletedIds;
+
         return CUSTOM_FALLBACK_PRODUCTS;
       }
     }
@@ -155,6 +172,7 @@ export async function fetchStorageCustomProducts(): Promise<FallbackProduct[]> {
   } catch (e: any) {
     console.warn("[fetchStorageCustomProducts] exception:", e?.message);
   }
+  // On failure, preserve existing in-memory products instead of returning empty
   return CUSTOM_FALLBACK_PRODUCTS;
 }
 
@@ -165,7 +183,7 @@ function getStoragePayload(): string {
   }, null, 2);
 }
 
-export async function saveStorageCustomProducts(product: FallbackProduct, client?: any): Promise<void> {
+export async function saveStorageCustomProducts(product: FallbackProduct, client?: any, adminClient?: any): Promise<void> {
   addCustomFallbackProduct(product);
   // Remove from deleted set if re-adding
   DELETED_PRODUCT_IDS.delete(product.id);
@@ -188,6 +206,22 @@ export async function saveStorageCustomProducts(product: FallbackProduct, client
       console.warn("[saveStorageCustomProducts] auth client error:", error.message);
     } catch (e: any) {
       console.warn("[saveStorageCustomProducts] auth client exception:", e?.message);
+    }
+  }
+
+  // Try with admin/service-role client (bypasses RLS)
+  if (adminClient) {
+    try {
+      const { error } = await adminClient.storage
+        .from(STORAGE_BUCKET)
+        .upload(STORAGE_PATH, buffer, { upsert: true, contentType: "application/json" });
+      if (!error) {
+        console.log("[saveStorageCustomProducts] Saved via admin client");
+        return;
+      }
+      console.warn("[saveStorageCustomProducts] admin client error:", error.message);
+    } catch (e: any) {
+      console.warn("[saveStorageCustomProducts] admin client exception:", e?.message);
     }
   }
 
