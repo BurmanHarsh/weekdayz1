@@ -44,32 +44,81 @@ export const getProductBySlug = createServerFn({ method: "GET" })
 
     await fetchStorageCustomProducts();
 
+    // Helper: enrich product with fallback images if DB images are missing
+    const enrichImages = (product: any) => {
+      if (!product.image_urls || product.image_urls.length === 0 || (product.image_urls.length === 1 && !product.image_urls[0])) {
+        const fallback = getFallbackProductBySlug(product.slug) ?? getFallbackProductBySlug(cleanSlug) ?? getFallbackProductBySlug(rawSlug);
+        if (fallback && fallback.image_urls && fallback.image_urls.length > 0) {
+          return { ...product, image_urls: fallback.image_urls };
+        }
+      }
+      return product;
+    };
+
     try {
       const supabase = getPublicClient();
-      const { data: product, error } = await supabase
+
+      // Strategy 1: Try exact slug match first (most reliable)
+      const { data: exactMatch, error: exactErr } = await supabase
         .from("products")
         .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
-        .or(`id.eq."${rawSlug}",slug.eq."${rawSlug}",slug.eq."${cleanSlug}",slug.ilike."${cleanSlug}"`)
+        .eq("slug", cleanSlug)
         .eq("is_active", true)
         .maybeSingle();
 
-      if (!error && product) {
-        if (!product.image_urls || product.image_urls.length === 0 || (product.image_urls.length === 1 && !product.image_urls[0])) {
-          const fallback = getFallbackProductBySlug(cleanSlug) ?? getFallbackProductBySlug(rawSlug);
-          if (fallback && fallback.image_urls && fallback.image_urls.length > 0) {
-            return { ...product, image_urls: fallback.image_urls };
-          }
+      if (!exactErr && exactMatch) {
+        return enrichImages(exactMatch);
+      }
+
+      // Strategy 2: Try raw slug (may differ from cleanSlug)
+      if (rawSlug !== cleanSlug) {
+        const { data: rawMatch, error: rawErr } = await supabase
+          .from("products")
+          .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+          .eq("slug", rawSlug)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (!rawErr && rawMatch) {
+          return enrichImages(rawMatch);
         }
-        return product;
+      }
+
+      // Strategy 3: Try by product ID (handles links that use ID instead of slug)
+      const { data: idMatch, error: idErr } = await supabase
+        .from("products")
+        .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+        .eq("id", rawSlug)
+        .eq("is_active", true)
+        .maybeSingle();
+
+      if (!idErr && idMatch) {
+        return enrichImages(idMatch);
+      }
+
+      // Strategy 4: Case-insensitive slug match
+      const { data: ilikeMatch, error: ilikeErr } = await supabase
+        .from("products")
+        .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+        .ilike("slug", cleanSlug)
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (!ilikeErr && ilikeMatch) {
+        return enrichImages(ilikeMatch);
       }
     } catch (_) {}
 
+    // Final fallback: check in-memory / storage-backed fallback products
     const fallbacks = getFallbackProducts();
     const found = fallbacks.find(
       (p) =>
         p.id === rawSlug ||
         p.id === cleanSlug ||
         p.id.toLowerCase() === rawSlug.toLowerCase() ||
+        p.slug === rawSlug ||
+        p.slug === cleanSlug ||
         p.slug.toLowerCase() === rawSlug.toLowerCase() ||
         p.slug.toLowerCase() === cleanSlug ||
         p.slug.toLowerCase().replace(/[^a-z0-9]+/g, "-") === cleanSlug ||
@@ -79,3 +128,4 @@ export const getProductBySlug = createServerFn({ method: "GET" })
     if (found) return found;
     throw new Error("Product not found");
   });
+
