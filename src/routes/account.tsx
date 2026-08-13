@@ -228,31 +228,61 @@ function AccountPage() {
               </div>
             ) : (
               <ul className="space-y-3">
-                {orders.map((o) => (
-                  <li key={o.id} className="flex items-center justify-between gap-4 bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <Package className="h-5 w-5 text-primary" />
+                {orders.map((o: any) => {
+                  const firstItem = o.order_items?.[0];
+                  const productImage = firstItem?.image_snapshot;
+                  const productSlug = firstItem?.product_slug;
+                  const productTitle = firstItem?.title_snapshot;
+                  const itemCount = o.order_items?.length ?? 0;
+
+                  const content = (
+                    <div className="flex items-center justify-between gap-4 bg-card border border-border rounded-xl p-5 hover:border-primary/30 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-lg overflow-hidden flex-shrink-0 border border-border bg-muted">
+                          {productImage ? (
+                            <img src={productImage} alt={productTitle ?? "Product"} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center">
+                              <Package className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          {productTitle && (
+                            <p className="text-sm font-semibold leading-snug line-clamp-1">{productTitle}</p>
+                          )}
+                          <p className="text-xs font-bold tracking-wide text-muted-foreground">
+                            #{o.id.slice(0, 8).toUpperCase()}
+                            {itemCount > 1 && <span className="ml-1.5 text-foreground/60">+{itemCount - 1} more</span>}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mt-0.5">
+                            {new Date(o.created_at).toLocaleDateString()} · {o.fulfillment_status}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold tracking-wide">#{o.id.slice(0, 8).toUpperCase()}</p>
-                        <p className="text-xs text-muted-foreground uppercase tracking-wider mt-0.5">
-                          {new Date(o.created_at).toLocaleDateString()} · {o.fulfillment_status}
-                        </p>
+                      <div className="text-right flex-shrink-0">
+                        <p className="font-bold">{formatPrice(o.total_cents)}</p>
+                        <span className={`inline-block mt-1 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
+                          o.payment_status === "paid"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}>
+                          {o.payment_status}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold">{formatPrice(o.total_cents)}</p>
-                      <span className={`inline-block mt-1 text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-                        o.payment_status === "paid"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}>
-                        {o.payment_status}
-                      </span>
-                    </div>
-                  </li>
-                ))}
+                  );
+
+                  return productSlug ? (
+                    <li key={o.id}>
+                      <Link to="/product/$slug" params={{ slug: productSlug }}>
+                        {content}
+                      </Link>
+                    </li>
+                  ) : (
+                    <li key={o.id}>{content}</li>
+                  );
+                })}
               </ul>
             )}
           </div>

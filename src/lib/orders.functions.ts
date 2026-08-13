@@ -182,8 +182,36 @@ export const myOrders = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("orders")
-      .select("id, total_cents, payment_status, fulfillment_status, created_at, tracking_number, estimated_delivery_date")
+      .select("id, total_cents, payment_status, fulfillment_status, created_at, tracking_number, estimated_delivery_date, order_items(id, product_id, title_snapshot, image_snapshot, quantity, size, color, unit_price_cents)")
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data;
+
+    // Enrich order items with product slugs for linking
+    const productIds = new Set<string>();
+    for (const order of data ?? []) {
+      for (const item of (order as any).order_items ?? []) {
+        if (item.product_id) productIds.add(item.product_id);
+      }
+    }
+
+    let slugMap: Record<string, string> = {};
+    if (productIds.size > 0) {
+      try {
+        const { data: products } = await context.supabase
+          .from("products")
+          .select("id, slug")
+          .in("id", Array.from(productIds));
+        if (products) {
+          slugMap = Object.fromEntries(products.map((p) => [p.id, p.slug]));
+        }
+      } catch (_) {}
+    }
+
+    return (data ?? []).map((order: any) => ({
+      ...order,
+      order_items: (order.order_items ?? []).map((item: any) => ({
+        ...item,
+        product_slug: slugMap[item.product_id] ?? null,
+      })),
+    }));
   });
