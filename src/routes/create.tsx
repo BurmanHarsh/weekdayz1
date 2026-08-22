@@ -227,9 +227,7 @@ function CreatorStudio() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".avif", ".gif"]
-    },
+    accept: { "image/*": [] },
     multiple: true,
   });
 
