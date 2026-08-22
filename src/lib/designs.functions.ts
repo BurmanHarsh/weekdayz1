@@ -51,3 +51,17 @@ export const myDesigns = createServerFn({ method: "GET" })
     return data ?? [];
   });
 
+export const getDesignById = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.object({ id: z.string() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("custom_designs")
+      .select("id, design_file_url, base_color, placement_settings, created_at")
+      .eq("id", data.id)
+      .single();
+    if (error || !row) throw new Error(error?.message ?? "Design not found");
+    return row;
+  });
+
+

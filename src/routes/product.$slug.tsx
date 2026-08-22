@@ -86,7 +86,7 @@ function ProductPageInner() {
     }
 
     // 2. Positional fallback among non-size-chart images
-    const nonSizeChartImages = product.image_urls.filter((url) => {
+    const nonSizeChartImages = product.image_urls.filter((url: string) => {
       const l = url.toLowerCase();
       return !l.includes("size-chart") && !l.includes("sizechart");
     });
@@ -105,7 +105,7 @@ function ProductPageInner() {
   const initialColor = (() => {
     if (searchColor) {
       const match = availableColors.find(
-        (c) => c.toLowerCase() === searchColor.toLowerCase()
+        (c: string) => c.toLowerCase() === searchColor.toLowerCase()
       );
       if (match) return match;
     }
@@ -114,7 +114,7 @@ function ProductPageInner() {
 
   const initialImgIdx = initialColor ? findImageIndexForColor(initialColor) : 0;
   const isRequestedColorUnavailable = Boolean(
-    searchColor && !availableColors.some((c) => c.toLowerCase() === searchColor.toLowerCase())
+    searchColor && !availableColors.some((c: string) => c.toLowerCase() === searchColor.toLowerCase())
   );
 
   const [size, setSize] = useState(product.sizes[1] ?? product.sizes[0]);
@@ -127,7 +127,7 @@ function ProductPageInner() {
   // Couple variant: separate config for male & female
   const isCouple = product.category?.toLowerCase().includes("couple") ||
     product.title?.toLowerCase().includes("couple") ||
-    availableColors.some(c => c.toLowerCase().includes("couple"));
+    availableColors.some((c: string) => c.toLowerCase().includes("couple"));
   const [maleSize, setMaleSize] = useState(product.sizes[1] ?? product.sizes[0]);
   const [maleColor, setMaleColor] = useState<"White" | "Black">("White");
   const [femaleSize, setFemaleSize] = useState(product.sizes[0]);
@@ -138,7 +138,7 @@ function ProductPageInner() {
   useEffect(() => {
     if (searchColor) {
       const match = availableColors.find(
-        (c) => c.toLowerCase() === searchColor.toLowerCase()
+        (c: string) => c.toLowerCase() === searchColor.toLowerCase()
       );
       if (match) {
         setColor(match);
@@ -290,7 +290,7 @@ function ProductPageInner() {
           {/* Thumbnail rail */}
           {product.image_urls.length > 1 && (
             <div className="flex flex-col gap-2">
-              {product.image_urls.map((u, i) => (
+              {product.image_urls.map((u: string, i: number) => (
                 <button
                   key={i}
                   onClick={() => setImgIdx(i)}
@@ -395,7 +395,7 @@ function ProductPageInner() {
               )}
 
               <div className="flex flex-wrap gap-2">
-                {availableColors.map((c) => {
+                {availableColors.map((c: string) => {
                   const isSelected = color === c;
                   return (
                     <button
@@ -483,7 +483,7 @@ function ProductPageInner() {
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {product.sizes.map((s) => (
+              {product.sizes.map((s: string) => (
                 <button
                   key={s}
                   onClick={() => setSize(s)}
@@ -631,7 +631,7 @@ function ProductPageInner() {
                 {/* Thumbnail Strip */}
                 {product.image_urls.length > 1 && (
                   <div className="flex gap-2 mt-4 overflow-x-auto max-w-full py-1 px-2">
-                    {product.image_urls.map((u, i) => (
+                    {product.image_urls.map((u: string, i: number) => (
                       <button
                         key={i}
                         type="button"

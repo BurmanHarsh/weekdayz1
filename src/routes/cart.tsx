@@ -42,7 +42,18 @@ function CartPage() {
               <div className="flex-1">
                 <div className="flex justify-between items-start gap-2">
                   <h3 className="font-semibold">{i.title}</h3>
-                  <button onClick={() => removeItem(i.key)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  <div className="flex items-center gap-2">
+                    {i.custom_design_id && (
+                      <Link
+                        to="/create"
+                        search={{ designId: i.custom_design_id, cartKey: i.key }}
+                        className="text-xs text-accent font-bold hover:underline"
+                      >
+                        Edit Design
+                      </Link>
+                    )}
+                    <button onClick={() => removeItem(i.key)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                  </div>
                 </div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">Size {i.size}{i.custom_design_id && <span className="ml-2 text-accent">Custom</span>}</p>
                 <div className="flex items-center justify-between mt-4">

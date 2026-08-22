@@ -21,6 +21,7 @@ import AutoLayoutCard from "@/components/ui/auto-layout-card";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
+import { fetchWebsitePosters, WebsitePoster } from "@/lib/posters";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
@@ -137,11 +138,25 @@ function Home() {
   );
 }
 
-/* ─── HERO CAROUSEL — Sliding animation, 3:4 on mobile, cinematic on desktop ─── */
+/* ─── HERO CAROUSEL — Dynamic Admin Website Posters & Sliding Animation ─── */
 function HeroCarousel() {
+  const [posters, setPosters] = useState<WebsitePoster[]>([]);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const loadPosters = () => {
+      const all = fetchWebsitePosters();
+      const active = all.filter((p) => p.is_active);
+      setPosters(active.length > 0 ? active : all);
+    };
+    loadPosters();
+    window.addEventListener("website-posters-updated", loadPosters);
+    return () => window.removeEventListener("website-posters-updated", loadPosters);
+  }, []);
+
+  const heroList = posters.length > 0 ? posters : HERO;
 
   const goTo = (idx: number) => {
     if (animating || idx === current) return;
@@ -150,23 +165,21 @@ function HeroCarousel() {
     setTimeout(() => setAnimating(false), 700);
   };
 
-  const goNext = () => goTo((current + 1) % HERO.length);
-  const goPrev = () => goTo((current - 1 + HERO.length) % HERO.length);
+  const goNext = () => goTo((current + 1) % heroList.length);
+  const goPrev = () => goTo((current - 1 + heroList.length) % heroList.length);
 
   useEffect(() => {
     timerRef.current = setInterval(goNext, 5000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [current, animating]);
-
-  const slide = HERO[current];
+  }, [current, animating, heroList.length]);
 
   return (
     <section className="relative bg-black text-white overflow-hidden group">
       {/* 3:4 on mobile, tall cinematic on desktop */}
       <div className="relative w-full" style={{ paddingBottom: "min(75%, 90vh)" }}>
-        {HERO.map((s, idx) => (
+        {heroList.map((s, idx) => (
           <div
-            key={s.title}
+            key={s.id || s.title}
             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === current ? "opacity-100 z-10" : "opacity-0 z-0"}`}
           >
             <img
@@ -188,22 +201,12 @@ function HeroCarousel() {
                   <h1 className="text-display text-4xl md:text-6xl lg:text-7xl leading-[0.92] font-black text-white">{s.title}</h1>
                   <p className="mt-4 text-base md:text-lg text-white/80 font-medium leading-relaxed">{s.sub}</p>
                   <div className="mt-8">
-                    {s.params ? (
-                      <Link
-                        to={s.to as any}
-                        params={s.params as any}
-                        className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-foreground hover:text-white transition-all duration-300 shadow-lg"
-                      >
-                        {s.cta} <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    ) : (
-                      <Link
-                        to={s.to as any}
-                        className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-foreground hover:text-white transition-all duration-300 shadow-lg"
-                      >
-                        {s.cta} <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    )}
+                    <Link
+                      to={s.to as any}
+                      className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-foreground hover:text-white transition-all duration-300 shadow-lg"
+                    >
+                      {s.cta} <ArrowRight className="h-4 w-4" />
+                    </Link>
                   </div>
                 </div>
               </div>

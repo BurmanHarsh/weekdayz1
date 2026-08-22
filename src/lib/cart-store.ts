@@ -11,12 +11,14 @@ export type CartItem = {
   color?: string;
   unit_price_cents: number;
   quantity: number;
+  designConfig?: Record<string, any>;
 };
 
 interface CartState {
   items: CartItem[];
   drawerOpen: boolean;
   addItem: (item: Omit<CartItem, "quantity" | "key"> & { quantity?: number }) => void;
+  updateItem: (key: string, updated: Partial<CartItem>) => void;
   removeItem: (key: string) => void;
   updateQty: (key: string, qty: number) => void;
   syncItemPrices: (products: Array<{ id: string; price_cents: number }>) => void;
@@ -53,6 +55,10 @@ export const useCart = create<CartState>()(
             drawerOpen: true,
           };
         }),
+      updateItem: (key, updated) =>
+        set((state) => ({
+          items: state.items.map((i) => (i.key === key ? { ...i, ...updated } : i)),
+        })),
       removeItem: (key) => set((state) => ({ items: state.items.filter((i) => i.key !== key) })),
       updateQty: (key, qty) =>
         set((state) => ({

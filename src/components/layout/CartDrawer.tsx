@@ -65,9 +65,26 @@ export function CartDrawer() {
                       <div className="flex-1 min-w-0">
                         <div className="flex justify-between gap-2">
                           <h3 className="text-sm font-semibold truncate">{item.title}</h3>
-                          <button onClick={() => removeItem(item.key)} aria-label="Remove" className="text-muted-foreground hover:text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {item.custom_design_id && (
+                              <button
+                                onClick={() => {
+                                  setDrawerOpen(false);
+                                  navigate({
+                                    to: "/create",
+                                    search: { designId: item.custom_design_id, cartKey: item.key },
+                                  });
+                                }}
+                                title="Re-edit Custom Design"
+                                className="text-xs text-accent font-bold hover:underline flex items-center gap-1 p-1"
+                              >
+                                Edit
+                              </button>
+                            )}
+                            <button onClick={() => removeItem(item.key)} aria-label="Remove" className="text-muted-foreground hover:text-destructive p-1">
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
                           Size {item.size} {item.color ? `• ${item.color}` : ""}
