@@ -269,7 +269,7 @@ export default function WebsitePostersSection() {
                       {uploading ? "Uploading..." : "Upload Local Image"}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*, .png, .jpg, .jpeg, .webp, .heic, .heif, .avif"
                         className="hidden"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];

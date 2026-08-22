@@ -2,7 +2,7 @@ import { createFileRoute, notFound, useNavigate, Link } from "@tanstack/react-ro
 import { useState, useEffect, useMemo } from "react";
 import { useSuspenseQuery, queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw, Ruler, X, Maximize2, ChevronLeft, ChevronRight, ArrowRight, Heart } from "lucide-react";
+import { ShoppingBag, Zap, Check, Star, Trash2, ShieldCheck, Truck, RotateCcw, Ruler, X, Maximize2, ChevronLeft, ChevronRight, ArrowRight, Heart, Box } from "lucide-react";
 import { getProductBySlug, listProducts } from "@/lib/products.functions";
 import { getFallbackProducts } from "@/lib/fallback-data";
 import { getProductReviews, submitReview, deleteReview, canUserReviewProduct } from "@/lib/reviews.functions";
@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/format";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { TShirt3DPreviewModal } from "@/components/shop/TShirt3DPreviewModal";
 
 const productQ = (slug: string) =>
   queryOptions({
@@ -123,6 +124,7 @@ function ProductPageInner() {
   const [zoom, setZoom] = useState({ x: 50, y: 50, active: false });
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [preview3D, setPreview3D] = useState(false);
   const [quantity, setQuantity] = useState(1);
   // Couple variant: separate config for male & female
   const isCouple = product.category?.toLowerCase().includes("couple") ||
@@ -349,6 +351,16 @@ function ProductPageInner() {
               title="Click to view image in full screen"
             >
               <Maximize2 className="h-3.5 w-3.5" /> View Image
+            </button>
+
+            {/* 3D Interactive View Button */}
+            <button
+              type="button"
+              onClick={() => setPreview3D(true)}
+              className="absolute bottom-3 right-3 px-3.5 py-2 bg-foreground text-background font-black text-xs uppercase tracking-widest shadow-xl flex items-center gap-2 hover:opacity-90 transition-all z-20 hover:scale-105 cursor-pointer"
+              title="Open interactive 3D view of product"
+            >
+              <Box className="h-4 w-4" /> 3D View
             </button>
           </div>
         </div>
@@ -825,6 +837,15 @@ function ProductPageInner() {
 
       {/* You May Also Like Section */}
       <YouMayAlsoLikeSection currentProductId={product.id} category={product.category} />
+
+      {/* 3D Interactive Modal */}
+      <TShirt3DPreviewModal
+        open={preview3D}
+        onOpenChange={setPreview3D}
+        frontCompositeUrl={product.image_urls[imgIdx] || product.image_urls[0]}
+        baseColor="#FFFFFF"
+        garmentType={product.title}
+      />
     </div>
   );
 }

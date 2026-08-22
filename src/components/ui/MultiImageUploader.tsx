@@ -153,7 +153,9 @@ export function MultiImageUploader({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/png": [".png"], "image/jpeg": [".jpg", ".jpeg"], "image/webp": [".webp"] },
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".avif", ".gif"]
+    },
     multiple: true,
     disabled: images.length >= maxFiles,
   });

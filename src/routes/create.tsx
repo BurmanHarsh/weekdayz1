@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { z } from "zod";
 import {
   Upload,
   ShoppingBag,
@@ -97,11 +98,13 @@ const PRINT_COSTS = [
   { label: "Sleeve Print", price: 5900 },
 ];
 
+const createSearchSchema = z.object({
+  designId: z.string().optional(),
+  cartKey: z.string().optional(),
+});
+
 export const Route = createFileRoute("/create")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    designId: (search.designId as string) || undefined,
-    cartKey: (search.cartKey as string) || undefined,
-  }),
+  validateSearch: createSearchSchema,
   head: () => ({
     meta: [
       { title: "Design Your Own Tee | WEEKDAYZZ" },
@@ -200,8 +203,8 @@ function CreatorStudio() {
   const onDrop = (files: File[]) => {
     const f = files[0];
     if (!f) return;
-    if (f.size > 8 * 1024 * 1024) {
-      toast.error("Max file size is 8MB");
+    if (f.size > 15 * 1024 * 1024) {
+      toast.error("Max file size is 15MB");
       return;
     }
     const previewUrl = URL.createObjectURL(f);
@@ -224,7 +227,9 @@ function CreatorStudio() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/png": [".png"], "image/jpeg": [".jpg", ".jpeg"] },
+    accept: {
+      "image/*": [".png", ".jpg", ".jpeg", ".webp", ".heic", ".heif", ".avif", ".gif"]
+    },
     multiple: true,
   });
 
@@ -251,6 +256,54 @@ function CreatorStudio() {
     setSelectedLayerId(newLayer.id);
     setNewText("");
     toast.success(`Text added to ${printSide} print`);
+  };
+
+  const handleCornerResizeStart = (
+    e: React.PointerEvent,
+    layerId: string,
+    corner: "tl" | "tr" | "bl" | "br"
+  ) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedLayerId(layerId);
+
+    const targetLayer = layers.find((l) => l.id === layerId);
+    if (!targetLayer) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startScale = targetLayer.scale;
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const deltaX = moveEvent.clientX - startX;
+      const deltaY = moveEvent.clientY - startY;
+
+      let factor = 0;
+      if (corner === "br") {
+        factor = (deltaX + deltaY) / 2;
+      } else if (corner === "tl") {
+        factor = (-deltaX - deltaY) / 2;
+      } else if (corner === "tr") {
+        factor = (deltaX - deltaY) / 2;
+      } else if (corner === "bl") {
+        factor = (-deltaX + deltaY) / 2;
+      }
+
+      const sensitivity = 0.006;
+      const newScale = Math.min(2.5, Math.max(0.3, startScale + factor * sensitivity));
+
+      setLayers((prev) =>
+        prev.map((l) => (l.id === layerId ? { ...l, scale: Number(newScale.toFixed(3)) } : l))
+      );
+    };
+
+    const handlePointerUp = () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
   };
 
   const updateActiveLayer = (updates: Partial<DesignLayer>) => {
@@ -566,6 +619,47 @@ function CreatorStudio() {
                         {layer.text}
                       </div>
                     )}
+
+                    {/* 4 Interactive Corner Drag Resize Handles */}
+                    {isSelected && (
+                      <>
+                        {/* Top-Left Corner Handle */}
+                        <div
+                          onPointerDown={(e) => handleCornerResizeStart(e, layer.id, "tl")}
+                          className="absolute -top-3 -left-3 w-6 h-6 bg-background border-2 border-foreground rounded-full shadow-lg cursor-nwse-resize z-50 flex items-center justify-center hover:scale-125 active:scale-125 transition-transform"
+                          title="Drag corner to resize"
+                        >
+                          <div className="w-2 h-2 bg-foreground rounded-full" />
+                        </div>
+
+                        {/* Top-Right Corner Handle */}
+                        <div
+                          onPointerDown={(e) => handleCornerResizeStart(e, layer.id, "tr")}
+                          className="absolute -top-3 -right-3 w-6 h-6 bg-background border-2 border-foreground rounded-full shadow-lg cursor-nesw-resize z-50 flex items-center justify-center hover:scale-125 active:scale-125 transition-transform"
+                          title="Drag corner to resize"
+                        >
+                          <div className="w-2 h-2 bg-foreground rounded-full" />
+                        </div>
+
+                        {/* Bottom-Left Corner Handle */}
+                        <div
+                          onPointerDown={(e) => handleCornerResizeStart(e, layer.id, "bl")}
+                          className="absolute -bottom-3 -left-3 w-6 h-6 bg-background border-2 border-foreground rounded-full shadow-lg cursor-nesw-resize z-50 flex items-center justify-center hover:scale-125 active:scale-125 transition-transform"
+                          title="Drag corner to resize"
+                        >
+                          <div className="w-2 h-2 bg-foreground rounded-full" />
+                        </div>
+
+                        {/* Bottom-Right Corner Handle */}
+                        <div
+                          onPointerDown={(e) => handleCornerResizeStart(e, layer.id, "br")}
+                          className="absolute -bottom-3 -right-3 w-6 h-6 bg-background border-2 border-foreground rounded-full shadow-lg cursor-nwse-resize z-50 flex items-center justify-center hover:scale-125 active:scale-125 transition-transform"
+                          title="Drag corner to resize"
+                        >
+                          <div className="w-2 h-2 bg-foreground rounded-full" />
+                        </div>
+                      </>
+                    )}
                   </motion.div>
                 );
               })}
@@ -675,7 +769,7 @@ function CreatorStudio() {
                   <Upload className="h-6 w-6 mx-auto mb-2 text-foreground" />
                   <p className="text-xs font-bold uppercase tracking-wider">Drop or Select Images</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Add multiple graphics to Front or Back. PNG / JPG max 8MB.
+                    Add multiple graphics to Front or Back. PNG, JPG, WEBP, or Phone Photos (max 15MB).
                   </p>
                 </div>
               )}
@@ -736,57 +830,6 @@ function CreatorStudio() {
                 </div>
               )}
             </div>
-
-            {/* Active Layer Fine-Tuning Transform Panel */}
-            {activeLayer && (
-              <div className="border border-border bg-card p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-border pb-2">
-                  <span className="text-xs font-black uppercase tracking-wider">
-                    Transforming Selected {activeLayer.type}
-                  </span>
-                  <button
-                    onClick={removeActiveLayer}
-                    className="text-[11px] font-bold text-destructive hover:underline flex items-center gap-1"
-                  >
-                    <Trash2 className="h-3 w-3" /> Remove
-                  </button>
-                </div>
-
-                {/* Scale Slider */}
-                <div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                    <span><Maximize2 className="h-3 w-3 inline mr-1" /> Scale</span>
-                    <span>{activeLayer.scale.toFixed(2)}x</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={0.3}
-                    max={2.5}
-                    step={0.05}
-                    value={activeLayer.scale}
-                    onChange={(e) => updateActiveLayer({ scale: Number(e.target.value) })}
-                    className="w-full accent-foreground cursor-pointer"
-                  />
-                </div>
-
-                {/* Rotation Slider */}
-                <div>
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                    <span><RotateCw className="h-3 w-3 inline mr-1" /> Rotation</span>
-                    <span>{activeLayer.rotate}°</span>
-                  </div>
-                  <input
-                    type="range"
-                    min={-180}
-                    max={180}
-                    step={5}
-                    value={activeLayer.rotate}
-                    onChange={(e) => updateActiveLayer({ rotate: Number(e.target.value) })}
-                    className="w-full accent-foreground cursor-pointer"
-                  />
-                </div>
-              </div>
-            )}
 
             {/* Garment Selection */}
             <div>

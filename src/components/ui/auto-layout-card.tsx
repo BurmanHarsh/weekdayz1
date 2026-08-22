@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Sparkles } from "lucide-react";
@@ -65,19 +65,19 @@ const cardVariants = {
     y: 120,
     transition: {
       duration: 0.2,
-      ease: "easeIn",
+      ease: "easeIn" as const,
     },
   },
   visible: {
     y: 0,
     transition: {
       duration: 0.3,
-      ease: "easeOut",
+      ease: "easeOut" as const,
     },
   },
 };
 
-export interface AutoLayoutCardProps extends Omit<React.HTMLAttributes<HTMLDivElement>, "title"> {
+export interface AutoLayoutCardProps extends Omit<HTMLMotionProps<"div">, "title"> {
   title?: React.ReactNode;
   subtitle?: string;
   badge?: string;

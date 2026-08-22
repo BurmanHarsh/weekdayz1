@@ -158,6 +158,10 @@ function HeroCarousel() {
 
   const heroList = posters.length > 0 ? posters : HERO;
 
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [mouseDownStart, setMouseDownStart] = useState<number | null>(null);
+
   const goTo = (idx: number) => {
     if (animating || idx === current) return;
     setAnimating(true);
@@ -168,6 +172,40 @@ function HeroCarousel() {
   const goNext = () => goTo((current + 1) % heroList.length);
   const goPrev = () => goTo((current - 1 + heroList.length) % heroList.length);
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    if (distance > 40) {
+      goNext();
+    } else if (distance < -40) {
+      goPrev();
+    }
+  };
+
+  const onMouseDown = (e: React.MouseEvent) => {
+    setMouseDownStart(e.clientX);
+  };
+
+  const onMouseUp = (e: React.MouseEvent) => {
+    if (mouseDownStart === null) return;
+    const distance = mouseDownStart - e.clientX;
+    setMouseDownStart(null);
+    if (distance > 40) {
+      goNext();
+    } else if (distance < -40) {
+      goPrev();
+    }
+  };
+
   useEffect(() => {
     timerRef.current = setInterval(goNext, 5000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
@@ -176,10 +214,18 @@ function HeroCarousel() {
   return (
     <section className="relative bg-black text-white overflow-hidden group">
       {/* 3:4 on mobile, tall cinematic on desktop */}
-      <div className="relative w-full" style={{ paddingBottom: "min(75%, 90vh)" }}>
+      <div
+        className="relative w-full touch-pan-y select-none cursor-grab active:cursor-grabbing"
+        style={{ paddingBottom: "min(75%, 90vh)" }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+      >
         {heroList.map((s, idx) => (
           <div
-            key={s.id || s.title}
+            key={("id" in s && s.id) ? (s.id as string) : `${s.title}-${idx}`}
             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === current ? "opacity-100 z-10" : "opacity-0 z-0"}`}
           >
             <img
