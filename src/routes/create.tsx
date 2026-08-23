@@ -37,9 +37,9 @@ const CUSTOM_PRINT_SURCHARGE = 20000; // ₹200 in paise/cents
 
 export const COLORS = [
   { name: "White", hex: "#FFFFFF" },
-  { name: "Navy Blue", hex: "#162238" },
-  { name: "Black", hex: "#121212" },
-  { name: "Off White", hex: "#F3EBDD" },
+  { name: "Navy Blue", hex: "#0F2042" },
+  { name: "Black", hex: "#111111" },
+  { name: "Off White", hex: "#EFE6D5" },
 ];
 
 export const GARMENT_TYPES = [
@@ -979,10 +979,10 @@ function CreatorStudio() {
       <TShirt3DPreviewModal
         open={preview3D}
         onOpenChange={setPreview3D}
-        frontCompositeUrl={frontCompositeBlobUrl}
-        backCompositeUrl={backCompositeBlobUrl}
+        layers={layers}
         baseColor={color.hex}
         garmentType={garment}
+        size={size as "XS" | "S" | "M" | "L" | "XL" | "XXL" | "XXXL"}
       />
     </div>
   );

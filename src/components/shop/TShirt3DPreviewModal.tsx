@@ -1,221 +1,185 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { RotateCcw, ZoomIn, ZoomOut, Pause, Play, AlertTriangle } from "lucide-react";
+import { TShirt3DViewer } from "./TShirt3DViewer";
+import type { TextureLayer } from "./designToTexture";
 
 interface TShirt3DPreviewModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  frontCompositeUrl?: string;
-  backCompositeUrl?: string;
+  /** Customer's design layers — same type as in routes/create.tsx DesignLayer. */
+  layers: TextureLayer[];
   baseColor: string;
   garmentType: string;
+  /** S/M/L/XL — drives body fit proportions in the 3D viewer. */
+  size?: "XS" | "S" | "M" | "L" | "XL" | "XXL" | "XXXL";
+}
+
+class ThreeJSBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("3D Preview Error Boundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center bg-card">
+          <AlertTriangle className="h-10 w-10 text-amber-500 mb-3" />
+          <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
+            3D Preview Unavailable
+          </h3>
+          <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+            WebGL 3D rendering encountered an issue on your browser or device. You can still customize your design in 2D view.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => this.setState({ hasError: false, error: null })}
+            className="mt-4 text-xs font-bold uppercase tracking-wider"
+          >
+            Try Again
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 export function TShirt3DPreviewModal({
   open,
   onOpenChange,
-  frontCompositeUrl,
-  backCompositeUrl,
+  layers,
   baseColor,
   garmentType,
+  size = "L",
 }: TShirt3DPreviewModalProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [rotationY, setRotationY] = useState(0);
-  const [rotationX, setRotationX] = useState(0);
-  const [zoom, setZoom] = useState(1);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [paused, setPaused] = useState(false);
 
-  const frontImgRef = useRef<HTMLImageElement | null>(null);
-  const backImgRef = useRef<HTMLImageElement | null>(null);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-
+  // Reset pause state when reopening
   useEffect(() => {
-    if (!open) return;
-    let loadedCount = 0;
-    const totalToLoad = (frontCompositeUrl ? 1 : 0) + (backCompositeUrl ? 1 : 0);
-    if (totalToLoad === 0) {
-      setImagesLoaded(true);
-      return;
-    }
+    if (open) setPaused(false);
+  }, [open]);
 
-    if (frontCompositeUrl) {
-      const fImg = new Image();
-      fImg.crossOrigin = "anonymous";
-      fImg.src = frontCompositeUrl;
-      fImg.onload = () => {
-        frontImgRef.current = fImg;
-        loadedCount++;
-        if (loadedCount >= totalToLoad) setImagesLoaded(true);
-      };
-    }
-    if (backCompositeUrl) {
-      const bImg = new Image();
-      bImg.crossOrigin = "anonymous";
-      bImg.src = backCompositeUrl;
-      bImg.onload = () => {
-        backImgRef.current = bImg;
-        loadedCount++;
-        if (loadedCount >= totalToLoad) setImagesLoaded(true);
-      };
-    }
-  }, [open, frontCompositeUrl, backCompositeUrl]);
-
-  useEffect(() => {
-    if (!open || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const width = canvas.width;
-    const height = canvas.height;
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Save state
-    ctx.save();
-    ctx.translate(width / 2, height / 2);
-    ctx.scale(zoom, zoom);
-
-    // Calculate rotation angle & active side (front vs back based on rotationY)
-    const normalizedY = ((rotationY % 360) + 360) % 360;
-    const isFrontSide = normalizedY <= 90 || normalizedY >= 270;
-    const scaleX = Math.cos((normalizedY * Math.PI) / 180);
-
-    ctx.scale(scaleX, 1);
-
-    // Draw shirt silhouette base
-    ctx.fillStyle = baseColor;
-    ctx.beginPath();
-    ctx.moveTo(-120, -180);
-    ctx.lineTo(-70, -220);
-    ctx.quadraticCurveTo(0, -200, 70, -220);
-    ctx.lineTo(120, -180);
-    ctx.lineTo(180, -110);
-    ctx.lineTo(135, -70);
-    ctx.lineTo(110, -110);
-    ctx.lineTo(110, 200);
-    ctx.lineTo(-110, 200);
-    ctx.lineTo(-110, -110);
-    ctx.lineTo(-135, -70);
-    ctx.lineTo(-180, -110);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = "#00000022";
-    ctx.lineWidth = 4;
-    ctx.stroke();
-
-    // Draw shadow gradient
-    const shadowGrad = ctx.createLinearGradient(-120, 0, 120, 0);
-    shadowGrad.addColorStop(0, "rgba(0,0,0,0.15)");
-    shadowGrad.addColorStop(0.5, "rgba(255,255,255,0.05)");
-    shadowGrad.addColorStop(1, "rgba(0,0,0,0.2)");
-    ctx.fillStyle = shadowGrad;
-    ctx.fill();
-
-    // Draw neck collar outline
-    ctx.beginPath();
-    ctx.ellipse(0, -210, 35, 12, 0, 0, Math.PI * 2);
-    ctx.strokeStyle = "rgba(0,0,0,0.3)";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    // Draw custom composite design texture on front or back
-    const activeImg = isFrontSide ? frontImgRef.current : backImgRef.current;
-    if (activeImg) {
-      ctx.globalAlpha = 0.95;
-      ctx.drawImage(activeImg, -100, -160, 200, 320);
-    } else {
-      ctx.fillStyle = "rgba(255,255,255,0.2)";
-      ctx.font = "12px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(isFrontSide ? "FRONT VIEW" : "BACK VIEW", 0, 0);
-    }
-
-    ctx.restore();
-  }, [open, rotationY, rotationX, zoom, imagesLoaded, baseColor]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX, y: e.clientY });
+  const handleReset = () => {
+    window.dispatchEvent(new CustomEvent("tshirt3d:reset"));
   };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    const deltaX = e.clientX - dragStart.x;
-    const deltaY = e.clientY - dragStart.y;
-    setRotationY((prev) => prev + deltaX * 0.8);
-    setRotationX((prev) => Math.max(-30, Math.min(30, prev + deltaY * 0.5)));
-    setDragStart({ x: e.clientX, y: e.clientY });
-  };
-
-  const handleMouseUp = () => setIsDragging(false);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl bg-background border border-border p-6 sm:p-8">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl bg-background border border-border p-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4 border-b border-border">
           <DialogTitle className="text-xl font-black uppercase tracking-wider text-foreground">
-            3D Interactive Preview — {garmentType}
+            3D Preview — {garmentType}
           </DialogTitle>
-          <p className="text-xs text-muted-foreground">
-            Click and drag to rotate 360°. Scroll or use buttons to zoom.
+          <p className="text-xs text-muted-foreground mt-1">
+            Your custom design fitted to a body, rotating 360°. Drag to inspect, scroll to zoom.
           </p>
         </DialogHeader>
 
-        {/* 3D Canvas viewport */}
-        <div
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          className="relative my-2 w-full h-[400px] bg-secondary/30 border border-border flex items-center justify-center cursor-grab active:cursor-grabbing select-none overflow-hidden"
-        >
-          <canvas ref={canvasRef} width={500} height={500} className="w-full h-full object-contain" />
+        {/* 3D viewport — fixed height so the canvas can size itself */}
+        <div className="relative w-full h-[460px] bg-gradient-to-b from-secondary/30 to-background">
+          {open && (
+            <ThreeJSBoundary>
+              <ViewerPauser paused={paused}>
+                <TShirt3DViewer
+                  baseColor={baseColor}
+                  garmentType={garmentType}
+                  layers={layers}
+                  size={size}
+                />
+              </ViewerPauser>
+            </ThreeJSBoundary>
+          )}
 
-          {/* Floating Orbit Toolbar */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur border border-border p-1.5 flex items-center gap-2 shadow-lg">
-            <button
-              onClick={() => setZoom((z) => Math.min(1.8, z + 0.15))}
-              className="p-1.5 hover:bg-secondary text-foreground transition-colors"
+          {/* Floating toolbar */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-background/95 backdrop-blur border border-border px-1.5 py-1 flex items-center gap-1 shadow-xl z-30">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setPaused((p) => !p)}
+              title={paused ? "Resume rotation" : "Pause rotation"}
+              className="h-8 w-8"
+            >
+              {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+            </Button>
+            <div className="h-5 w-px bg-border mx-1" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.dispatchEvent(new CustomEvent("tshirt3d:zoom", { detail: +0.4 }))}
               title="Zoom In"
+              className="h-8 w-8"
             >
               <ZoomIn className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setZoom((z) => Math.max(0.6, z - 0.15))}
-              className="p-1.5 hover:bg-secondary text-foreground transition-colors"
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => window.dispatchEvent(new CustomEvent("tshirt3d:zoom", { detail: -0.4 }))}
               title="Zoom Out"
+              className="h-8 w-8"
             >
               <ZoomOut className="h-4 w-4" />
-            </button>
-            <div className="h-4 w-px bg-border" />
-            <button
-              onClick={() => setRotationY((r) => r + 180)}
-              className="p-1.5 hover:bg-secondary text-foreground transition-colors flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider"
-              title="Flip Front / Back"
+            </Button>
+            <div className="h-5 w-px bg-border mx-1" />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              title="Reset view"
+              className="h-8 px-2 text-[10px] font-bold uppercase tracking-widest"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> Flip Side
-            </button>
-            <button
-              onClick={() => {
-                setRotationY(0);
-                setRotationX(0);
-                setZoom(1);
-              }}
-              className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider hover:bg-secondary text-muted-foreground transition-colors"
-            >
-              Reset
-            </button>
+              <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
+            </Button>
           </div>
+        </div>
 
-          <div className="absolute top-3 left-3 bg-foreground/80 text-background px-2 py-1 text-[10px] font-bold uppercase tracking-widest">
-            {(((rotationY % 360) + 360) % 360 <= 90 || ((rotationY % 360) + 360) % 360 >= 270) ? "Front View" : "Back View"}
+        {/* Footer hint */}
+        <div className="px-6 sm:px-8 py-3 border-t border-border bg-card flex items-center justify-between">
+          <div className="text-[11px] text-muted-foreground font-medium">
+            Base color · <span className="font-bold text-foreground">{baseColor}</span> · Size{" "}
+            <span className="font-bold text-foreground">{size}</span>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onOpenChange(false)}
+            className="text-[10px] font-bold uppercase tracking-widest"
+          >
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
   );
+}
+
+/**
+ * Wraps the viewer and forwards the toolbar's pause state.
+ */
+function ViewerPauser({
+  paused,
+  children,
+}: {
+  paused: boolean;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("tshirt3d:paused", { detail: paused }));
+  }, [paused]);
+  return <>{children}</>;
 }

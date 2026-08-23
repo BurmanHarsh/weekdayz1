@@ -838,13 +838,25 @@ function ProductPageInner() {
       {/* You May Also Like Section */}
       <YouMayAlsoLikeSection currentProductId={product.id} category={product.category} />
 
-      {/* 3D Interactive Modal */}
+      {/* 3D Interactive Modal — wraps the product image onto a rotating t-shirt */}
       <TShirt3DPreviewModal
         open={preview3D}
         onOpenChange={setPreview3D}
-        frontCompositeUrl={product.image_urls[imgIdx] || product.image_urls[0]}
-        baseColor="#FFFFFF"
+        layers={[
+          {
+            id: "product-preview",
+            type: "image",
+            side: "Front",
+            previewUrl: product.image_urls[imgIdx] || product.image_urls[0],
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotate: 0,
+          },
+        ]}
+        baseColor={color || "#FFFFFF"}
         garmentType={product.title}
+        size={(size as "XS" | "S" | "M" | "L" | "XL" | "XXL" | "XXXL") ?? "L"}
       />
     </div>
   );
