@@ -370,11 +370,21 @@ function ProductPageInner() {
             <h1 className="text-display text-4xl sm:text-6xl mt-2">{product.title}</h1>
 
             <div className="flex items-center gap-3 mt-4 flex-wrap">
-              {/* Sale badge */}
-              <span className="bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1">SALE</span>
-              {/* Strikethrough original price */}
-              <p className="text-lg text-muted-foreground line-through">{formatPrice(Math.round(product.price_cents * 1.25))}</p>
-              <p className="text-2xl font-black">{formatPrice(product.price_cents)}</p>
+              {product.compare_at_price_cents && product.compare_at_price_cents > product.price_cents && (
+                <>
+                  {/* Sale badge */}
+                  <span className="bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1">SALE</span>
+                  {/* Strikethrough original price */}
+                  <p className="text-lg text-muted-foreground line-through">{formatPrice(product.compare_at_price_cents)}</p>
+                  <p className="text-2xl font-black">{formatPrice(product.price_cents)}</p>
+                  <span className="text-[10px] font-black bg-emerald-500/15 text-emerald-700 px-2 py-1">
+                    {Math.round(((product.compare_at_price_cents - product.price_cents) / product.compare_at_price_cents) * 100)}% OFF
+                  </span>
+                </>
+              )}
+              {(!product.compare_at_price_cents || product.compare_at_price_cents <= product.price_cents) && (
+                <p className="text-2xl font-black">{formatPrice(product.price_cents)}</p>
+              )}
               {reviews && reviews.length > 0 && (
                 <a href="#reviews" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
                   <div className="flex text-amber-400">
@@ -1078,7 +1088,14 @@ function YouMayAlsoLikeSection({ currentProductId, category }: { currentProductI
                   {p.title}
                 </h3>
                 <p className="text-xs font-semibold text-muted-foreground mt-0.5">
-                  {formatPrice(p.price_cents)}
+                  {p.compare_at_price_cents && p.compare_at_price_cents > p.price_cents ? (
+                    <>
+                      <span className="text-emerald-600 font-bold">{formatPrice(p.price_cents)}</span>
+                      <span className="ml-1.5 line-through opacity-70">{formatPrice(p.compare_at_price_cents)}</span>
+                    </>
+                  ) : (
+                    formatPrice(p.price_cents)
+                  )}
                 </p>
               </div>
               <button

@@ -16,6 +16,7 @@ export type ProductCardData = {
   slug: string;
   title: string;
   price_cents: number;
+  compare_at_price_cents?: number | null;
   image_urls: string[];
   category: string;
 };
@@ -107,11 +108,29 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </motion.div>
         </button>
       </div>
-      <div className="mt-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold uppercase tracking-wide group-hover:text-accent transition-colors">
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold uppercase tracking-wide group-hover:text-accent transition-colors line-clamp-1">
           {product.title}
         </h3>
-        <span className="text-sm font-medium">{formatPrice(product.price_cents)}</span>
+        <div className="flex flex-col items-end leading-tight">
+          {product.compare_at_price_cents && product.compare_at_price_cents > product.price_cents ? (
+            <>
+              <span className="text-sm font-semibold text-emerald-600">
+                {formatPrice(product.price_cents)}
+                <span className="ml-1.5 text-[10px] font-black bg-emerald-500/15 text-emerald-700 px-1.5 py-0.5 align-middle">
+                  {Math.round(
+                    ((product.compare_at_price_cents - product.price_cents) / product.compare_at_price_cents) * 100
+                  )}% OFF
+                </span>
+              </span>
+              <span className="text-[11px] text-muted-foreground line-through">
+                {formatPrice(product.compare_at_price_cents)}
+              </span>
+            </>
+          ) : (
+            <span className="text-sm font-medium">{formatPrice(product.price_cents)}</span>
+          )}
+        </div>
       </div>
     </Link>
   );

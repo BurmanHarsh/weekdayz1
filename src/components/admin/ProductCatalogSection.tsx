@@ -165,7 +165,23 @@ export default function ProductCatalogSection() {
                       {p.category || "tee"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 font-semibold">{formatPrice(p.price_cents)}</td>
+                  <td className="px-4 py-3">
+                    {p.compare_at_price_cents && p.compare_at_price_cents > p.price_cents ? (
+                      <div className="space-y-0.5">
+                        <div className="font-semibold text-emerald-600">
+                          {formatPrice(p.price_cents)}
+                          <span className="ml-2 inline-block bg-emerald-500/15 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 align-middle">
+                            {Math.round(((p.compare_at_price_cents - p.price_cents) / p.compare_at_price_cents) * 100)}% OFF
+                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground line-through">
+                          MRP {formatPrice(p.compare_at_price_cents)}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="font-semibold">{formatPrice(p.price_cents)}</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <span
                       className={`font-mono font-semibold ${
@@ -262,6 +278,9 @@ function ProductFormModal({
     slug: initialProduct?.slug ?? "",
     description: initialProduct?.description ?? "",
     price: initialProduct ? (initialProduct.price_cents / 100).toString() : "1899",
+    compareAtPrice: initialProduct?.compare_at_price_cents
+      ? (initialProduct.compare_at_price_cents / 100).toString()
+      : "",
     inventory: initialProduct ? initialProduct.inventory_count.toString() : "100",
     categorySelect: initialProduct?.category && allCategoryList.includes(initialProduct.category.toLowerCase())
       ? initialProduct.category.toLowerCase()
@@ -298,11 +317,19 @@ function ProductFormModal({
             .replace(/[^a-z0-9]+/g, "-")
             .replace(/(^-|-$)/g, "");
 
+      const compareAtRaw = form.compareAtPrice.trim();
+      const compareAtCents = compareAtRaw === "" ? null : Math.round(Number(compareAtRaw) * 100);
+      const finalCompareAt =
+        compareAtCents !== null && compareAtCents > 0 && compareAtCents > Math.round(Number(form.price) * 100)
+          ? compareAtCents
+          : null;
+
       const payload = {
         slug,
         title: form.title.trim(),
         description: form.description.trim(),
         price_cents: Math.round(Number(form.price) * 100),
+        compare_at_price_cents: finalCompareAt,
         inventory_count: Number(form.inventory),
         image_urls: imageUrls,
         sizes: form.sizes.split(",").map((s: string) => s.trim()).filter(Boolean),
@@ -427,7 +454,7 @@ function ProductFormModal({
             )}
 
             <div>
-              <label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Price (₹) *</label>
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">Sale Price (₹) *</label>
               <input
                 type="number"
                 value={form.price}
@@ -435,6 +462,24 @@ function ProductFormModal({
                 className="mt-1 w-full bg-background border border-border px-3 py-2 text-sm font-mono"
                 required
               />
+              <p className="text-[11px] text-muted-foreground mt-1">The price customers actually pay.</p>
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-widest text-muted-foreground font-semibold">
+                Actual Price / MRP (₹)
+              </label>
+              <input
+                type="number"
+                value={form.compareAtPrice}
+                onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })}
+                placeholder="Optional — shown crossed-out as MRP"
+                className="mt-1 w-full bg-background border border-border px-3 py-2 text-sm font-mono"
+                min={0}
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Higher than sale price → displayed as strikethrough MRP. Leave blank for no MRP.
+              </p>
             </div>
 
             <div>

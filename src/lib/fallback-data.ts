@@ -4,6 +4,7 @@ export type FallbackProduct = {
   title: string;
   description: string;
   price_cents: number;
+  compare_at_price_cents?: number | null;
   inventory_count: number;
   image_urls: string[];
   sizes: string[];
