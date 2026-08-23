@@ -24,6 +24,35 @@ import { useDropzone } from "react-dropzone";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
+/**
+ * Resize a base64 data URL down to fit within `maxDim` on its longest side,
+ * re-encoded as JPEG with the given quality. Returns the original if the
+ * browser can't decode it (e.g. HEIC without support).
+ */
+function compressDataUrl(dataUrl: string, maxDim = 1280, quality = 0.78): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+        const w = Math.round(img.width * ratio);
+        const h = Math.round(img.height * ratio);
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(dataUrl);
+        ctx.drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      } catch {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 export default function WebsitePostersSection() {
   const [posters, setPosters] = useState<WebsitePoster[]>([]);
   const [editingPoster, setEditingPoster] = useState<WebsitePoster | null>(null);
@@ -286,9 +315,14 @@ export default function WebsitePostersSection() {
                               // Fallback to FileReader DataURL if storage bucket restricts unauthenticated upload
                               const reader = new FileReader();
                               reader.onload = () => {
-                                setEditingPoster({ ...editingPoster, img: reader.result as string });
-                                setUploading(false);
-                                toast.success("Poster image loaded!");
+                                const original = reader.result as string;
+                                // Compress the base64 fallback so multiple posters don't
+                                // blow past the ~5MB localStorage quota.
+                                compressDataUrl(original, 1280, 0.78).then((compressed) => {
+                                  setEditingPoster({ ...editingPoster, img: compressed });
+                                  setUploading(false);
+                                  toast.success("Poster image loaded!");
+                                });
                               };
                               reader.readAsDataURL(file);
                               return;

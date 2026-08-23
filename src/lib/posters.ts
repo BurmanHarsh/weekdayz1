@@ -70,7 +70,30 @@ export function saveWebsitePosters(posters: WebsitePoster[]) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(posters));
     window.dispatchEvent(new Event("website-posters-updated"));
-  } catch (e) {
+  } catch (e: any) {
+    // localStorage quota (typically ~5MB) gets blown out by base64 DataURLs
+    // when Supabase storage rejects unauthenticated uploads. Drop non-critical
+    // fields on older entries so the new poster still saves.
+    const isQuota =
+      e?.name === "QuotaExceededError" ||
+      e?.code === 22 ||
+      e?.code === 1014 ||
+      /quota/i.test(String(e?.message ?? ""));
+    if (isQuota) {
+      console.warn("Posters storage quota exceeded — trimming prior entries");
+      const trimmed = posters.map((p, i) =>
+        i === posters.length - 1
+          ? p
+          : { ...p, img: typeof p.img === "string" && p.img.startsWith("data:") ? "" : p.img },
+      );
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+        window.dispatchEvent(new Event("website-posters-updated"));
+        return;
+      } catch {
+        // give up silently — caller surfaces toast already
+      }
+    }
     console.error("Failed to save website posters to storage", e);
   }
 }

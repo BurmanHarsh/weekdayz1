@@ -278,7 +278,7 @@ function HeroCarousel() {
 
         {/* Dots */}
         <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
-          {HERO.map((_, idx) => (
+          {heroList.map((_, idx) => (
             <button
               key={idx}
               aria-label={`Go to slide ${idx + 1}`}
@@ -290,7 +290,7 @@ function HeroCarousel() {
 
         {/* Slide counter */}
         <div className="absolute bottom-6 right-6 z-20 text-white/60 text-xs font-bold tracking-widest">
-          {String(current + 1).padStart(2, "0")} / {String(HERO.length).padStart(2, "0")}
+          {String(current + 1).padStart(2, "0")} / {String(heroList.length).padStart(2, "0")}
         </div>
       </div>
     </section>
