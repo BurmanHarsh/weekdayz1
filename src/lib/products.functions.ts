@@ -10,7 +10,7 @@ export const listProducts = createServerFn({ method: "GET" }).handler(async () =
     const supabase = getPublicClient();
     const { data, error } = await supabase
       .from("products")
-      .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+      .select("id, slug, title, description, price_cents, compare_at_price_cents, inventory_count, image_urls, sizes, colors, category")
       .eq("is_active", true)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
@@ -61,7 +61,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
       // Strategy 1: Try exact slug match first (most reliable)
       const { data: exactMatch, error: exactErr } = await supabase
         .from("products")
-        .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+        .select("id, slug, title, description, price_cents, compare_at_price_cents, inventory_count, image_urls, sizes, colors, category")
         .eq("slug", cleanSlug)
         .eq("is_active", true)
         .maybeSingle();
@@ -74,7 +74,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
       if (rawSlug !== cleanSlug) {
         const { data: rawMatch, error: rawErr } = await supabase
           .from("products")
-          .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+          .select("id, slug, title, description, price_cents, compare_at_price_cents, inventory_count, image_urls, sizes, colors, category")
           .eq("slug", rawSlug)
           .eq("is_active", true)
           .maybeSingle();
@@ -87,7 +87,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
       // Strategy 3: Try by product ID (handles links that use ID instead of slug)
       const { data: idMatch, error: idErr } = await supabase
         .from("products")
-        .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+        .select("id, slug, title, description, price_cents, compare_at_price_cents, inventory_count, image_urls, sizes, colors, category")
         .eq("id", rawSlug)
         .eq("is_active", true)
         .maybeSingle();
@@ -99,7 +99,7 @@ export const getProductBySlug = createServerFn({ method: "GET" })
       // Strategy 4: Case-insensitive slug match
       const { data: ilikeMatch, error: ilikeErr } = await supabase
         .from("products")
-        .select("id, slug, title, description, price_cents, inventory_count, image_urls, sizes, colors, category")
+        .select("id, slug, title, description, price_cents, compare_at_price_cents, inventory_count, image_urls, sizes, colors, category")
         .ilike("slug", cleanSlug)
         .eq("is_active", true)
         .limit(1)

@@ -190,6 +190,7 @@ export type Database = {
         Row: {
           category: string
           colors: string[]
+          compare_at_price_cents: number | null
           created_at: string
           description: string
           height_cm: number
@@ -208,6 +209,7 @@ export type Database = {
         Insert: {
           category?: string
           colors?: string[]
+          compare_at_price_cents?: number | null
           created_at?: string
           description?: string
           height_cm?: number
@@ -226,6 +228,7 @@ export type Database = {
         Update: {
           category?: string
           colors?: string[]
+          compare_at_price_cents?: number | null
           created_at?: string
           description?: string
           height_cm?: number

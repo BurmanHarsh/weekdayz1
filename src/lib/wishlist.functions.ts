@@ -81,7 +81,7 @@ export const myWishlist = createServerFn({ method: "GET" })
     try {
       const { data } = await context.supabase
         .from("wishlist")
-        .select("product_id, products(id, slug, title, price_cents, image_urls, category)")
+        .select("product_id, products(id, slug, title, price_cents, compare_at_price_cents, image_urls, category)")
         .order("created_at", { ascending: false });
       if (data) dbItems.push(...data);
     } catch (_) {}

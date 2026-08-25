@@ -78,7 +78,7 @@ function Shop() {
 
   const allColors = useMemo(() => {
     const set = new Set<string>();
-    data.forEach((p) => p.colors?.forEach((c) => set.add(c)));
+    data.forEach((p) => p.colors?.forEach((c: string) => set.add(c)));
     return Array.from(set);
   }, [data]);
 

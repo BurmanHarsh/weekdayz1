@@ -372,11 +372,8 @@ function ProductPageInner() {
             <div className="flex items-center gap-3 mt-4 flex-wrap">
               {product.compare_at_price_cents && product.compare_at_price_cents > product.price_cents && (
                 <>
-                  {/* Sale badge */}
-                  <span className="bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1">SALE</span>
-                  {/* Strikethrough original price */}
-                  <p className="text-lg text-muted-foreground line-through">{formatPrice(product.compare_at_price_cents)}</p>
                   <p className="text-2xl font-black">{formatPrice(product.price_cents)}</p>
+                  <p className="text-sm font-medium text-muted-foreground line-through">MRP {formatPrice(product.compare_at_price_cents)}</p>
                   <span className="text-[10px] font-black bg-emerald-500/15 text-emerald-700 px-2 py-1">
                     {Math.round(((product.compare_at_price_cents - product.price_cents) / product.compare_at_price_cents) * 100)}% OFF
                   </span>
