@@ -289,10 +289,11 @@ function AuthFormContainer({
 }) {
   const handleGoogleLogin = async () => {
     try {
+      const redirectUrl = typeof window !== "undefined" ? window.location.origin : undefined;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectUrl,
         },
       });
       if (error) throw error;
