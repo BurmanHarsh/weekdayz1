@@ -14,6 +14,7 @@ import {
   Send
 } from "lucide-react";
 import FlowArt, { FlowSection } from "@/components/ui/story-scroll";
+import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";
 import { TestimonialsColumn, type TestimonialItem } from "@/components/ui/testimonials-columns-1";
 import {
   Accordion,
@@ -289,6 +290,7 @@ export function StoreTestimonialsSection() {
 export function BulkOrdersSection() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const sectionRef = React.useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -309,196 +311,202 @@ export function BulkOrdersSection() {
     setTimeout(() => {
       setDialogOpen(false);
       setSubmitted(false);
-      setFormData({
-        name: "",
-        email: "",
-        phone: "",
-        organization: "",
-        quantity: "50-100",
-        notes: "",
-      });
+      setFormData({ name: "", email: "", phone: "", organization: "", quantity: "50-100", notes: "" });
     }, 2000);
   };
 
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 my-24">
-      <div className="relative overflow-hidden rounded-3xl bg-card border border-border p-8 md:p-14 shadow-xl">
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-80 h-80 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-              <Building2 className="h-3.5 w-3.5" /> BULK & TEAM MERCH
+    <section ref={sectionRef} className="py-8 px-4 sm:px-6 bg-[#f9f9f9] my-10">
+      <div className="max-w-6xl mx-auto">
+        <div className="relative">
+
+          {/* ── Kicker ── */}
+          <div className="flex items-center gap-2 mb-8">
+            <span className="text-foreground animate-spin inline-block">✱</span>
+            <span className="text-xs font-bold tracking-[0.35em] text-muted-foreground uppercase">
+              BULK &amp; TEAM MERCH
+            </span>
+          </div>
+
+          {/* ── Large feature image with SVG clip path ── */}
+          <figure className="relative group mb-0">
+            <svg className="w-full" width="100%" height="100%" viewBox="0 0 100 40">
+              <defs>
+                <clipPath id="clip-bulk" clipPathUnits="objectBoundingBox">
+                  <path
+                    d="M0.0998072 1H0.422076H0.749756C0.767072 1 0.774207 0.961783 0.77561 0.942675V0.807325C0.777053 0.743631 0.791844 0.731953 0.799059 0.734076H0.969813C0.996268 0.730255 1.00088 0.693206 0.999875 0.675159V0.0700637C0.999875 0.0254777 0.985045 0.00477707 0.977629 0H0.902473C0.854975 0 0.890448 0.138535 0.850165 0.138535H0.0204424C0.00408849 0.142357 0 0.180467 0 0.199045V0.410828C0 0.449045 0.0136283 0.46603 0.0204424 0.469745H0.0523086C0.0696245 0.471019 0.0735527 0.497877 0.0733523 0.511146V0.915605C0.0723903 0.983121 0.090588 1 0.0998072 1Z"
+                    fill="#D9D9D9"
+                  />
+                </clipPath>
+              </defs>
+              <image
+                clipPath="url(#clip-bulk)"
+                preserveAspectRatio="xMidYMid slice"
+                width="100%"
+                height="100%"
+                href="https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=1400&auto=format&fit=crop&q=80"
+              />
+            </svg>
+          </figure>
+
+          {/* ── Stats row ── */}
+          <div className="flex flex-wrap lg:justify-start justify-between items-center py-3 text-sm gap-x-6">
+            <div className="flex items-center gap-2 mb-2 sm:text-base text-xs">
+              <span className="text-foreground font-black text-lg">15+</span>
+              <span className="text-muted-foreground">pieces minimum</span>
+              <span className="text-border">|</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2 sm:text-base text-xs">
+              <span className="text-foreground font-black text-lg">24h</span>
+              <span className="text-muted-foreground">quote turnaround</span>
+              <span className="text-border">|</span>
+            </div>
+            <div className="flex items-center gap-2 mb-2 sm:text-base text-xs">
+              <span className="text-foreground font-black text-lg">100%</span>
+              <span className="text-muted-foreground">custom prints</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-foreground leading-tight">
-              Planning Bulk or Custom Orders for Your Team?
+            {/* Right-aligned large stat */}
+            <div className="lg:absolute right-0 bottom-16 flex lg:flex-col flex-row-reverse lg:gap-0 gap-4">
+              <div className="flex lg:text-4xl sm:text-3xl text-2xl items-center gap-2 mb-2">
+                <span className="text-foreground font-black">250+</span>
+                <span className="text-muted-foreground uppercase text-sm">brands served</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Main content 2-col ── */}
+        <div className="grid md:grid-cols-3 gap-8 mt-6">
+          <div className="md:col-span-2">
+            <h2 className="sm:text-4xl md:text-5xl text-2xl !leading-[110%] font-black text-foreground mb-8 tracking-tight">
+              <VerticalCutReveal
+                splitBy="words"
+                staggerDuration={0.08}
+                staggerFrom="first"
+                transition={{ type: "spring", stiffness: 250, damping: 30, delay: 0.3 }}
+              >
+                Custom Merch Crafted for Your Crew.
+              </VerticalCutReveal>
             </h2>
 
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl">
-              Whether it’s for college fests, corporate events, sports clubs, or wholesale merch — Weekdayzz offers custom screen printing, puff prints, embroidery, and tiered wholesale pricing. Contact our sales team today.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-sm text-foreground">Tiered Volume Discounts</h4>
-                  <p className="text-xs text-muted-foreground">Special pricing starting at 15+ pieces.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-sm text-foreground">Custom Prints & Puff Merch</h4>
-                  <p className="text-xs text-muted-foreground">Upload your designs or let our artists assist.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-sm text-foreground">Dedicated Account Manager</h4>
-                  <p className="text-xs text-muted-foreground">Personalized support from order to delivery.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-sm text-foreground">Sample Proofing</h4>
-                  <p className="text-xs text-muted-foreground">Physical fabric & sample review before full run.</p>
-                </div>
-              </div>
+            <div className="grid md:grid-cols-2 gap-6 text-muted-foreground">
+              <p className="leading-relaxed text-justify text-sm sm:text-base">
+                Whether it's college fests, corporate events, sports clubs, or large-scale wholesale — Weekdayzz delivers premium screen printing, puff prints, and embroidery with tiered volume pricing.
+              </p>
+              <p className="leading-relaxed text-justify text-sm sm:text-base">
+                Every batch gets a dedicated account manager, physical sample proofing, and end-to-end production tracking — so your brand looks exactly how you imagined it.
+              </p>
             </div>
 
-            <div className="pt-4 flex flex-wrap items-center gap-4">
+            {/* Feature checklist */}
+            <div className="grid sm:grid-cols-2 gap-3 mt-8">
+              {[
+                { label: "Tiered Volume Discounts", sub: "Special pricing from 15+ pieces" },
+                { label: "Custom Prints & Puff Merch", sub: "Upload your art or get our designers" },
+                { label: "Dedicated Account Manager", sub: "Personal support order to delivery" },
+                { label: "Sample Proofing", sub: "Physical fabric review before full run" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-start gap-3 p-3 rounded-xl border border-border bg-card">
+                  <CheckCircle2 className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-xs text-foreground">{item.label}</h4>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{item.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Right: CTA block ── */}
+          <div className="md:col-span-1">
+            <div className="flex flex-col gap-4 lg:items-end items-start">
+              <div>
+                <div className="text-foreground font-black text-2xl tracking-tight">WEEKDAYZZ</div>
+                <div className="text-muted-foreground text-xs mt-0.5">Bulk & Team Merchandise</div>
+              </div>
+
+              <p className="text-sm text-foreground font-medium lg:text-right">
+                Ready to get custom merch for your team?
+              </p>
+
+              {/* Dialog CTA */}
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="lg" className="bg-primary text-primary-foreground font-bold px-8 py-6 text-sm rounded-xl shadow-lg hover:shadow-primary/25">
-                    Contact Sales Team <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  <button className="bg-foreground hover:bg-foreground/90 shadow-lg border border-foreground/20 flex w-fit items-center gap-2 hover:gap-4 transition-all duration-300 ease-in-out text-background px-5 py-3 rounded-lg cursor-pointer font-bold text-sm">
+                    CONTACT SALES <ArrowRight className="h-4 w-4" />
+                  </button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
                     <DialogTitle className="text-2xl font-bold">Contact Bulk Sales</DialogTitle>
                     <DialogDescription>
-                      Fill in your requirement and our sales representative will get back to you with custom catalog & pricing within 24 hours.
+                      Fill in your requirement and our sales team will reply within 24 hours with a custom catalog &amp; pricing.
                     </DialogDescription>
                   </DialogHeader>
-
                   {submitted ? (
                     <div className="py-8 text-center space-y-3">
                       <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-600 mx-auto flex items-center justify-center">
                         <CheckCircle2 className="h-6 w-6" />
                       </div>
                       <h3 className="font-bold text-lg">Inquiry Received!</h3>
-                      <p className="text-xs text-muted-foreground">Our sales representative will reach out to you shortly.</p>
+                      <p className="text-xs text-muted-foreground">Our sales rep will reach out shortly.</p>
                     </div>
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-4 pt-2">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <label className="text-xs font-semibold">Full Name *</label>
-                          <Input
-                            required
-                            placeholder="John Doe"
-                            value={formData.name}
-                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          />
+                          <Input required placeholder="John Doe" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-semibold">Phone Number *</label>
-                          <Input
-                            required
-                            placeholder="+91 98765 43210"
-                            value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          />
+                          <label className="text-xs font-semibold">Phone *</label>
+                          <Input required placeholder="+91 98765 43210" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                         </div>
                       </div>
-
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold">Work / Email *</label>
-                        <Input
-                          type="email"
-                          required
-                          placeholder="john@company.com"
-                          value={formData.email}
-                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        />
+                        <label className="text-xs font-semibold">Email *</label>
+                        <Input type="email" required placeholder="john@company.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                       </div>
-
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                          <label className="text-xs font-semibold">Organization / College</label>
-                          <Input
-                            placeholder="Tech Corp / Club"
-                            value={formData.organization}
-                            onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                          />
+                          <label className="text-xs font-semibold">Organisation</label>
+                          <Input placeholder="Tech Corp / Club" value={formData.organization} onChange={(e) => setFormData({ ...formData, organization: e.target.value })} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-semibold">Estimated Quantity</label>
+                          <label className="text-xs font-semibold">Quantity</label>
                           <select
                             className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
                             value={formData.quantity}
                             onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                           >
-                            <option value="15-50">15 - 50 pieces</option>
-                            <option value="50-100">50 - 100 pieces</option>
-                            <option value="100-250">100 - 250 pieces</option>
+                            <option value="15-50">15 – 50 pieces</option>
+                            <option value="50-100">50 – 100 pieces</option>
+                            <option value="100-250">100 – 250 pieces</option>
                             <option value="250+">250+ pieces</option>
                           </select>
                         </div>
                       </div>
-
                       <div className="space-y-1">
-                        <label className="text-xs font-semibold">Custom Details / Notes</label>
-                        <Textarea
-                          placeholder="Tell us about product type (tees/hoodies), print requirements or deadline..."
-                          rows={3}
-                          value={formData.notes}
-                          onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                        />
+                        <label className="text-xs font-semibold">Notes / Requirements</label>
+                        <Textarea placeholder="Product type, print style, deadline..." rows={3} value={formData.notes} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
                       </div>
-
                       <Button type="submit" className="w-full font-bold">
-                        Submit Bulk Inquiry <Send className="ml-2 h-4 w-4" />
+                        Submit Inquiry <Send className="ml-2 h-4 w-4" />
                       </Button>
                     </form>
                   )}
                 </DialogContent>
               </Dialog>
 
-              <a
-                href="mailto:sales@weekdayz.in?subject=Bulk%20Order%20Inquiry"
-                className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-4 py-3 border border-border rounded-xl"
-              >
-                <Mail className="h-4 w-4" /> Email: sales@weekdayz.in
-              </a>
-
-              <a
-                href="tel:+919876543210"
-                className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors px-4 py-3 border border-border rounded-xl"
-              >
-                <Phone className="h-4 w-4" /> Sales: +91 98765 43210
-              </a>
-            </div>
-          </div>
-
-          <div className="lg:col-span-5 flex justify-center">
-            <div className="relative w-full max-w-md aspect-square rounded-2xl overflow-hidden shadow-2xl border border-border group">
-              <img
-                src="https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=800&auto=format&fit=crop&q=80"
-                alt="Bulk orders apparel printing"
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-6 left-6 right-6 text-white space-y-1">
-                <span className="text-[10px] font-bold tracking-widest uppercase bg-primary px-2 py-0.5 rounded-sm">
-                  CUSTOM BATCH PRODUCTION
-                </span>
-                <h3 className="text-xl font-bold">High GSM Fabric & Custom Prints</h3>
-                <p className="text-xs text-white/80">Tailored to your exact brand aesthetics.</p>
+              {/* Quick contact links */}
+              <div className="flex flex-col gap-2 w-full lg:items-end">
+                <a href="mailto:sales@weekdayz.in?subject=Bulk%20Order%20Inquiry" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                  <Mail className="h-3.5 w-3.5" /> sales@weekdayz.in
+                </a>
+                <a href="tel:+919876543210" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                  <Phone className="h-3.5 w-3.5" /> +91 98765 43210
+                </a>
               </div>
             </div>
           </div>
