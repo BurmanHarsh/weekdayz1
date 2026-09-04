@@ -3,8 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/refunds")({
   head: () => ({
     meta: [
-      { title: "Refund & Return Policy — Weekdayz" },
-      { name: "description", content: "Returns, replacements and refund policy for Weekdayz orders." },
+      { title: "Refund & Return Policy — Weekdayzz" },
+      { name: "description", content: "Returns, replacements and refund policy for Weekdayzz orders." },
     ],
   }),
   component: RefundsPage,

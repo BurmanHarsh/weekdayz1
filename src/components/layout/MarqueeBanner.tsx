@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 export function MarqueeBanner() {
-  const text = "WEEKDAYZ DROPS NEW ARRIVALS EVERY WEEK · FREE SHIPPING OVER ₹2,000 · BUILT FOR LATE NIGHTS · ";
+  const text = "WEEKDAYZZ DROPS NEW ARRIVALS EVERY WEEK · FREE SHIPPING OVER ₹2,000 · BUILT FOR LATE NIGHTS · ";
   return (
     <div className="overflow-hidden bg-accent text-accent-foreground border-y border-foreground/10 py-2">
       <motion.div

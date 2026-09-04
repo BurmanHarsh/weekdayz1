@@ -25,10 +25,12 @@ export const listProducts = createServerFn({ method: "GET" }).handler(async () =
       return p;
     });
 
-    const dbSlugs = new Set(dbProducts.map((p) => p.slug));
-    const extraFallbacks = getFallbackProducts().filter((p) => !dbSlugs.has(p.slug) && p.is_active !== false);
+    // If database returned products, return them directly
+    if (dbProducts.length > 0) {
+      return dbProducts;
+    }
 
-    return [...dbProducts, ...extraFallbacks];
+    return getFallbackProducts();
   } catch (error) {
     console.warn("Falling back to local product data:", error);
     return getFallbackProducts();

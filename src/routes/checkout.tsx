@@ -42,7 +42,7 @@ type Shipping = z.infer<typeof ShippingSchema>;
 export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
-      { title: "Checkout — Weekdayz" },
+      { title: "Checkout — Weekdayzz" },
       { name: "description", content: "Secure checkout. Free shipping above ₹2,000." },
     ],
   }),
@@ -283,7 +283,7 @@ function Checkout() {
         key: razorpayKey,
         amount: order.amount,
         currency: order.currency,
-        name: "Weekdayz",
+        name: "Weekdayzz",
         description: "Streetwear & Custom Drops",
         order_id: order.id,
         handler: async function (response: any) {

@@ -21,9 +21,9 @@ export const Route = createFileRoute("/shop")({
   validateSearch: (search) => shopSearchSchema.parse(search),
   head: () => ({
     meta: [
-      { title: "Shop All Drops — Weekdayz" },
-      { name: "description", content: "Browse the full Weekdayz catalog of premium tees, oversized fits, and hoodies." },
-      { property: "og:title", content: "Shop All Drops — Weekdayz" },
+      { title: "Shop All Drops — Weekdayzz" },
+      { name: "description", content: "Browse the full Weekdayzz catalog of premium tees, oversized fits, and hoodies." },
+      { property: "og:title", content: "Shop All Drops — Weekdayzz" },
       { property: "og:description", content: "Premium streetwear catalog. Filter by size, color, and price." },
     ],
   }),
@@ -31,8 +31,25 @@ export const Route = createFileRoute("/shop")({
   component: Shop,
 });
 
-const CATEGORIES = ["tee", "hoodie"] as const;
 const SIZES = ["S", "M", "L", "XL", "XXL"];
+
+function matchesCategory(productCat: string, filterCat: string) {
+  if (!filterCat || filterCat === "all") return true;
+  const pCat = (productCat || "").toLowerCase().trim();
+  const fCat = filterCat.toLowerCase().trim();
+
+  if (pCat === fCat) return true;
+  if (pCat.includes(fCat) || fCat.includes(pCat)) return true;
+
+  // Aliases & Substrings
+  if (fCat === "couple" && pCat.includes("couple")) return true;
+  if (fCat === "statement" && pCat.includes("statement")) return true;
+  if ((fCat === "pinterest" || fCat === "pins") && (pCat.includes("pin") || pCat.includes("pinterest"))) return true;
+  if ((fCat === "tee" || fCat === "tshirt") && (pCat.includes("tee") || pCat.includes("tshirt") || pCat.includes("shirt"))) return true;
+  if (fCat === "hoodie" && pCat.includes("hoodie")) return true;
+
+  return false;
+}
 
 function ShopHeaderBanner() {
   return (
@@ -76,6 +93,20 @@ function Shop() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sort, setSort] = useState<"new" | "price_asc" | "price_desc">("new");
 
+  const availableCategories = useMemo(() => {
+    const defaultCats = ["tee", "couple", "statement", "pinterest", "hoodie"];
+    const foundCats = data.map((p) => p.category?.toLowerCase()?.trim()).filter(Boolean);
+    const set = new Set<string>();
+    defaultCats.forEach((c) => set.add(c));
+    foundCats.forEach((c) => {
+      if (c === "couple t-shirt") set.add("couple");
+      else if (c === "statement tees") set.add("statement");
+      else if (c === "pins tees") set.add("pinterest");
+      else set.add(c);
+    });
+    return Array.from(set);
+  }, [data]);
+
   const allColors = useMemo(() => {
     const set = new Set<string>();
     data.forEach((p) => p.colors?.forEach((c: string) => set.add(c)));
@@ -84,7 +115,7 @@ function Shop() {
 
   const filtered = useMemo(() => {
     let list = data.filter((p) => {
-      if (category && p.category !== category) return false;
+      if (category && !matchesCategory(p.category, category)) return false;
       if (size && !p.sizes.includes(size)) return false;
       if (color && !p.colors?.includes(color)) return false;
       if (p.price_cents > maxPrice * 100) return false;
@@ -108,17 +139,20 @@ function Shop() {
       <div>
         <h3 className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Category</h3>
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategory(category === c ? null : c)}
-              className={`px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
-                category === c ? "bg-foreground text-background border-foreground" : "border-border hover:border-foreground"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+          {availableCategories.map((c) => {
+            const isSelected = category ? matchesCategory(c, category) : false;
+            return (
+              <button
+                key={c}
+                onClick={() => setCategory(isSelected ? null : c)}
+                className={`px-3 py-1.5 text-xs uppercase tracking-widest border transition-colors ${
+                  isSelected ? "bg-foreground text-background border-foreground font-bold shadow-sm" : "border-border hover:border-foreground"
+                }`}
+              >
+                {c}
+              </button>
+            );
+          })}
         </div>
       </div>
       <div>

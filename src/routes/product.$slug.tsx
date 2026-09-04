@@ -28,9 +28,9 @@ export const Route = createFileRoute("/product/$slug")({
   },
   head: ({ params }) => ({
     meta: [
-      { title: `${params.slug.replace(/-/g, " ")} — Weekdayz` },
-      { name: "description", content: "Shop the latest drop from Weekdayz." },
-      { property: "og:title", content: `${params.slug.replace(/-/g, " ")} — Weekdayz` },
+      { title: `${params.slug.replace(/-/g, " ")} — Weekdayzz` },
+      { name: "description", content: "Shop the latest drop from Weekdayzz." },
+      { property: "og:title", content: `${params.slug.replace(/-/g, " ")} — Weekdayzz` },
     ],
   }),
   loader: async ({ params, context }) => {
@@ -287,16 +287,16 @@ function ProductPageInner() {
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 space-y-16">
       <div className="grid lg:grid-cols-2 gap-10">
-        {/* Image gallery: vertical thumbnail rail + main image */}
-        <div className="grid grid-cols-[72px_1fr] gap-3">
+        {/* Image gallery: responsive thumbnail rail + main image */}
+        <div className="flex flex-col-reverse sm:grid sm:grid-cols-[72px_1fr] gap-3">
           {/* Thumbnail rail */}
           {product.image_urls.length > 1 && (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-row sm:flex-col gap-2 overflow-x-auto sm:overflow-x-visible no-scrollbar pb-1 sm:pb-0">
               {product.image_urls.map((u: string, i: number) => (
                 <button
                   key={i}
                   onClick={() => setImgIdx(i)}
-                  className={`aspect-[4/5] border-2 overflow-hidden transition-all bg-card ${
+                  className={`w-14 sm:w-auto shrink-0 aspect-[4/5] border-2 overflow-hidden transition-all bg-card ${
                     i === imgIdx ? "border-accent shadow-sm" : "border-transparent hover:border-border"
                   }`}
                 >

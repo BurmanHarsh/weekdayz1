@@ -11,7 +11,7 @@ import { formatPrice } from "@/lib/format";
 export const Route = createFileRoute("/wishlist")({
   head: () => ({
     meta: [
-      { title: "Your Wishlist — Weekdayz" },
+      { title: "Your Wishlist — Weekdayzz" },
       { name: "description", content: "Products you've saved to buy later." },
     ],
   }),

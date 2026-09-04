@@ -14,7 +14,7 @@ export interface ShippingAddress {
   country: string;
 }
 
-/** Pickup pincode — Weekdayz warehouse (Lucknow) */
+/** Pickup pincode — Weekdayzz warehouse (Lucknow) */
 const PICKUP_PINCODE = "226023";
 
 /**

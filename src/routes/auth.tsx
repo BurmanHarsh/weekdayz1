@@ -6,8 +6,8 @@ import { AuthUI } from "@/components/ui/auth-ui";
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — Weekdayz" },
-      { name: "description", content: "Sign in to your Weekdayz account." },
+      { title: "Sign in — Weekdayzz" },
+      { name: "description", content: "Sign in to your Weekdayzz account." },
     ],
   }),
   component: AuthPage,

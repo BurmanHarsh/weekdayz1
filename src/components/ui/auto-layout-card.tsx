@@ -221,12 +221,7 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
                   key={idx}
                   src={img}
                   alt={`card-image-${idx + 1}`}
-                  className="bg-slate-50 cursor-pointer object-cover shadow-md hover:scale-105 transition-transform"
-                  style={{
-                    width: 140,
-                    height: 180,
-                    borderRadius: 14,
-                  }}
+                  className="bg-slate-50 cursor-pointer object-cover shadow-md hover:scale-105 transition-transform w-[90px] h-[120px] sm:w-[130px] sm:h-[170px] rounded-xl"
                   initial={{ rotate: idx === 0 ? -6 : idx === 2 ? 6 : 0 }}
                   layout
                 />
