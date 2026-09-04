@@ -75,6 +75,13 @@ export const createRazorpayOrder = createServerFn({ method: "POST" })
         amount: data.amount_cents, // Razorpay amount in paise
         currency: "INR",
         receipt: `receipt_${crypto.randomUUID().slice(0, 10)}`,
+        notes: {
+          userId: context.userId,
+          orderData: JSON.stringify({
+            total_cents: data.amount_cents,
+            items: data.items,
+          }),
+        },
       };
 
       const order = await razorpay.orders.create(options);
@@ -111,6 +118,31 @@ export function verifySignature(
     return crypto.timingSafeEqual(
       Buffer.from(generatedSignature, "utf-8"),
       Buffer.from(razorpaySignature, "utf-8")
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
+ * Verifies a Razorpay Webhook signature.
+ * @param body Raw request body string
+ * @param signature Signature from X-Razorpay-Signature header
+ */
+export function verifyWebhookSignature(body: string, signature: string): boolean {
+  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    throw new Error("Missing RAZORPAY_WEBHOOK_SECRET environment variable");
+  }
+
+  const hmac = crypto.createHmac("sha256", webhookSecret);
+  hmac.update(body);
+  const expectedSignature = hmac.digest("hex");
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, "utf-8"),
+      Buffer.from(signature, "utf-8")
     );
   } catch (_) {
     return false;

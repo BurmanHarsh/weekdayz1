@@ -126,8 +126,8 @@ export const bootstrapAdmin = createServerFn({ method: "POST" })
     // Security Restriction: Rate-limit bootstrap attempts to max 3 / hour per user
     checkRateLimit(
       `bootstrap_admin_${context.userId}`,
-      3,
-      60 * 60 * 1000,
+      5,
+      60 * 1000,
       "Too many admin bootstrap attempts. Request blocked for security."
     );
 
@@ -230,6 +230,12 @@ export const updateOrderStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     const { error } = await context.supabase
       .from("orders")
       .update({
@@ -286,6 +292,12 @@ export const uploadProductImage = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     const { base64, filename, contentType } = data;
     const base64Clean = base64.includes(",") ? base64.split(",")[1] : base64;
     const buffer = Buffer.from(base64Clean, "base64");
@@ -352,6 +364,12 @@ export const createProduct = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
 
     // 1. Sanitize & ensure unique slug
     let baseSlug = (data.slug || "")
@@ -473,6 +491,12 @@ export const getSignedAdminDesignUrl = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ path: z.string() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     const { data: signed, error } = await context.supabase.storage
       .from("user-graphics")
       .createSignedUrl(data.path, 60 * 60);
@@ -552,6 +576,12 @@ export const updateProduct = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     const { id, ...updates } = data;
 
     const adminClient = await getAdminSupabaseClient();
@@ -582,6 +612,12 @@ export const deleteProduct = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
 
     // Also find and delete by slug to cover fallback products
     let slug = data.id;
@@ -694,6 +730,12 @@ export const createPromoCode = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     const formattedCode = data.code.trim().toUpperCase();
 
     try {
@@ -742,6 +784,12 @@ export const togglePromoCodeStatus = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     try {
       const { data: existing } = await (context.supabase as any)
         .from("promo_codes")
@@ -768,6 +816,12 @@ export const deletePromoCode = createServerFn({ method: "POST" })
   .inputValidator((data) => z.object({ id: z.string() }).parse(data))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     try {
       await (context.supabase as any).from("promo_codes").delete().eq("id", data.id);
     } catch (_) {}
@@ -799,6 +853,12 @@ export const recordExternalSale = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
+    checkRateLimit(
+      `admin_action_${context.userId}`,
+      5,
+      60 * 1000,
+      "Too many administrative actions. Please wait a minute before trying again."
+    );
     const { supabase, userId } = context;
 
     const shipping_details = {

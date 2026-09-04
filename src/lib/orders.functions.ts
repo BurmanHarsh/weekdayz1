@@ -40,6 +40,100 @@ const PlaceOrderSchema = z.object({
   razorpay_signature: z.string().min(10).max(255),
 });
 
+export async function internalPlaceOrder(supabase: any, userId: string, data: any) {
+    // 1. Insert order record into database
+    const { data: order, error } = await supabase
+      .from("orders")
+      .insert({
+        user_id: userId,
+        total_cents: data.total_cents,
+        payment_status: "paid",
+        fulfillment_status: "processing",
+        shipping_details: data.shipping_details as any,
+      })
+      .select("id")
+      .single();
+
+    if (error || !order) throw new Error(error?.message ?? "Failed to create order in database");
+
+    // 2. Insert order items
+    const items = data.items.map((i: any) => ({
+      order_id: order.id,
+      product_id: i.product_id ?? null,
+      custom_design_id: i.custom_design_id ?? null,
+      quantity: i.quantity,
+      size: i.size,
+      color: i.color ?? null,
+      unit_price_cents: i.unit_price_cents,
+      title_snapshot: i.title_snapshot,
+      image_snapshot: i.image_snapshot ?? null,
+    }));
+
+    let { error: itemsErr } = await supabase.from("order_items").insert(items);
+
+    // Fallback if Supabase database schema does not have 'color' column yet
+    if (itemsErr && (itemsErr.message.includes("color") || itemsErr.code === "PGRST204")) {
+      const legacyItems = items.map(({ color, ...rest }) => rest);
+      const retryRes = await supabase.from("order_items").insert(legacyItems);
+      itemsErr = retryRes.error;
+    }
+
+    if (itemsErr) throw new Error(itemsErr.message);
+
+    // 3. Atomically decrement inventory for each product in the order
+    const productItems = data.items.filter((i: any) => i.product_id);
+    await Promise.all(
+      productItems.map(async (i: any) => {
+        if (!i.product_id) return;
+        try {
+          const { error: rpcErr } = await supabase.rpc("decrement_inventory", {
+            p_product_id: i.product_id as string,
+            p_qty: i.quantity,
+          });
+
+          if (rpcErr) {
+            const { data: prod } = await supabase
+              .from("products")
+              .select("inventory_count")
+              .eq("id", i.product_id)
+              .maybeSingle();
+
+            if (prod) {
+              const updatedCount = Math.max(0, (prod.inventory_count ?? 0) - i.quantity);
+              await supabase
+                .from("products")
+                .update({ inventory_count: updatedCount })
+                .eq("id", i.product_id);
+            }
+          }
+        } catch (_) {}
+
+        decrementFallbackInventory(i.product_id, i.quantity);
+      })
+    );
+
+    // 4. Set estimated delivery date (DTDC standard: 5–7 business days)
+    const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+
+    await supabase
+      .from("orders")
+      .update({
+        estimated_delivery_date: estimatedDelivery.toISOString(),
+      })
+      .eq("id", order.id);
+
+    // 5. Trigger transactional email
+    const shippingDetails = data.shipping_details as Record<string, string>;
+    const email = shippingDetails.email;
+    if (email) {
+      sendOrderConfirmation(email, order.id, data.total_cents, estimatedDelivery.toISOString()).catch(
+        (err) => console.error("Email delivery failed:", err)
+      );
+    }
+
+    return { id: order.id };
+}
+
 export const placeOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data) => PlaceOrderSchema.parse(data))
@@ -84,97 +178,7 @@ export const placeOrder = createServerFn({ method: "POST" })
       }
     }
 
-    // 2. Insert order record into database
-    const { data: order, error } = await supabase
-      .from("orders")
-      .insert({
-        user_id: userId,
-        total_cents: data.total_cents,
-        payment_status: "paid",
-        fulfillment_status: "processing",
-        shipping_details: data.shipping_details as any,
-      })
-      .select("id")
-      .single();
-
-    if (error || !order) throw new Error(error?.message ?? "Failed to create order in database");
-
-    // 3. Insert order items
-    const items = data.items.map((i) => ({
-      order_id: order.id,
-      product_id: i.product_id ?? null,
-      custom_design_id: i.custom_design_id ?? null,
-      quantity: i.quantity,
-      size: i.size,
-      color: i.color ?? null,
-      unit_price_cents: i.unit_price_cents,
-      title_snapshot: i.title_snapshot,
-      image_snapshot: i.image_snapshot ?? null,
-    }));
-
-    let { error: itemsErr } = await supabase.from("order_items").insert(items);
-
-    // Fallback if Supabase database schema does not have 'color' column yet
-    if (itemsErr && (itemsErr.message.includes("color") || itemsErr.code === "PGRST204")) {
-      const legacyItems = items.map(({ color, ...rest }) => rest);
-      const retryRes = await supabase.from("order_items").insert(legacyItems);
-      itemsErr = retryRes.error;
-    }
-
-    if (itemsErr) throw new Error(itemsErr.message);
-
-    // 4. Atomically decrement inventory for each product in the order
-    const productItems = data.items.filter((i) => i.product_id);
-    await Promise.all(
-      productItems.map(async (i) => {
-        if (!i.product_id) return;
-        try {
-          const { error: rpcErr } = await supabase.rpc("decrement_inventory", {
-            p_product_id: i.product_id as string,
-            p_qty: i.quantity,
-          });
-
-          if (rpcErr) {
-            const { data: prod } = await supabase
-              .from("products")
-              .select("inventory_count")
-              .eq("id", i.product_id)
-              .maybeSingle();
-
-            if (prod) {
-              const updatedCount = Math.max(0, (prod.inventory_count ?? 0) - i.quantity);
-              await supabase
-                .from("products")
-                .update({ inventory_count: updatedCount })
-                .eq("id", i.product_id);
-            }
-          }
-        } catch (_) {}
-
-        decrementFallbackInventory(i.product_id, i.quantity);
-      })
-    );
-
-    // 5. Set estimated delivery date (DTDC standard: 5–7 business days)
-    const estimatedDelivery = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-
-    await supabase
-      .from("orders")
-      .update({
-        estimated_delivery_date: estimatedDelivery.toISOString(),
-      })
-      .eq("id", order.id);
-
-    // 6. Trigger transactional email
-    const shippingDetails = data.shipping_details as Record<string, string>;
-    const email = shippingDetails.email;
-    if (email) {
-      sendOrderConfirmation(email, order.id, data.total_cents, estimatedDelivery.toISOString()).catch(
-        (err) => console.error("Email delivery failed:", err)
-      );
-    }
-
-    return { id: order.id };
+    return await internalPlaceOrder(supabase, userId, data);
   });
 
 export const myOrders = createServerFn({ method: "GET" })
