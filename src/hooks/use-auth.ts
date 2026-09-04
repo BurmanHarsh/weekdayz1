@@ -55,22 +55,42 @@ export function useAuth() {
   useEffect(() => {
     let alive = true;
 
+    const syncSession = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (!alive) return;
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+      } catch (e) {
+        console.error("[useAuth] Failed to sync session:", e);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    };
+
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       if (!alive) return;
       setSession(s);
       setUser(s?.user ?? null);
-    });
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (!alive) return;
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
       setLoading(false);
     });
+
+    syncSession();
+
+    const handleFocusOrVisibility = () => {
+      if (document.visibilityState === "visible") {
+        syncSession();
+      }
+    };
+
+    window.addEventListener("focus", handleFocusOrVisibility);
+    document.addEventListener("visibilitychange", handleFocusOrVisibility);
 
     return () => {
       alive = false;
       sub.subscription.unsubscribe();
+      window.removeEventListener("focus", handleFocusOrVisibility);
+      document.removeEventListener("visibilitychange", handleFocusOrVisibility);
     };
   }, []);
 

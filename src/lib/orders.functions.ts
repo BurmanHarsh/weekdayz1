@@ -73,7 +73,7 @@ export async function internalPlaceOrder(supabase: any, userId: string, data: an
 
     // Fallback if Supabase database schema does not have 'color' column yet
     if (itemsErr && (itemsErr.message.includes("color") || itemsErr.code === "PGRST204")) {
-      const legacyItems = items.map(({ color, ...rest }) => rest);
+      const legacyItems = items.map(({ color, ...rest }: any) => rest);
       const retryRes = await supabase.from("order_items").insert(legacyItems);
       itemsErr = retryRes.error;
     }

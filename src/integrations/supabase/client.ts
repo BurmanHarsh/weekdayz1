@@ -27,6 +27,49 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 
+const hybridAuthStorage = {
+  getItem: (key: string): string | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const val = localStorage.getItem(key);
+      if (val) return val;
+    } catch {}
+
+    try {
+      const name = encodeURIComponent(key) + '=';
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i].trim();
+        if (c.indexOf(name) === 0) {
+          return decodeURIComponent(c.substring(name.length, c.length));
+        }
+      }
+    } catch {}
+
+    return null;
+  },
+  setItem: (key: string, value: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem(key, value);
+    } catch {}
+
+    try {
+      const isSecure = window.location.protocol === 'https:';
+      document.cookie = `${encodeURIComponent(key)}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax${isSecure ? '; Secure' : ''}`;
+    } catch {}
+  },
+  removeItem: (key: string): void => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+    try {
+      document.cookie = `${encodeURIComponent(key)}=; path=/; max-age=0; SameSite=Lax`;
+    } catch {}
+  },
+};
+
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
   // Fall back to process.env for SSR (server-side rendering)
@@ -48,7 +91,7 @@ function createSupabaseClient() {
       fetch: createSupabaseFetch(SUPABASE_PUBLISHABLE_KEY),
     },
     auth: {
-      storage: typeof window !== 'undefined' ? localStorage : undefined,
+      storage: hybridAuthStorage,
       persistSession: true,
       autoRefreshToken: true,
     }

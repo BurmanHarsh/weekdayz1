@@ -237,14 +237,28 @@ function Checkout() {
     );
   }
 
+  useEffect(() => {
+    if (!loading) return;
+    const handleFocus = () => {
+      // Safety guard for iOS: Reset loading state if tab regains focus after app switch
+      const timer = setTimeout(() => {
+        setLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [loading]);
+
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
-      if ((window as any).Razorpay) {
+      if (typeof window !== "undefined" && (window as any).Razorpay) {
         resolve(true);
         return;
       }
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
@@ -330,10 +344,16 @@ function Checkout() {
           ondismiss: () => {
             setLoading(false);
           },
+          handleback: true,
         },
       };
 
       const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (resp: any) {
+        console.error("Razorpay payment failed:", resp.error);
+        toast.error(resp.error?.description || "Payment was not completed.");
+        setLoading(false);
+      });
       rzp.open();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Payment initialization failed");

@@ -24,8 +24,9 @@ async function getServerEntry(): Promise<ServerEntry> {
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
 const SECURITY_HEADERS = {
-  "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://checkout.razorpay.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: *.supabase.co; connect-src 'self' *.supabase.co *.razorpay.com *.resend.com; frame-src https://checkout.razorpay.com;",
-  "X-Frame-Options": "DENY",
+  "Content-Security-Policy":
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.razorpay.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https: *.supabase.co *.razorpay.com *.unsplash.com; connect-src 'self' https: *.supabase.co *.razorpay.com api.razorpay.com lumberjack.razorpay.com *.resend.com nominatim.openstreetmap.org; frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com https://*.razorpay.com;",
+  "X-Frame-Options": "SAMEORIGIN",
   "X-Content-Type-Options": "nosniff",
   "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   "Referrer-Policy": "strict-origin-when-cross-origin",
