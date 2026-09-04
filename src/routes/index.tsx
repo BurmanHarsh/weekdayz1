@@ -21,50 +21,18 @@ import AutoLayoutCard from "@/components/ui/auto-layout-card";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
-import { fetchWebsitePosters, WebsitePoster } from "@/lib/posters";
+import { fetchWebsitePosters, getWebsitePostersServer, WebsitePoster, DEFAULT_POSTERS } from "@/lib/posters";
+import { useMemo } from "react";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
 });
 
-export const Route = createFileRoute("/")(  {
+export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: Home,
 });
-
-const HERO = [
-  {
-    img: hero1,
-    kicker: "JUST DROPPED · LIMITED STOCK",
-    title: "RCB EDITION '26",
-    sub: "Cheer in style with the official oversized fit.",
-    badge: "FLAT 20% OFF",
-    to: "/collections/$slug" as const,
-    params: { slug: "rcb" },
-    cta: "GRAB YOURS",
-  },
-  {
-    img: hero2,
-    kicker: "BESTSELLER · SS26",
-    title: "THE OVERSIZED EDIT",
-    sub: "Premium heavyweight cotton. Minimal branding. Maximum comfort.",
-    badge: "BUY 2 GET 10% OFF",
-    to: "/shop" as const,
-    params: undefined,
-    cta: "SHOP THE LOOK",
-  },
-  {
-    img: hero3,
-    kicker: "PREMIUM CAPSULE",
-    title: "F1 PIT-LANE",
-    sub: "Carbon detailing. Race-day ready. The ultimate speed aesthetic.",
-    badge: "NEW ARRIVAL",
-    to: "/collections/$slug" as const,
-    params: { slug: "f1" },
-    cta: "EXPLORE NOW",
-  },
-];
 
 // Exactly 8 categories, 4 per row (2 rows)
 const CATS = [
@@ -140,7 +108,14 @@ function Home() {
 
 /* ─── HERO CAROUSEL — Dynamic Admin Website Posters & Sliding Animation ─── */
 function HeroCarousel() {
-  const [posters, setPosters] = useState<WebsitePoster[]>([]);
+  const getPostersFn = useServerFn(getWebsitePostersServer);
+  const { data: serverPosters } = useQuery({
+    queryKey: ["website-posters"],
+    queryFn: () => getPostersFn(),
+    staleTime: 60_000,
+  });
+
+  const [localPosters, setLocalPosters] = useState<WebsitePoster[]>([]);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -149,14 +124,24 @@ function HeroCarousel() {
     const loadPosters = () => {
       const all = fetchWebsitePosters();
       const active = all.filter((p) => p.is_active);
-      setPosters(active.length > 0 ? active : all);
+      setLocalPosters(active.length > 0 ? active : all);
     };
     loadPosters();
     window.addEventListener("website-posters-updated", loadPosters);
     return () => window.removeEventListener("website-posters-updated", loadPosters);
   }, []);
 
-  const heroList = posters.length > 0 ? posters : HERO;
+  const heroList = useMemo(() => {
+    if (serverPosters && serverPosters.length > 0) {
+      const active = serverPosters.filter((p) => p.is_active);
+      if (active.length > 0) return active;
+    }
+    if (localPosters && localPosters.length > 0) {
+      const active = localPosters.filter((p) => p.is_active);
+      if (active.length > 0) return active;
+    }
+    return DEFAULT_POSTERS;
+  }, [serverPosters, localPosters]);
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);

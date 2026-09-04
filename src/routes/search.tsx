@@ -9,8 +9,8 @@ import { ProductCard } from "@/components/shop/ProductCard";
 export const Route = createFileRoute("/search")({
   head: () => ({
     meta: [
-      { title: "Search Catalog — Weekdayz" },
-      { name: "description", content: "Search and filter the Weekdayz catalog by category, price, and size." },
+      { title: "Search Catalog — Weekdayzz" },
+      { name: "description", content: "Search and filter the Weekdayzz catalog by category, price, and size." },
     ],
   }),
   component: SearchPage,

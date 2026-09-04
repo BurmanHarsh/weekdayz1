@@ -3,8 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
   head: () => ({
     meta: [
-      { title: "Terms & Conditions — Weekdayz" },
-      { name: "description", content: "Terms of service and store rules for Weekdayz." },
+      { title: "Terms & Conditions — Weekdayzz" },
+      { name: "description", content: "Terms of service and store rules for Weekdayzz." },
     ],
   }),
   component: TermsPage,
@@ -20,7 +20,7 @@ function TermsPage() {
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">1. General Overview</h2>
           <p>
-            This website is operated by Weekdayz. By visiting our site or purchasing from us, you agree to be bound by the following terms and conditions.
+            This website is operated by Weekdayzz. By visiting our site or purchasing from us, you agree to be bound by the following terms and conditions.
           </p>
         </section>
 
@@ -34,7 +34,7 @@ function TermsPage() {
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">3. Custom Prints & Graphic Uploads</h2>
           <p>
-            For custom design orders (Creator Studio), customers must ensure they own or hold rights to uploaded graphics. Weekdayz reserves the right to decline printing graphic submissions containing hate speech, illegal content, or copyright infringements.
+            For custom design orders (Creator Studio), customers must ensure they own or hold rights to uploaded graphics. Weekdayzz reserves the right to decline printing graphic submissions containing hate speech, illegal content, or copyright infringements.
           </p>
         </section>
 

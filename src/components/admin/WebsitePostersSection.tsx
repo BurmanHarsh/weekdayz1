@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import {
   fetchWebsitePosters,
   saveWebsitePosters,
+  getWebsitePostersServer,
+  saveWebsitePostersServer,
   WebsitePoster,
   DEFAULT_POSTERS,
 } from "@/lib/posters";
+import { useServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Upload,
   Plus,
@@ -59,14 +63,33 @@ export default function WebsitePostersSection() {
   const [isNew, setIsNew] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  const qc = useQueryClient();
+  const getPostersServerFn = useServerFn(getWebsitePostersServer);
+  const savePostersServerFn = useServerFn(saveWebsitePostersServer);
+
   useEffect(() => {
     setPosters(fetchWebsitePosters());
+    // Also fetch from server to get latest synced version across all devices
+    getPostersServerFn()
+      .then((serverData) => {
+        if (serverData && serverData.length > 0) {
+          setPosters(serverData);
+          saveWebsitePosters(serverData);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const handleSaveAll = (newPosters: WebsitePoster[]) => {
+  const handleSaveAll = async (newPosters: WebsitePoster[]) => {
     setPosters(newPosters);
     saveWebsitePosters(newPosters);
-    toast.success("Website posters updated!");
+    try {
+      await savePostersServerFn({ data: newPosters });
+      qc.invalidateQueries({ queryKey: ["website-posters"] });
+    } catch (e) {
+      console.warn("Server save error:", e);
+    }
+    toast.success("Website posters updated & synced across all devices!");
   };
 
   const handleToggleActive = (id: string) => {

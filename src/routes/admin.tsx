@@ -37,7 +37,7 @@ const WebsitePostersSection = lazy(() => import("@/components/admin/WebsitePoste
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Admin Control Room — Weekdayz" },
+      { title: "Admin Control Room — Weekdayzz" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -59,7 +59,7 @@ function AdminPage() {
     return (
       <div className="mx-auto max-w-md my-24 border border-border bg-card p-8 text-center space-y-4 shadow-xl">
         <h2 className="text-xl font-bold">Admin Login Required</h2>
-        <p className="text-xs text-muted-foreground">Please sign in to access the Weekdayz Control Room.</p>
+        <p className="text-xs text-muted-foreground">Please sign in to access the Weekdayzz Control Room.</p>
         <button
           onClick={() => navigate({ to: "/auth" })}
           className="bg-accent text-accent-foreground px-6 py-2.5 text-xs uppercase tracking-widest font-bold"

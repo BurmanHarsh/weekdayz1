@@ -42,7 +42,7 @@ export function exportOrderToPdf(order: OrderExportData) {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Order Manifest #${escapeHtml(order.id.slice(0, 8).toUpperCase())} — WEEKDAYZ</title>
+        <title>Order Manifest #${escapeHtml(order.id.slice(0, 8).toUpperCase())} — WEEKDAYZZ</title>
         <style>
           @page { size: A4; margin: 20mm; }
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; line-height: 1.5; font-size: 13px; margin: 0; padding: 20px; }
@@ -75,7 +75,7 @@ export function exportOrderToPdf(order: OrderExportData) {
 
         <div class="header">
           <div>
-            <div class="logo">WEEKDAYZ</div>
+            <div class="logo">WEEKDAYZZ</div>
             <div class="sub">Official Order Manifest</div>
           </div>
           <div style="text-align: right;">
@@ -139,7 +139,7 @@ export function exportOrderToPdf(order: OrderExportData) {
         </div>
 
         <div class="footer">
-          Weekdayz Apparel Co. · Thank you for shopping with us!
+          Weekdayzz Apparel Co. · Thank you for shopping with us!
         </div>
 
         <script>
@@ -188,7 +188,7 @@ export function exportMonthlyProfitPdf(summary: MonthlyProfitDataForExport) {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Monthly Profit Statement - ${escapeHtml(summary.monthLabel)} — WEEKDAYZ</title>
+        <title>Monthly Profit Statement - ${escapeHtml(summary.monthLabel)} — WEEKDAYZZ</title>
         <style>
           @page { size: A4; margin: 15mm; }
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #0f172a; line-height: 1.5; font-size: 13px; margin: 0; padding: 25px; background: #ffffff; }
@@ -237,7 +237,7 @@ export function exportMonthlyProfitPdf(summary: MonthlyProfitDataForExport) {
 
         <div class="header">
           <div>
-            <h1 class="brand-title">WEEKDAYZ</h1>
+            <h1 class="brand-title">WEEKDAYZZ</h1>
             <div class="brand-subtitle">Financial Analytics & Profit Auditor</div>
           </div>
           <div style="text-align: right;">
@@ -322,7 +322,7 @@ export function exportMonthlyProfitPdf(summary: MonthlyProfitDataForExport) {
         </div>
 
         <div class="footer">
-          Weekdayz Apparel Co. · Confidential Financial Statement · Generated automatically
+          Weekdayzz Apparel Co. · Confidential Financial Statement · Generated automatically
         </div>
 
         <script>

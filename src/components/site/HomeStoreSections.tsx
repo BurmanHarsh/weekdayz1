@@ -136,10 +136,10 @@ export function ValuePropsStoryScroll() {
         <div className="lg:col-span-5 flex flex-col">
           {/* Top Row: Light background with big bold stacked title */}
           <div className="bg-[#f8f8f6] text-foreground p-8 md:p-12 flex-1 flex flex-col justify-center space-y-4 border-b border-border min-h-[260px]">
-            <h2 className="text-display text-4xl sm:text-5xl font-black tracking-tighter leading-[0.88] text-right uppercase">
+            <h2 className="text-display text-4xl sm:text-5xl font-black tracking-tighter leading-[0.88] text-left sm:text-right uppercase">
               WHY<br />CHOOSE<br />US?
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground text-right max-w-xs ml-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-muted-foreground text-left sm:text-right max-w-xs sm:ml-auto leading-relaxed">
               Everyday we work hard to make streetwear that defines your style and vibe better and happier.
             </p>
           </div>
@@ -269,7 +269,7 @@ export function StoreTestimonialsSection() {
             What our customers say
           </h2>
           <p className="mt-4 text-muted-foreground text-sm sm:text-base leading-relaxed">
-            Real reviews from streetwear fans, sports enthusiasts, and crew who trust Weekdayz quality, design, and style.
+            Real reviews from streetwear fans, sports enthusiasts, and crew who trust Weekdayzz quality, design, and style.
           </p>
         </motion.div>
 
@@ -336,7 +336,7 @@ export function BulkOrdersSection() {
             </h2>
 
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl">
-              Whether it’s for college fests, corporate events, sports clubs, or wholesale merch — Weekdayz offers custom screen printing, puff prints, embroidery, and tiered wholesale pricing. Contact our sales team today.
+              Whether it’s for college fests, corporate events, sports clubs, or wholesale merch — Weekdayzz offers custom screen printing, puff prints, embroidery, and tiered wholesale pricing. Contact our sales team today.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
@@ -522,8 +522,8 @@ export function StoreFaqSection() {
       a: "Yes! We specialize in custom team, corporate, and college fest merchandise. Orders above 15 pieces qualify for tiered wholesale discounts. Click the 'Contact Sales Team' button above to get a custom quote within 24 hours.",
     },
     {
-      q: "What is the fabric quality of Weekdayz apparel?",
-      a: "All Weekdayz oversized tees and hoodies are crafted from 100% premium combed cotton (240+ GSM for tees, 380+ GSM fleece for hoodies). They are pre-shrunk, bio-washed, and designed for maximum comfort and durability.",
+      q: "What is the fabric quality of Weekdayzz apparel?",
+      a: "All Weekdayzz oversized tees and hoodies are crafted from 100% premium combed cotton (240+ GSM for tees, 380+ GSM fleece for hoodies). They are pre-shrunk, bio-washed, and designed for maximum comfort and durability.",
     },
     {
       q: "Can I return or exchange a product?",

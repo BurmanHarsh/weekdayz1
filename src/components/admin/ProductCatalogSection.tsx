@@ -306,21 +306,24 @@ function ProductFormModal({
       if (!finalCategory) throw new Error("Please select or enter a product category");
       if (!form.title.trim()) throw new Error("Title is required");
 
-      const slug = form.slug.trim()
-        ? form.slug
-            .trim()
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "")
-        : form.title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "");
+      let slug = (form.slug.trim() || form.title.trim())
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+
+      if (!slug) {
+        slug = `${finalCategory.replace(/[^a-z0-9]+/g, "") || "product"}-${Date.now().toString(36)}`;
+      }
+
+      const numPrice = Number(form.price);
+      if (isNaN(numPrice) || numPrice < 0) throw new Error("Please enter a valid sale price");
+      const numInventory = Number(form.inventory);
+      if (isNaN(numInventory) || numInventory < 0) throw new Error("Please enter a valid stock inventory count");
 
       const compareAtRaw = form.compareAtPrice.trim();
       const compareAtCents = compareAtRaw === "" ? null : Math.round(Number(compareAtRaw) * 100);
       const finalCompareAt =
-        compareAtCents !== null && compareAtCents > 0 && compareAtCents > Math.round(Number(form.price) * 100)
+        compareAtCents !== null && compareAtCents > 0 && compareAtCents > Math.round(numPrice * 100)
           ? compareAtCents
           : null;
 
@@ -328,9 +331,9 @@ function ProductFormModal({
         slug,
         title: form.title.trim(),
         description: form.description.trim(),
-        price_cents: Math.round(Number(form.price) * 100),
+        price_cents: Math.round(numPrice * 100),
         compare_at_price_cents: finalCompareAt,
-        inventory_count: Number(form.inventory),
+        inventory_count: Math.round(numInventory),
         image_urls: imageUrls,
         sizes: form.sizes.split(",").map((s: string) => s.trim()).filter(Boolean),
         colors: form.colors.split(",").map((c: string) => c.trim()).filter(Boolean),
@@ -409,7 +412,7 @@ function ProductFormModal({
               <input
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="e.g. WEEKDAYZ OVERSIZED HEAVYWEIGHT TEE"
+                placeholder="e.g. WEEKDAYZZ OVERSIZED HEAVYWEIGHT TEE"
                 className="mt-1 w-full bg-background border border-border px-3 py-2 text-sm"
                 required
               />

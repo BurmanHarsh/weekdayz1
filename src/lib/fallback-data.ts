@@ -65,7 +65,7 @@ let fallbackProducts: FallbackProduct[] = [
   {
     id: "fallback-tee",
     slug: "weekdayz-core-casual-tee",
-    title: "Weekdayz Core Casual Tee",
+    title: "Weekdayzz Core Casual Tee",
     description: "The everyday essential. Clean silhouette, soft-washed cotton, and a relaxed boxy fit.",
     price_cents: 149900,
     inventory_count: 100,
@@ -79,7 +79,7 @@ let fallbackProducts: FallbackProduct[] = [
   {
     id: "fallback-hoodie",
     slug: "weekdayz-premium-oversized-hoodie",
-    title: "Weekdayz Premium Oversized Hoodie",
+    title: "Weekdayzz Premium Oversized Hoodie",
     description: "400gsm fleece hoodie with dropped shoulders, kangaroo pocket, and a relaxed oversized silhouette.",
     price_cents: 349900,
     inventory_count: 40,
@@ -108,7 +108,7 @@ let fallbackProducts: FallbackProduct[] = [
     id: "fallback-rcb",
     slug: "rcb-fan-edition-tee",
     title: "RCB Fan Edition Tee",
-    description: "Ee sala cup namde! Rep the Red & Gold in style with the official Weekdayz x RCB fan edition tee.",
+    description: "Ee sala cup namde! Rep the Red & Gold in style with the official Weekdayzz x RCB fan edition tee.",
     price_cents: 199900,
     inventory_count: 60,
     image_urls: ["/products/rcb-hero.jpg"],

@@ -26,7 +26,7 @@ async function sendEmail(payload: EmailPayload): Promise<void> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.EMAIL_FROM ?? "Weekdayz <no-reply@weekdayz.in>",
+      from: process.env.EMAIL_FROM ?? "Weekdayzz <no-reply@weekdayz.in>",
       to: payload.to,
       subject: payload.subject,
       html: payload.html,
@@ -67,7 +67,7 @@ export async function sendOrderConfirmation(
         </p>
         <p style="color:#888">You'll get another email when it ships. Stay fly. 🚀</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-        <p style="font-size:12px;color:#888">Weekdayz · Built for the always-online generation</p>
+        <p style="font-size:12px;color:#888">Weekdayzz · Built for the always-online generation</p>
       </div>
     `,
   });
@@ -95,7 +95,7 @@ export async function sendShipped(
         </p>
         <p style="color:#888">Should arrive in 5–7 business days.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-        <p style="font-size:12px;color:#888">Weekdayz · Built for the always-online generation</p>
+        <p style="font-size:12px;color:#888">Weekdayzz · Built for the always-online generation</p>
       </div>
     `,
   });
@@ -115,7 +115,7 @@ export async function sendDelivered(
         <p>Order <strong>#${safeOrderId}</strong> has been delivered. Hope you love it!</p>
         <p>Drop a review — it means the world to us.</p>
         <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-        <p style="font-size:12px;color:#888">Weekdayz · Built for the always-online generation</p>
+        <p style="font-size:12px;color:#888">Weekdayzz · Built for the always-online generation</p>
       </div>
     `,
   });

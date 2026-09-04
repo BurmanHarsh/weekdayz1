@@ -7,7 +7,7 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-16 grid gap-12 md:grid-cols-4">
         <div className="md:col-span-2">
           <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Weekdayz" className="h-24 w-auto" />
+            <img src="/logo.png" alt="Weekdayzz" className="h-24 w-auto" />
           </Link>
           <p className="mt-4 text-sm text-muted-foreground max-w-sm">
             Premium streetwear for the always-online generation. Drops every week.
@@ -41,7 +41,7 @@ export function Footer() {
         </div>
       </div>
       <div className="border-t border-border py-6 px-4 sm:px-6 max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs text-muted-foreground gap-4">
-        <span>© {new Date().getFullYear()} Weekdayz. All rights reserved.</span>
+        <span>© {new Date().getFullYear()} Weekdayzz. All rights reserved.</span>
         <div className="flex gap-4">
           <Link to="/privacy" className="hover:text-accent">Privacy</Link>
           <Link to="/terms" className="hover:text-accent">Terms</Link>

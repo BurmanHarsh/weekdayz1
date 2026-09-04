@@ -1,6 +1,10 @@
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getPublicClient } from "@/lib/supabase-server";
+import { z } from "zod";
 
 export interface WebsitePoster {
   id: string;
@@ -52,6 +56,59 @@ export const DEFAULT_POSTERS: WebsitePoster[] = [
 
 const STORAGE_KEY = "weekdayz_website_posters_v2";
 
+export const getWebsitePostersServer = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const supabase = getPublicClient();
+    const { data, error } = await supabase.storage
+      .from("product-images")
+      .download("website_posters.json");
+
+    if (!error && data) {
+      const text = await data.text();
+      const parsed = JSON.parse(text);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed as WebsitePoster[];
+      }
+    }
+  } catch (e: any) {
+    console.warn("[getWebsitePostersServer] Storage read exception:", e?.message);
+  }
+  return DEFAULT_POSTERS;
+});
+
+export const saveWebsitePostersServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data) => z.array(z.any()).parse(data))
+  .handler(async ({ data, context }) => {
+    try {
+      const buffer = Buffer.from(JSON.stringify(data, null, 2), "utf-8");
+
+      if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        try {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          if (supabaseAdmin) {
+            await supabaseAdmin.storage
+              .from("product-images")
+              .upload("website_posters.json", buffer, { upsert: true, contentType: "application/json" });
+            return { ok: true };
+          }
+        } catch (_) {}
+      }
+
+      const { error } = await context.supabase.storage
+        .from("product-images")
+        .upload("website_posters.json", buffer, { upsert: true, contentType: "application/json" });
+
+      if (error) {
+        console.warn("[saveWebsitePostersServer] user client error:", error.message);
+      }
+      return { ok: true };
+    } catch (e: any) {
+      console.warn("[saveWebsitePostersServer] Storage write exception:", e?.message);
+      return { ok: false, error: e?.message };
+    }
+  });
+
 export function fetchWebsitePosters(): WebsitePoster[] {
   if (typeof window === "undefined") return DEFAULT_POSTERS;
   try {
@@ -71,9 +128,6 @@ export function saveWebsitePosters(posters: WebsitePoster[]) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(posters));
     window.dispatchEvent(new Event("website-posters-updated"));
   } catch (e: any) {
-    // localStorage quota (typically ~5MB) gets blown out by base64 DataURLs
-    // when Supabase storage rejects unauthenticated uploads. Drop non-critical
-    // fields on older entries so the new poster still saves.
     const isQuota =
       e?.name === "QuotaExceededError" ||
       e?.code === 22 ||
@@ -91,7 +145,7 @@ export function saveWebsitePosters(posters: WebsitePoster[]) {
         window.dispatchEvent(new Event("website-posters-updated"));
         return;
       } catch {
-        // give up silently — caller surfaces toast already
+        // give up silently
       }
     }
     console.error("Failed to save website posters to storage", e);

@@ -305,7 +305,7 @@ function AuthFormContainer({
     <div className="mx-auto grid w-[350px] gap-2">
       <div className="flex justify-center mb-8">
         <Link to="/">
-          <img src="/logo.png" alt="Weekdayz" className="h-24 w-auto" />
+          <img src="/logo.png" alt="Weekdayzz" className="h-24 w-auto" />
         </Link>
       </div>
       {isSignIn ? (
@@ -359,7 +359,7 @@ const defaultSignInContent = {
   },
   quote: {
     text: "Welcome Back! The drop continues.",
-    author: "Weekdayz Creator Hub",
+    author: "Weekdayzz Creator Hub",
   },
 };
 
@@ -370,7 +370,7 @@ const defaultSignUpContent = {
   },
   quote: {
     text: "Create an account. Enter the creator studio.",
-    author: "Weekdayz Creator Hub",
+    author: "Weekdayzz Creator Hub",
   },
 };
 

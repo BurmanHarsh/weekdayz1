@@ -11,8 +11,8 @@ const ADMIN_EMAILS = [
 ];
 
 async function assertAdmin(ctx: { supabase: any; userId: string; claims?: any }) {
-  const email = ctx.claims?.email;
-  if (email && ADMIN_EMAILS.includes(email)) {
+  const email = (ctx.claims?.email || "").trim().toLowerCase();
+  if (email && ADMIN_EMAILS.some((ae) => ae.toLowerCase() === email)) {
     // Auto-grant admin role in DB so RLS policies (has_role) work for this user
     await ensureAdminRole(ctx);
     return;
@@ -20,7 +20,8 @@ async function assertAdmin(ctx: { supabase: any; userId: string; claims?: any })
 
   try {
     const { data } = await ctx.supabase.auth.getUser();
-    if (data?.user?.email && ADMIN_EMAILS.includes(data.user.email)) {
+    const userEmail = (data?.user?.email || "").trim().toLowerCase();
+    if (userEmail && ADMIN_EMAILS.some((ae) => ae.toLowerCase() === userEmail)) {
       await ensureAdminRole(ctx);
       return;
     }
@@ -336,7 +337,7 @@ export const createProduct = createServerFn({ method: "POST" })
   .inputValidator((data) =>
     z
       .object({
-        slug: z.string().min(1).max(150),
+        slug: z.string().max(150).optional().default(""),
         title: z.string().min(1).max(200),
         description: z.string().max(5000).default(""),
         price_cents: z.number().int().nonnegative().max(100000000),
@@ -352,39 +353,105 @@ export const createProduct = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
 
+    // 1. Sanitize & ensure unique slug
+    let baseSlug = (data.slug || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+    if (!baseSlug) {
+      baseSlug = data.title
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)/g, "");
+    }
+
+    if (!baseSlug) {
+      baseSlug = `${(data.category || "tee").toLowerCase().replace(/[^a-z0-9]+/g, "") || "product"}-${Date.now().toString(36)}`;
+    }
+
     const adminClient = await getAdminSupabaseClient();
+    const activeClient = adminClient || context.supabase;
+
+    // Check if slug exists in DB, append suffix if duplicate
+    let finalSlug = baseSlug;
+    try {
+      const { data: existing } = await activeClient
+        .from("products")
+        .select("id")
+        .eq("slug", finalSlug)
+        .maybeSingle();
+
+      if (existing) {
+        finalSlug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
+      }
+    } catch (_) {}
+
+    const productInsertPayload = {
+      slug: finalSlug,
+      title: data.title.trim(),
+      description: data.description.trim(),
+      price_cents: data.price_cents,
+      compare_at_price_cents: data.compare_at_price_cents ?? null,
+      inventory_count: data.inventory_count,
+      image_urls: data.image_urls,
+      sizes: data.sizes,
+      colors: data.colors,
+      category: data.category,
+      is_active: true,
+      weight_g: 300,
+      length_cm: 30,
+      width_cm: 20,
+      height_cm: 3,
+    };
+
+    // Attempt 1: admin service client (if configured)
     if (adminClient) {
       try {
         const { data: row, error } = await adminClient
           .from("products")
-          .insert(data)
+          .insert(productInsertPayload)
           .select("id")
           .single();
-        if (!error && row) return { id: row.id };
+        if (!error && row) return { id: row.id, slug: finalSlug };
         if (error) console.warn("[createProduct] Admin client DB insert failed:", error.message);
       } catch (e: any) {
         console.warn("[createProduct] Admin client DB insert exception:", e?.message);
       }
     }
 
+    // Attempt 2: authenticated user client
     try {
       const { data: row, error } = await context.supabase
         .from("products")
-        .insert(data)
+        .insert(productInsertPayload)
         .select("id")
         .single();
-      if (!error && row) return { id: row.id };
+      if (!error && row) return { id: row.id, slug: finalSlug };
+
+      // If error was duplicate slug (code 23505), retry once with random suffix
+      if (error && (error.code === "23505" || error.message.includes("unique"))) {
+        const retrySlug = `${baseSlug}-${Math.random().toString(36).substring(2, 7)}`;
+        const { data: retryRow, error: retryErr } = await context.supabase
+          .from("products")
+          .insert({ ...productInsertPayload, slug: retrySlug })
+          .select("id")
+          .single();
+        if (!retryErr && retryRow) return { id: retryRow.id, slug: retrySlug };
+      }
       if (error) console.warn("[createProduct] User client DB insert failed:", error.message);
     } catch (e: any) {
       console.warn("[createProduct] User client DB insert exception:", e?.message);
     }
 
-    // Store in fallback memory list and persistent Supabase storage
-    console.warn("[createProduct] DB insert failed for both clients, using fallback storage for product:", data.slug);
+    // Attempt 3: Persist to fallback memory and Supabase storage
+    console.warn("[createProduct] DB insert failed for both clients, using fallback storage for product:", finalSlug);
     const newId = `admin-prod-${Date.now()}`;
     const newProduct: FallbackProduct = {
       id: newId,
-      slug: data.slug,
+      slug: finalSlug,
       title: data.title,
       description: data.description,
       price_cents: data.price_cents,
@@ -397,9 +464,8 @@ export const createProduct = createServerFn({ method: "POST" })
       is_active: true,
       created_at: new Date().toISOString(),
     };
-    // Pass both user client and admin client so saveStorageCustomProducts can try both
     await saveStorageCustomProducts(newProduct, context.supabase, adminClient ?? undefined);
-    return { id: newId };
+    return { id: newId, slug: finalSlug };
   });
 
 export const getSignedAdminDesignUrl = createServerFn({ method: "POST" })
@@ -456,10 +522,12 @@ export const listAdminProducts = createServerFn({ method: "GET" })
       return p;
     });
 
-    const dbSlugs = new Set(dbProducts.map((p: any) => p.slug));
-    const extraFallbacks = getFallbackProducts().filter((p) => !dbSlugs.has(p.slug));
+    // If database has products, return real products directly
+    if (dbProducts.length > 0) {
+      return dbProducts;
+    }
 
-    return [...dbProducts, ...extraFallbacks];
+    return getFallbackProducts();
   });
 
 export const updateProduct = createServerFn({ method: "POST" })
@@ -570,7 +638,7 @@ interface PromoCode {
 let MEMORY_PROMO_CODES: PromoCode[] = [
   {
     id: "promo-1",
-    code: "WEEKDAYZ10",
+    code: "WEEKDAYZZ10",
     discountType: "percent",
     discountValue: 10,
     minOrderValue: 999,

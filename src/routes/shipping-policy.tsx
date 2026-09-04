@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/shipping-policy")({
   head: () => ({
     meta: [
-      { title: "Shipping Policy — Weekdayz" },
+      { title: "Shipping Policy — Weekdayzz" },
       { name: "description", content: "Shipping timelines, logistics partners and delivery details." },
     ],
   }),

@@ -82,7 +82,7 @@ export default function PromoCodeSection() {
           <input
             value={form.code}
             onChange={(e) => setForm({ ...form, code: e.target.value })}
-            placeholder="e.g. WEEKDAYZ20"
+            placeholder="e.g. WEEKDAYZZ20"
             className="mt-1 w-full bg-background border border-border px-3 py-2 text-sm font-mono font-bold uppercase tracking-wider"
             required
           />

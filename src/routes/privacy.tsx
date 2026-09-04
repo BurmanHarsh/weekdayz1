@@ -3,8 +3,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/privacy")({
   head: () => ({
     meta: [
-      { title: "Privacy Policy — Weekdayz" },
-      { name: "description", content: "Privacy policy and data handling practices at Weekdayz." },
+      { title: "Privacy Policy — Weekdayzz" },
+      { name: "description", content: "Privacy policy and data handling practices at Weekdayzz." },
     ],
   }),
   component: PrivacyPage,
@@ -20,7 +20,7 @@ function PrivacyPage() {
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">1. Information We Collect</h2>
           <p>
-            When you visit or make a purchase from Weekdayz (weekdayz.in), we collect personal details necessary to fulfill your order. This includes your name, delivery address, phone number, email address, and IP address.
+            When you visit or make a purchase from Weekdayzz (weekdayz.in), we collect personal details necessary to fulfill your order. This includes your name, delivery address, phone number, email address, and IP address.
           </p>
         </section>
 
@@ -34,7 +34,7 @@ function PrivacyPage() {
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">3. Payment Security</h2>
           <p>
-            Weekdayz does not store your credit/debit card details, UPI IDs, or banking passwords. All payment transactions are encrypted and handled directly by RBI-licensed payment gateway partners (Razorpay).
+            Weekdayzz does not store your credit/debit card details, UPI IDs, or banking passwords. All payment transactions are encrypted and handled directly by RBI-licensed payment gateway partners (Razorpay).
           </p>
         </section>
 
