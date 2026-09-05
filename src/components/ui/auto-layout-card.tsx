@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowRight, Sparkles } from "lucide-react";
 
 export type Step = 1 | 2 | 3;
@@ -113,8 +113,13 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
     ref,
   ) => {
     const [step, setStep] = useState<Step>(1);
+    const navigate = useNavigate();
 
-    const handleClick = () => setStep((prevStep) => ((prevStep % 3) + 1) as Step);
+    const handleClick = () => {
+      if (linkTo) {
+        navigate({ to: linkTo as any, search: linkSearch });
+      }
+    };
 
     const currentStyle = stepStyles[step];
 
@@ -122,7 +127,7 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
       <motion.div
         ref={ref}
         className={cn(
-          "relative cursor-pointer overflow-hidden bg-card border border-border p-3 shadow-md hover:shadow-xl transition-shadow",
+          "relative cursor-pointer overflow-hidden bg-card border border-border p-3 shadow-md hover:shadow-xl transition-all duration-300 hover:border-foreground/30",
           className,
         )}
         style={{

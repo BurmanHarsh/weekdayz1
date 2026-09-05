@@ -115,7 +115,12 @@ export function CartDrawer() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="font-semibold">{formatPrice(subtotal)}</span>
                 </div>
-                <p className="text-xs text-muted-foreground">Shipping calculated at checkout.</p>
+                <div className="bg-muted/40 border border-border/80 p-2.5 rounded-lg text-[10px] text-muted-foreground leading-relaxed">
+                  <div className="font-bold text-foreground uppercase tracking-wider text-[10px] mb-0.5">
+                    100% Prepaid • Quick Exchange
+                  </div>
+                  Standard 4-day exchange (size/color) • Custom 2-day exchange (wrong print/size). No returns accepted.
+                </div>
                 <button
                   onClick={() => {
                     setDrawerOpen(false);

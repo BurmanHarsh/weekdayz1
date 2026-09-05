@@ -18,8 +18,9 @@ function ShippingPolicyPage() {
 
       <div className="space-y-8 text-sm leading-relaxed text-foreground/90">
         <section>
-          <h2 className="text-lg font-bold uppercase tracking-wider mb-3">1. Shipping Charges</h2>
+          <h2 className="text-lg font-bold uppercase tracking-wider mb-3">1. Shipping Charges & Payment</h2>
           <p>
+            • <strong className="text-foreground">Payment Method:</strong> 100% Prepaid only via UPI, Cards, and NetBanking. Cash on Delivery (COD) is not accepted.<br />
             • <strong className="text-foreground">Free Shipping:</strong> On all orders of ₹2,000 or above.<br />
             • <strong className="text-foreground">Standard Delivery:</strong> Flat ₹99 for orders under ₹2,000.
           </p>

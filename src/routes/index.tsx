@@ -21,6 +21,14 @@ import AutoLayoutCard from "@/components/ui/auto-layout-card";
 import hero1 from "@/assets/hero-1.jpg";
 import hero2 from "@/assets/hero-2.jpg";
 import hero3 from "@/assets/hero-3.jpg";
+import teesImg from "@/assets/tees.png";
+import couplesImg from "@/assets/couples.png";
+import statementImg from "@/assets/statement.png";
+import pinterestImg from "@/assets/pinterest finds.png";
+import jacketsImg from "@/assets/jackets.png";
+import hoodieImg from "@/assets/hoodie.png";
+import cricketImg from "@/assets/cricket.png";
+import bulkImg from "@/assets/bulk.png";
 import { fetchWebsitePosters, getWebsitePostersServer, WebsitePoster, DEFAULT_POSTERS } from "@/lib/posters";
 import { useMemo } from "react";
 
@@ -34,16 +42,16 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-// Exactly 8 categories, 4 per row (2 rows)
+// Exactly 8 categories transformed into bold cards with assets inside circular icons
 const CATS = [
-  { label: "Tees", cat: "tee", emoji: "👕" },
-  { label: "Couple", cat: "couple", emoji: "💑" },
-  { label: "Statement", cat: "statement", emoji: "✌️" },
-  { label: "Pinterest", cat: "pinterest", emoji: "📌" },
-  { label: "Jackets", cat: "jacket", emoji: "🧥" },
-  { label: "Hoodies", cat: "hoodie", emoji: "🦔" },
-  { label: "Bottoms", cat: "bottom", emoji: "👖" },
-  { label: "Bulk", cat: "bulk", emoji: "📦" },
+  { label: "Tees", cat: "tee", img: teesImg, desc: "240 GSM Heavy Cotton", to: "/shop", search: { category: "tee" } },
+  { label: "Couple", cat: "couple", img: couplesImg, desc: "Matching Fits for Two", to: "/collections/couple" },
+  { label: "Statement", cat: "statement", img: statementImg, desc: "Bold Graphic Drops", to: "/shop", search: { category: "statement" } },
+  { label: "Pinterest", cat: "pinterest", img: pinterestImg, desc: "Viral Aesthetic Styles", to: "/shop", search: { category: "pinterest" } },
+  { label: "Jackets", cat: "jacket", img: jacketsImg, desc: "Streetwear Outerwear", to: "/shop", search: { category: "jacket" } },
+  { label: "Hoodies", cat: "hoodie", img: hoodieImg, desc: "380 GSM Heavy Fleece", to: "/shop", search: { category: "hoodie" } },
+  { label: "Sports & Fan", cat: "sports", img: cricketImg, desc: "Cricket & F1 Capsule", to: "/collections/rcb" },
+  { label: "Bulk Orders", cat: "bulk", img: bulkImg, desc: "Team & Fest Merch", to: "/bulk-orders" },
 ];
 
 // Featured collections for grid
@@ -84,10 +92,10 @@ function Home() {
       <CustomizerBanner />
       <CollectionsGrid />
       <ShopAllSection products={shopAll} />
+      <BulkOrdersSection />
       <StoreHeroPromoBanner />
       <ValuePropsStoryScroll />
       <StoreTestimonialsSection />
-      <BulkOrdersSection />
       <StoreFaqSection />
 
       {/* Newsletter */}
@@ -219,24 +227,24 @@ function HeroCarousel() {
               className="h-full w-full object-cover object-center"
               style={{ transform: idx === current ? "scale(1)" : "scale(1.04)", transition: "transform 8s ease-out" }}
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
-            <div className="absolute inset-0 flex items-end pb-16 md:items-center md:pb-0">
-              <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
-                <div className="max-w-md">
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/25" />
+            <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 z-10">
+              <div className="mx-auto w-full max-w-2xl flex justify-center">
+                <div className="w-full bg-black/50 backdrop-blur-md border border-white/20 p-6 sm:p-10 rounded-3xl shadow-2xl flex flex-col items-center text-center transition-transform duration-500 hover:border-white/30">
                   {s.badge && (
-                    <span className="inline-block bg-white text-black font-black uppercase tracking-widest text-[10px] px-3 py-1 mb-4 shadow-md">
+                    <span className="inline-block bg-white text-black font-black uppercase tracking-widest text-[10px] px-3.5 py-1 mb-3 rounded-full shadow-md">
                       {s.badge}
                     </span>
                   )}
                   <div className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase mb-2">{s.kicker}</div>
-                  <h1 className="text-display text-4xl md:text-6xl lg:text-7xl leading-[0.92] font-black text-white">{s.title}</h1>
-                  <p className="mt-4 text-base md:text-lg text-white/80 font-medium leading-relaxed">{s.sub}</p>
-                  <div className="mt-8">
+                  <h1 className="text-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.94] font-black text-white">{s.title}</h1>
+                  <p className="mt-3 text-sm sm:text-base text-white/80 font-medium leading-relaxed max-w-md">{s.sub}</p>
+                  <div className="mt-6 flex justify-center w-full">
                     <Link
                       to={s.to as any}
-                      className="inline-flex items-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-foreground hover:text-white transition-all duration-300 shadow-lg"
+                      className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-300 rounded-full shadow-2xl"
                     >
-                      {s.cta} <ArrowRight className="h-4 w-4" />
+                      {s.cta || "Shop All"} <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
                 </div>
@@ -282,29 +290,43 @@ function HeroCarousel() {
   );
 }
 
-/* ─── CATEGORIES GRID — Exactly 4 per row, 2 rows, circular icons, NO carousel ─── */
+/* ─── CATEGORIES GRID — Bold Heading Cards with Category Images inside Circular Icons ─── */
 function CategoriesGrid() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
-      <Reveal className="mb-6 text-center">
-        <div className="text-xs font-bold tracking-widest text-muted-foreground uppercase">BROWSE BY CATEGORY</div>
-        <h2 className="mt-1 text-display text-2xl font-bold">Shop Your Style</h2>
+      <Reveal className="mb-8 text-center">
+        <div className="text-xs font-bold tracking-[0.25em] text-muted-foreground uppercase">BROWSE BY CATEGORY</div>
+        <h2 className="mt-1 text-display text-3xl sm:text-4xl font-black">Shop Your Style</h2>
+        <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+          Explore our signature cuts, matching couple drops, heavy fleece, and custom team apparel.
+        </p>
       </Reveal>
-      {/* Strictly 4-column grid — static, no slider */}
-      <div className="grid grid-cols-4 gap-4 sm:gap-6">
+
+      {/* 4 columns on desktop/tablet, 2 on mobile — bold heading cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
         {CATS.map((c, i) => (
-          <Reveal key={c.label} delay={i * 50}>
+          <Reveal key={c.label} delay={i * 40}>
             <Link
-              to="/shop"
-              search={{ category: c.cat }}
-              className="group flex flex-col items-center gap-2 sm:gap-3"
+              to={c.to as any}
+              search={c.search}
+              className="group relative flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-foreground/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
-              <div className="h-14 w-14 sm:h-20 sm:w-20 flex items-center justify-center rounded-full bg-black text-white border border-black shadow-md transition-transform duration-300 group-hover:scale-105">
-                <span className="text-xl sm:text-3xl font-black">{c.label.charAt(0)}</span>
+              {/* Category Circular Icon with Image - No plain black placeholder color */}
+              <div className="relative h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-full overflow-hidden border-2 border-border/80 group-hover:border-foreground transition-all duration-300 shadow-md bg-secondary/30 flex items-center justify-center p-1">
+                <img
+                  src={c.img}
+                  alt={c.label}
+                  className="w-full h-full object-cover object-center rounded-full group-hover:scale-110 transition-transform duration-500"
+                />
               </div>
-              <span className="text-[11px] sm:text-xs font-semibold text-center uppercase tracking-wider text-foreground group-hover:text-foreground/70 transition-colors leading-tight">
+
+              {/* Bold Heading Card Info */}
+              <h3 className="mt-3.5 text-sm sm:text-base font-black uppercase tracking-wider text-foreground group-hover:text-accent transition-colors">
                 {c.label}
-              </span>
+              </h3>
+              <p className="text-[11px] text-muted-foreground font-medium mt-0.5 line-clamp-1">
+                {c.desc}
+              </p>
             </Link>
           </Reveal>
         ))}
@@ -353,17 +375,16 @@ function CollectionsGrid() {
                 Couple <br /> Collection
               </>
             }
-            subtitle="SS26 Match Edition • Oversized Fits"
+            subtitle="SS26 Match Edition • Oversized Fits for Two"
             badge="POPULAR"
-            mainImage="https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1740&auto=format&fit=crop"
+            mainImage={couplesImg}
             logoImage="/logo.png"
             extraImages={[
-              "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=1742&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1740&auto=format&fit=crop",
-              "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=1740&auto=format&fit=crop",
+              "/products/certified-yapper-listener-couple.png",
+              "/products/calm-admi-kaleshi-aurat-black.png",
+              "/products/calm-admi-kaleshi-aurat-white.png",
             ]}
-            linkTo="/shop"
-            linkSearch={{ category: "couple" }}
+            linkTo="/collections/couple"
           />
         </Reveal>
         <Reveal delay={120}>

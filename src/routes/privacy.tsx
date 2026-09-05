@@ -20,35 +20,40 @@ function PrivacyPage() {
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">1. Information We Collect</h2>
           <p>
-            When you visit or make a purchase from Weekdayzz (weekdayz.in), we collect personal details necessary to fulfill your order. This includes your name, delivery address, phone number, email address, and IP address.
+            When you visit or make a purchase from Weekdayzz (weekdayzz.in), we collect personal details necessary to fulfill your order. This includes your name, delivery address, phone number, email address, and IP address.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">2. How We Use Your Information</h2>
           <p>
-            We use your personal information to process orders, process payment transactions through secure gateways (Razorpay), arrange shipping (DTDC Express), and communicate order updates and promotional drops.
+            Your information is used exclusively to:
           </p>
+          <ul className="list-disc pl-5 mt-2 space-y-1">
+            <li>Process transactions, calculate taxes, and generate invoices.</li>
+            <li>Coordinate pan-India shipping and deliver status notifications via SMS, email, and WhatsApp.</li>
+            <li>Prevent fraudulent transactions and protect platform integrity.</li>
+          </ul>
         </section>
 
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">3. Payment Security</h2>
           <p>
-            Weekdayzz does not store your credit/debit card details, UPI IDs, or banking passwords. All payment transactions are encrypted and handled directly by RBI-licensed payment gateway partners (Razorpay).
+            We partner with Razorpay for all transaction processing. We do not store your credit/debit card numbers, UPI PINs, or CVVs on our servers. All transaction traffic is encrypted with industry-standard 256-bit SSL protocols.
           </p>
         </section>
 
         <section>
-          <h2 className="text-lg font-bold uppercase tracking-wider mb-3">4. Cookies & Analytics</h2>
+          <h2 className="text-lg font-bold uppercase tracking-wider mb-3">4. Third-Party Sharing</h2>
           <p>
-            We use essential cookies and session data to maintain your shopping cart, authentication state, and wishlist preferences.
+            We only disclose essential shipping details (name, delivery address, contact phone) to logistics partners (Shiprocket, DTDC) to complete order dispatch. We will never sell, rent, or trade your personal data to external marketing agencies.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-bold uppercase tracking-wider mb-3">5. Contact Us</h2>
           <p>
-            For privacy inquiries or data requests, reach out to us at <strong className="text-accent">support@weekdayz.in</strong>.
+            For privacy inquiries or data requests, reach out to us at <strong className="text-accent">support@weekdayzz.in</strong>.
           </p>
         </section>
       </div>
