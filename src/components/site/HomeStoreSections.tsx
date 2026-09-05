@@ -151,9 +151,9 @@ export function ValuePropsStoryScroll() {
             <div className="bg-[#1c3d32] text-white p-6 sm:p-8 flex flex-col justify-between space-y-8 border-b sm:border-b-0 sm:border-r border-border min-h-[220px]">
               <RotateCcw className="h-8 w-8 stroke-[1.5] text-white" />
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white">15-DAY EXCHANGE</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white">EASY EXCHANGES</h3>
                 <p className="text-xs text-white/75 mt-1.5 leading-relaxed">
-                  Doorstep pickup & hassle-free size exchange.
+                  4-day standard exchange &amp; 2-day custom exchange.
                 </p>
               </div>
             </div>
@@ -162,9 +162,9 @@ export function ValuePropsStoryScroll() {
             <div className="bg-black text-white p-6 sm:p-8 flex flex-col justify-between space-y-8 min-h-[220px]">
               <ShieldCheck className="h-8 w-8 stroke-[1.5] text-white" />
               <div>
-                <h3 className="text-xs font-black uppercase tracking-wider text-white">SECURE PAYMENTS</h3>
+                <h3 className="text-xs font-black uppercase tracking-wider text-white">100% PREPAID</h3>
                 <p className="text-xs text-white/75 mt-1.5 leading-relaxed">
-                  100% encrypted UPI, Cards & Cash on Delivery.
+                  100% encrypted UPI, Cards &amp; NetBanking. No COD.
                 </p>
               </div>
             </div>
@@ -501,8 +501,8 @@ export function BulkOrdersSection() {
 
               {/* Quick contact links */}
               <div className="flex flex-col gap-2 w-full lg:items-end">
-                <a href="mailto:sales@weekdayz.in?subject=Bulk%20Order%20Inquiry" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
-                  <Mail className="h-3.5 w-3.5" /> sales@weekdayz.in
+                <a href="mailto:sales@weekdayzz.in?subject=Bulk%20Order%20Inquiry" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                  <Mail className="h-3.5 w-3.5" /> sales@weekdayzz.in
                 </a>
                 <a href="tel:+919876543210" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
                   <Phone className="h-3.5 w-3.5" /> +91 98765 43210
@@ -535,11 +535,11 @@ export function StoreFaqSection() {
     },
     {
       q: "Can I return or exchange a product?",
-      a: "Absolutely! We offer a hassle-free 15-day exchange and return policy. If the fit isn't perfect or you change your mind, simply initiate a request from your account or contact support for doorstep pickup.",
+      a: "We do not accept returns. However, we offer an exchange window: standard orders within 4 days after delivery (standard size or color exchange); custom orders within 2 days after delivery (valid only if wrong size or incorrect print/design was delivered).",
     },
     {
-      q: "Are payments secure?",
-      a: "Yes, 100% secure. We partner with Razorpay to accept UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, NetBanking, and Cash on Delivery (COD) with full end-to-end encryption.",
+      q: "Are payments secure? Do you accept COD?",
+      a: "All orders are 100% prepaid only. Cash on Delivery (COD) is not accepted. We accept 100% encrypted UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards, and NetBanking via Razorpay.",
     },
   ];
 

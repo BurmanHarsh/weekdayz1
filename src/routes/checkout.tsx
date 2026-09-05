@@ -22,6 +22,7 @@ import { formatPrice } from "@/lib/format";
 import { calculateShippingCost, checkAddressServiceability } from "@/lib/shipping";
 import { placeOrder } from "@/lib/orders.functions";
 import { createRazorpayOrder } from "@/lib/razorpay.functions";
+import { StorePoliciesNotice } from "@/components/shop/StorePoliciesNotice";
 
 const ShippingSchema = z.object({
   full_name: z.string().min(2, "Required"),
@@ -688,6 +689,9 @@ function Checkout() {
 
           {step === 3 && (
             <div className="space-y-5">
+              {/* Official Store Policies Table */}
+              <StorePoliciesNotice />
+
               <div className="bg-card border border-border p-6 space-y-4">
                 <div className="flex items-center justify-between border-b border-border pb-4">
                   <div className="flex items-center gap-2">
@@ -696,7 +700,7 @@ function Checkout() {
                       <h3 className="text-sm font-semibold uppercase tracking-wider">
                         Razorpay Secure Checkout
                       </h3>
-                      <p className="text-xs text-muted-foreground">100% Encrypted & Safe Payment</p>
+                      <p className="text-xs text-muted-foreground">100% Prepaid Only · Encrypted & Safe Payment</p>
                     </div>
                   </div>
                   <Lock className="h-4 w-4 text-muted-foreground" />
@@ -798,6 +802,7 @@ function Checkout() {
             <span>Total</span>
             <span>{formatPrice(total)}</span>
           </div>
+          <StorePoliciesNotice variant="compact" />
         </aside>
       </div>
     </div>

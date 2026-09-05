@@ -30,17 +30,16 @@ import { formatPrice } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { SizeChartModal } from "@/components/shop/SizeChartModal";
 import { TShirt3DPreviewModal } from "@/components/shop/TShirt3DPreviewModal";
-import { TShirtMockup, getTShirtSvgDataUrl } from "@/components/shop/TShirtMockup";
+import { TShirtMockup, getTShirtSvgDataUrl, MockupViewSide } from "@/components/shop/TShirtMockup";
+import {
+  fetchLocalMockupColors,
+  getMockupSettingsServer,
+  MockupColor,
+  DEFAULT_MOCKUP_COLORS,
+} from "@/lib/mockups";
 
 const BASE_PRICE = 1899_00 / 100 * 100; // base tee 1899
 const CUSTOM_PRINT_SURCHARGE = 20000; // ₹200 in paise/cents
-
-export const COLORS = [
-  { name: "White", hex: "#FFFFFF" },
-  { name: "Navy Blue", hex: "#0F2042" },
-  { name: "Black", hex: "#111111" },
-  { name: "Off White", hex: "#EFE6D5" },
-];
 
 export const GARMENT_TYPES = [
   "Oversized Tees",
@@ -74,7 +73,7 @@ const TEXT_COLORS = [
 export interface DesignLayer {
   id: string;
   type: "image" | "text";
-  side: "Front" | "Back";
+  side: MockupViewSide;
   // Image specific
   file?: File;
   previewUrl: string;
@@ -126,14 +125,41 @@ function CreatorStudio() {
 
   const createDesignFn = useServerFn(createDesign);
   const getDesignByIdFn = useServerFn(getDesignById);
+  const getMockupSettingsFn = useServerFn(getMockupSettingsServer);
 
-  const [color, setColor] = useState(COLORS[0]);
+  const [availableColors, setAvailableColors] = useState<MockupColor[]>(() => fetchLocalMockupColors());
+  const [color, setColor] = useState<MockupColor>(() => {
+    const list = fetchLocalMockupColors();
+    return list[0] || DEFAULT_MOCKUP_COLORS[0];
+  });
   const [garment, setGarment] = useState(GARMENT_TYPES[0]);
   const [size, setSize] = useState("L");
-  const [printSide, setPrintSide] = useState<"Front" | "Back">("Front");
+  const [printSide, setPrintSide] = useState<MockupViewSide>("Front");
 
   const [layers, setLayers] = useState<DesignLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
+
+  // Sync colors & mockups dynamically from server and custom event
+  useEffect(() => {
+    const handleUpdate = () => {
+      const latest = fetchLocalMockupColors();
+      if (latest.length > 0) setAvailableColors(latest);
+    };
+    window.addEventListener("mockups-updated", handleUpdate);
+    getMockupSettingsFn()
+      .then((serverData) => {
+        if (serverData && serverData.length > 0) {
+          setAvailableColors(serverData);
+          saveLocalMockupColors(serverData);
+          // If current color is not in updated list, fallback to first
+          if (!serverData.some((c) => c.name.toLowerCase() === color.name.toLowerCase())) {
+            setColor(serverData[0]);
+          }
+        }
+      })
+      .catch(() => {});
+    return () => window.removeEventListener("mockups-updated", handleUpdate);
+  }, []);
 
   // Text Tool inputs
   const [activeTab, setActiveTab] = useState<"image" | "text">("image");
@@ -159,7 +185,7 @@ function CreatorStudio() {
         const item = cartItems.find((i) => i.key === cartKey);
         if (item && item.designConfig) {
           if (item.color) {
-            const foundColor = COLORS.find((c) => c.name.toLowerCase() === item.color?.toLowerCase());
+            const foundColor = availableColors.find((c) => c.name.toLowerCase() === item.color?.toLowerCase());
             if (foundColor) setColor(foundColor);
           }
           if (item.size) setSize(item.size);
@@ -178,7 +204,7 @@ function CreatorStudio() {
               if (settings.garment) setGarment(settings.garment);
               if (settings.size) setSize(settings.size);
               if (settings.colorName) {
-                const c = COLORS.find((col) => col.name === settings.colorName);
+                const c = availableColors.find((col) => col.name === settings.colorName);
                 if (c) setColor(c);
               }
               if (Array.isArray(settings.layers)) {
@@ -194,7 +220,7 @@ function CreatorStudio() {
       }
     }
     loadSavedDesign();
-  }, [designId, cartKey, user]);
+  }, [designId, cartKey, user, availableColors]);
 
   const sideLayers = layers.filter((l) => l.side === printSide);
   const activeLayer = layers.find((l) => l.id === selectedLayerId);
@@ -320,8 +346,8 @@ function CreatorStudio() {
   const hasGraphics = layers.length > 0;
   const total = BASE_PRICE + (hasGraphics ? CUSTOM_PRINT_SURCHARGE : 0);
 
-  // Generate Composite Canvas Image Blob for a specific side (Front / Back)
-  const generateSideCompositeBlob = async (side: "Front" | "Back"): Promise<Blob> => {
+  // Generate Composite Canvas Image Blob for a specific side (Front / Back / Sleeve)
+  const generateSideCompositeBlob = async (side: MockupViewSide): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -340,7 +366,8 @@ function CreatorStudio() {
       // Draw T-shirt texture mockup image
       const baseImg = new Image();
       baseImg.crossOrigin = "anonymous";
-      baseImg.src = getTShirtSvgDataUrl(color.hex, side);
+      const customUrl = side === "Front" ? color.frontMockup : side === "Back" ? color.backMockup : color.sleeveMockup;
+      baseImg.src = getTShirtSvgDataUrl(color.hex, side, customUrl);
 
       baseImg.onload = async () => {
         ctx.drawImage(baseImg, 0, 0, 800, 800);
@@ -408,16 +435,22 @@ function CreatorStudio() {
 
     setSaving(true);
     try {
-      // Generate front composite
-      const frontBlob = await generateSideCompositeBlob("Front");
-      const frontBlobUrl = URL.createObjectURL(frontBlob);
-      setFrontCompositeBlobUrl(frontBlobUrl);
+      // Generate composite snapshot from the primary decorated side (Front, Back, or Sleeve)
+      const decoratedSide: MockupViewSide = layers.some((l) => l.side === "Front")
+        ? "Front"
+        : layers.some((l) => l.side === "Back")
+        ? "Back"
+        : "Sleeve";
+      const primaryBlob = await generateSideCompositeBlob(decoratedSide);
+      const primaryBlobUrl = URL.createObjectURL(primaryBlob);
+      if (decoratedSide === "Front") setFrontCompositeBlobUrl(primaryBlobUrl);
+      else if (decoratedSide === "Back") setBackCompositeBlobUrl(primaryBlobUrl);
 
       const compositePath = `${user.id}/composite_${crypto.randomUUID()}.png`;
 
       const { error: upCompErr } = await supabase.storage
         .from("user-graphics")
-        .upload(compositePath, frontBlob, { upsert: false, contentType: "image/png" });
+        .upload(compositePath, primaryBlob, { upsert: false, contentType: "image/png" });
       if (upCompErr) throw upCompErr;
 
       const { data: signedData, error: signedErr } = await supabase.storage
@@ -518,10 +551,10 @@ function CreatorStudio() {
 
           {/* ── STICKY CANVAS COLUMN ── */}
           <div className="space-y-4 lg:sticky lg:top-24">
-            {/* Front / Back Side Switcher */}
+            {/* Front / Back / Side Sleeve View Switcher */}
             <div className="flex justify-between items-center bg-card border border-border p-1.5">
               <div className="flex gap-1">
-                {(["Front", "Back"] as const).map((side) => (
+                {(["Front", "Back", "Sleeve"] as const).map((side) => (
                   <button
                     key={side}
                     onClick={() => {
@@ -529,13 +562,13 @@ function CreatorStudio() {
                       setSelectedLayerId(null);
                     }}
                     className={cn(
-                      "px-6 py-2 text-xs font-black uppercase tracking-widest transition-all",
+                      "px-3 sm:px-5 py-2 text-xs font-black uppercase tracking-widest transition-all",
                       printSide === side
-                        ? "bg-foreground text-background"
+                        ? "bg-foreground text-background shadow"
                         : "bg-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {side} Side
+                    {side === "Sleeve" ? "Side Sleeve" : `${side} View`}
                   </button>
                 ))}
               </div>
@@ -554,12 +587,23 @@ function CreatorStudio() {
               style={{ aspectRatio: "3/4" }}
               onClick={() => setSelectedLayerId(null)}
             >
-              {/* Straight Upright T-Shirt Mockup */}
-              <TShirtMockup colorHex={color.hex} side={printSide} className="absolute inset-0 p-4" />
+              {/* Straight Upright T-Shirt Mockup (Front / Back / Side Sleeve) */}
+              <TShirtMockup
+                colorHex={color.hex}
+                side={printSide}
+                customMockupUrl={
+                  printSide === "Front"
+                    ? color.frontMockup
+                    : printSide === "Back"
+                    ? color.backMockup
+                    : color.sleeveMockup
+                }
+                className="absolute inset-0 p-4"
+              />
 
               {/* Side badge */}
               <div className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1 z-10 shadow-md">
-                {printSide} View
+                {printSide === "Sleeve" ? "Side Sleeve" : `${printSide} View`}
               </div>
 
               {/* Render Side Layers */}
@@ -829,6 +873,173 @@ function CreatorStudio() {
               )}
             </div>
 
+            {/* ── MANUAL SCALE & RESIZE CONTROLS (ZOOM / RESIZE / ROTATE / ALIGN) ── */}
+            {activeLayer ? (
+              <div className="border border-foreground/30 bg-card p-4 space-y-4 rounded-xl shadow-sm">
+                <div className="flex items-center justify-between border-b border-border pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Maximize2 className="h-4 w-4 text-accent" />
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider">
+                        {activeLayer.type === "image" ? "Image Scale & Transform" : "Text Scale & Transform"}
+                      </h4>
+                      <p className="text-[10px] text-muted-foreground">Adjust scale, rotation & placement</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeActiveLayer}
+                    className="text-xs text-destructive hover:underline font-bold inline-flex items-center gap-1"
+                  >
+                    <Trash2 className="h-3 w-3" /> Remove
+                  </button>
+                </div>
+
+                {/* Manual Scale Slider & Step Controls */}
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                      <ZoomIn className="h-3.5 w-3.5 text-foreground" /> Manual Scale / Zoom
+                    </span>
+                    <span className="font-mono font-bold bg-secondary px-2.5 py-0.5 rounded text-xs">
+                      {Math.round(activeLayer.scale * 100)}%
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateActiveLayer({ scale: Math.max(0.3, Number((activeLayer.scale - 0.05).toFixed(2))) })}
+                      className="p-2 border border-border bg-background hover:bg-secondary rounded text-xs font-bold transition-colors"
+                      title="Zoom Out (-5%)"
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </button>
+                    <input
+                      type="range"
+                      min="0.3"
+                      max="2.5"
+                      step="0.01"
+                      value={activeLayer.scale}
+                      onChange={(e) => updateActiveLayer({ scale: parseFloat(e.target.value) })}
+                      className="w-full accent-foreground cursor-pointer h-2 bg-secondary rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => updateActiveLayer({ scale: Math.min(2.5, Number((activeLayer.scale + 0.05).toFixed(2))) })}
+                      className="p-2 border border-border bg-background hover:bg-secondary rounded text-xs font-bold transition-colors"
+                      title="Zoom In (+5%)"
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Quick Scale Presets */}
+                  <div className="flex gap-1.5 pt-1">
+                    {[
+                      { label: "50%", val: 0.5 },
+                      { label: "75%", val: 0.75 },
+                      { label: "100%", val: 1.0 },
+                      { label: "150%", val: 1.5 },
+                      { label: "200%", val: 2.0 },
+                    ].map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => updateActiveLayer({ scale: p.val })}
+                        className={cn(
+                          "flex-1 py-1 text-[10px] font-bold border rounded transition-colors",
+                          Math.abs(activeLayer.scale - p.val) < 0.02
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-background border-border hover:bg-secondary text-muted-foreground",
+                        )}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Manual Rotation Slider */}
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 text-[11px]">
+                      <RotateCw className="h-3.5 w-3.5 text-foreground" /> Rotation
+                    </span>
+                    <span className="font-mono font-bold bg-secondary px-2.5 py-0.5 rounded text-xs">
+                      {activeLayer.rotate}°
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="360"
+                      step="1"
+                      value={activeLayer.rotate}
+                      onChange={(e) => updateActiveLayer({ rotate: parseInt(e.target.value) || 0 })}
+                      className="w-full accent-foreground cursor-pointer h-2 bg-secondary rounded-lg"
+                    />
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => updateActiveLayer({ rotate: (activeLayer.rotate + 45) % 360 })}
+                        className="px-2 py-1.5 border border-border bg-background hover:bg-secondary rounded text-[11px] font-bold"
+                      >
+                        +45°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateActiveLayer({ rotate: 0 })}
+                        className="px-2 py-1.5 border border-border bg-background hover:bg-secondary rounded text-[11px] font-bold uppercase"
+                      >
+                        0°
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alignment buttons */}
+                <div className="pt-2 border-t border-border">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block mb-1.5">
+                    Position Alignment
+                  </span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => updateActiveLayer({ x: 0 })}
+                      className="py-1.5 px-2 border border-border bg-background hover:bg-secondary rounded text-[10px] font-bold uppercase tracking-wider"
+                    >
+                      Center X
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateActiveLayer({ y: 0 })}
+                      className="py-1.5 px-2 border border-border bg-background hover:bg-secondary rounded text-[10px] font-bold uppercase tracking-wider"
+                    >
+                      Center Y
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateActiveLayer({ x: 0, y: 0, rotate: 0, scale: 1 })}
+                      className="py-1.5 px-2 border border-border bg-background hover:bg-secondary rounded text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                    >
+                      Reset All
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              sideLayers.length > 0 && (
+                <div className="border border-border/80 bg-muted/20 p-3 rounded-xl text-center">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    Click any element on the {printSide} view to scale, resize or rotate it.
+                  </p>
+                </div>
+              )
+            )}
+
             {/* Garment Selection */}
             <div>
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
@@ -845,29 +1056,31 @@ function CreatorStudio() {
               </select>
             </div>
 
-            {/* Color Selection */}
+            {/* Color Selection with Dynamic Colors */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Color</span>
                 <span className="text-xs font-semibold">{color.name}</span>
               </div>
               <div className="flex flex-wrap gap-2.5">
-                {COLORS.map((c) => (
-                  <button
-                    key={c.name}
-                    onClick={() => setColor(c)}
-                    title={c.name}
-                    className={cn(
-                      "h-8 w-8 rounded-full border-2 transition-all flex items-center justify-center",
-                      color.name === c.name ? "border-foreground scale-110 shadow-md ring-2 ring-foreground/20" : "border-border hover:border-foreground/50",
-                    )}
-                    style={{ background: c.hex }}
-                  >
-                    {color.name === c.name && (
-                      <Check className={cn("h-4 w-4", c.hex === "#FAFAFA" || c.hex === "#F5F0E8" || c.hex === "#D4C4B5" ? "text-black" : "text-white")} />
-                    )}
-                  </button>
-                ))}
+                {availableColors
+                  .filter((c) => c.isActive)
+                  .map((c) => (
+                    <button
+                      key={c.id || c.name}
+                      onClick={() => setColor(c)}
+                      title={c.name}
+                      className={cn(
+                        "h-8 w-8 rounded-full border-2 transition-all flex items-center justify-center",
+                        color.name === c.name ? "border-foreground scale-110 shadow-md ring-2 ring-foreground/20" : "border-border hover:border-foreground/50",
+                      )}
+                      style={{ background: c.hex }}
+                    >
+                      {color.name === c.name && (
+                        <Check className={cn("h-4 w-4", c.hex === "#FAFAFA" || c.hex === "#F5F0E8" || c.hex === "#FFFFFF" || c.hex === "#D4C4B5" ? "text-black" : "text-white")} />
+                      )}
+                    </button>
+                  ))}
               </div>
             </div>
 

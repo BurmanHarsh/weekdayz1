@@ -33,6 +33,7 @@ const OrdersQueue = lazy(() => import("@/components/admin/OrdersQueue"));
 const PromoCodeSection = lazy(() => import("@/components/admin/PromoCodeSection"));
 const ProfitAnalyticsSection = lazy(() => import("@/components/admin/ProfitAnalyticsSection"));
 const WebsitePostersSection = lazy(() => import("@/components/admin/WebsitePostersSection"));
+const MockupsAndColorsSection = lazy(() => import("@/components/admin/MockupsAndColorsSection"));
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
@@ -47,7 +48,7 @@ export const Route = createFileRoute("/admin")({
 function AdminPage() {
   const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<"catalog" | "orders" | "promos" | "analytics" | "posters">("analytics");
+  const [activeTab, setActiveTab] = useState<"catalog" | "orders" | "promos" | "analytics" | "posters" | "mockups">("analytics");
   const [bootstrapSecret, setBootstrapSecret] = useState("");
   const bootstrapFn = useServerFn(bootstrapAdmin);
 
@@ -145,6 +146,7 @@ function AdminPage() {
           {[
             { id: "analytics", label: "📈 Profit Analytics" },
             { id: "posters", label: "🖼️ Website Posters" },
+            { id: "mockups", label: "🎨 Mockups & Colors" },
             { id: "catalog", label: "Catalog & Products" },
             { id: "orders", label: "Orders & Shipping" },
             { id: "promos", label: "Promo Codes" },
@@ -169,6 +171,7 @@ function AdminPage() {
       <Suspense fallback={<TabSkeleton />}>
         {activeTab === "analytics" && <ProfitAnalyticsSection />}
         {activeTab === "posters" && <WebsitePostersSection />}
+        {activeTab === "mockups" && <MockupsAndColorsSection />}
         {activeTab === "catalog" && <ProductCatalogSection />}
         {activeTab === "orders" && <OrdersQueue />}
         {activeTab === "promos" && <PromoCodeSection />}
