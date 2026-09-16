@@ -1,6 +1,8 @@
-import hero1 from "@/assets/hero-1.jpg";
-import hero2 from "@/assets/hero-2.jpg";
-import hero3 from "@/assets/hero-3.jpg";
+import heroCottonbro from "@/assets/pexels-cottonbro-6069083.jpg";
+import heroFreestock from "@/assets/pexels-freestockpro-7444126.jpg";
+import heroJohnRae from "@/assets/pexels-john-rae-cayabyab-1570188-4944121.jpg";
+import heroVisualkevv from "@/assets/pexels-visualkevv-28076806.jpg";
+import heroSynthesis from "@/assets/SYNTHESIS _ PROTOTYPE 04 - JANIS SNE.jpeg";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getPublicClient } from "@/lib/supabase-server";
@@ -20,41 +22,63 @@ export interface WebsitePoster {
 
 export const DEFAULT_POSTERS: WebsitePoster[] = [
   {
-    id: "poster-rcb-26",
-    img: hero1,
-    kicker: "JUST DROPPED · LIMITED STOCK",
-    title: "RCB EDITION '26",
-    sub: "Cheer in style with the official oversized fit.",
-    badge: "FLAT 20% OFF",
-    to: "/collections/rcb",
-    cta: "GRAB YOURS",
+    id: "poster-street-culture",
+    img: heroCottonbro,
+    kicker: "NEW ARRIVALS · SS26",
+    title: "STREET CULTURE",
+    sub: "Engineered oversized fits and heavyweight drops for the new era.",
+    badge: "NEW DROP",
+    to: "/shop",
+    cta: "SHOP COLLECTION",
     is_active: true,
   },
   {
-    id: "poster-oversized-ss26",
-    img: hero2,
-    kicker: "BESTSELLER · SS26",
-    title: "THE OVERSIZED EDIT",
-    sub: "Premium heavyweight cotton. Minimal branding. Maximum comfort.",
-    badge: "BUY 2 GET 10% OFF",
+    id: "poster-minimal-edit",
+    img: heroFreestock,
+    kicker: "LIMITED EDITION",
+    title: "THE MINIMAL EDIT",
+    sub: "Uncompromising quality. 240+ GSM crafted everyday essentials.",
+    badge: "FLAT 20% OFF",
+    to: "/shop",
+    cta: "EXPLORE NOW",
+    is_active: true,
+  },
+  {
+    id: "poster-signature",
+    img: heroJohnRae,
+    kicker: "WEEKDAYZZ SIGNATURE",
+    title: "RAW & REFINED",
+    sub: "Statement graphics and modern silhouettes made to turn heads.",
+    badge: "BESTSELLER",
     to: "/shop",
     cta: "SHOP THE LOOK",
     is_active: true,
   },
   {
-    id: "poster-f1-pitlane",
-    img: hero3,
-    kicker: "PREMIUM CAPSULE",
-    title: "F1 PIT-LANE",
-    sub: "Carbon detailing. Race-day ready. The ultimate speed aesthetic.",
-    badge: "NEW ARRIVAL",
-    to: "/collections/f1",
-    cta: "EXPLORE NOW",
+    id: "poster-urban-essentials",
+    img: heroVisualkevv,
+    kicker: "TRENDING NOW",
+    title: "URBAN ESSENTIALS",
+    sub: "Everyday luxury streetwear designed for effortless styling.",
+    badge: "FROM ₹500",
+    to: "/shop",
+    cta: "DISCOVER MORE",
+    is_active: true,
+  },
+  {
+    id: "poster-future-synthesis",
+    img: heroSynthesis,
+    kicker: "EXCLUSIVE DROP",
+    title: "FUTURE SYNTHESIS",
+    sub: "Experimental cuts, avant-garde textures, and signature fits.",
+    badge: "HIGH DEMAND",
+    to: "/shop",
+    cta: "GRAB YOURS",
     is_active: true,
   },
 ];
 
-const STORAGE_KEY = "weekdayz_website_posters_v2";
+const STORAGE_KEY = "weekdayz_website_posters_v3";
 
 export const getWebsitePostersServer = createServerFn({ method: "GET" }).handler(async () => {
   try {
@@ -66,8 +90,11 @@ export const getWebsitePostersServer = createServerFn({ method: "GET" }).handler
     if (!error && data) {
       const text = await data.text();
       const parsed = JSON.parse(text);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed as WebsitePoster[];
+      if (Array.isArray(parsed) && parsed.length >= 5) {
+        const hasLegacy = parsed.some((p: any) => p.id === "poster-rcb-26");
+        if (!hasLegacy) {
+          return parsed as WebsitePoster[];
+        }
       }
     }
   } catch (e: any) {
@@ -115,7 +142,10 @@ export function fetchWebsitePosters(): WebsitePoster[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_POSTERS;
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    if (Array.isArray(parsed) && parsed.length >= 5) {
+      const hasLegacy = parsed.some((p: any) => p.id === "poster-rcb-26");
+      if (!hasLegacy) return parsed;
+    }
   } catch (e) {
     console.error("Failed to parse website posters from storage", e);
   }

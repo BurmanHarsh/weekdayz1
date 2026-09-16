@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions, useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { listProducts } from "@/lib/products.functions";
 import { listLatestReviews } from "@/lib/reviews.functions";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
 import { Stars } from "@/components/site/Stars";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Sparkles, Users, TrendingUp, Star, Zap } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   StoreHeroPromoBanner,
   ValuePropsStoryScroll,
@@ -18,9 +18,6 @@ import {
 import { AdmitOneTicket } from "@/components/ui/admit-one-ticket";
 import AutoLayoutCard from "@/components/ui/auto-layout-card";
 
-import hero1 from "@/assets/hero-1.jpg";
-import hero2 from "@/assets/hero-2.jpg";
-import hero3 from "@/assets/hero-3.jpg";
 import teesImg from "@/assets/tees.png";
 import couplesImg from "@/assets/couples.png";
 import statementImg from "@/assets/statement.png";
@@ -29,49 +26,94 @@ import jacketsImg from "@/assets/jackets.png";
 import hoodieImg from "@/assets/hoodie.png";
 import cricketImg from "@/assets/cricket.png";
 import bulkImg from "@/assets/bulk.png";
+import shalom1Img from "@/assets/shalom-ejiofor-_7wel0dVeRA-unsplash.jpg";
+import shalom2Img from "@/assets/shalom-ejiofor-RgPEQjJWBYE-unsplash.jpg";
+import shalom3Img from "@/assets/shalom-ejiofor-t_prchAm4ag-unsplash.jpg";
+import heroCottonbro from "@/assets/pexels-cottonbro-6069083.jpg";
+import heroFreestock from "@/assets/pexels-freestockpro-7444126.jpg";
+import heroJohnRae from "@/assets/pexels-john-rae-cayabyab-1570188-4944121.jpg";
+import heroVisualkevv from "@/assets/pexels-visualkevv-28076806.jpg";
+import heroSynthesis from "@/assets/SYNTHESIS _ PROTOTYPE 04 - JANIS SNE.jpeg";
 import { fetchWebsitePosters, getWebsitePostersServer, WebsitePoster, DEFAULT_POSTERS } from "@/lib/posters";
-import { useMemo } from "react";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
 });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/")(({
   loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
   component: Home,
-});
+} as any));
 
-// Exactly 8 categories transformed into bold cards with assets inside circular icons
-const CATS = [
-  { label: "Tees", cat: "tee", img: teesImg, desc: "240 GSM Heavy Cotton", to: "/shop", search: { category: "tee" } },
-  { label: "Couple", cat: "couple", img: couplesImg, desc: "Matching Fits for Two", to: "/collections/couple" },
-  { label: "Statement", cat: "statement", img: statementImg, desc: "Bold Graphic Drops", to: "/shop", search: { category: "statement" } },
-  { label: "Pinterest", cat: "pinterest", img: pinterestImg, desc: "Viral Aesthetic Styles", to: "/shop", search: { category: "pinterest" } },
-  { label: "Jackets", cat: "jacket", img: jacketsImg, desc: "Streetwear Outerwear", to: "/shop", search: { category: "jacket" } },
-  { label: "Hoodies", cat: "hoodie", img: hoodieImg, desc: "380 GSM Heavy Fleece", to: "/shop", search: { category: "hoodie" } },
-  { label: "Sports & Fan", cat: "sports", img: cricketImg, desc: "Cricket & F1 Capsule", to: "/collections/rcb" },
-  { label: "Bulk Orders", cat: "bulk", img: bulkImg, desc: "Team & Fest Merch", to: "/bulk-orders" },
+export const HERO_SLIDES: WebsitePoster[] = [
+  {
+    id: "poster-street-culture",
+    img: heroCottonbro,
+    kicker: "NEW ARRIVALS · SS26",
+    title: "STREET CULTURE",
+    sub: "Engineered oversized fits and heavyweight drops for the new era.",
+    badge: "NEW DROP",
+    to: "/shop",
+    cta: "SHOP COLLECTION",
+    is_active: true,
+  },
+  {
+    id: "poster-minimal-edit",
+    img: heroFreestock,
+    kicker: "LIMITED EDITION",
+    title: "THE MINIMAL EDIT",
+    sub: "Uncompromising quality. 240+ GSM crafted everyday essentials.",
+    badge: "FLAT 20% OFF",
+    to: "/shop",
+    cta: "EXPLORE NOW",
+    is_active: true,
+  },
+  {
+    id: "poster-signature",
+    img: heroJohnRae,
+    kicker: "WEEKDAYZZ SIGNATURE",
+    title: "RAW & REFINED",
+    sub: "Statement graphics and modern silhouettes made to turn heads.",
+    badge: "BESTSELLER",
+    to: "/shop",
+    cta: "SHOP THE LOOK",
+    is_active: true,
+  },
+  {
+    id: "poster-urban-essentials",
+    img: heroVisualkevv,
+    kicker: "TRENDING NOW",
+    title: "URBAN ESSENTIALS",
+    sub: "Everyday luxury streetwear designed for effortless styling.",
+    badge: "FROM ₹500",
+    to: "/shop",
+    cta: "DISCOVER MORE",
+    is_active: true,
+  },
+  {
+    id: "poster-future-synthesis",
+    img: heroSynthesis,
+    kicker: "EXCLUSIVE DROP",
+    title: "FUTURE SYNTHESIS",
+    sub: "Experimental cuts, avant-garde textures, and signature fits.",
+    badge: "HIGH DEMAND",
+    to: "/shop",
+    cta: "GRAB YOURS",
+    is_active: true,
+  },
 ];
 
-// Featured collections for grid
-const COLLECTIONS = [
-  {
-    label: "Couple Tees",
-    desc: "Match your vibe together",
-    slug: "couple",
-    bg: "from-rose-50 to-pink-100",
-    accent: "#e11d48",
-    emoji: "💑",
-  },
-  {
-    label: "Trending Now",
-    desc: "What everyone's wearing",
-    slug: "trending",
-    bg: "from-amber-50 to-orange-100",
-    accent: "#f97316",
-    emoji: "🔥",
-  },
+// Exactly 8 categories transformed into clean circles (no card box)
+const CATS = [
+  { label: "Tees", cat: "tee", img: teesImg, to: "/shop", search: { category: "tee" } },
+  { label: "Couple", cat: "couple", img: couplesImg, to: "/collections/couple" },
+  { label: "Statement", cat: "statement", img: statementImg, to: "/shop", search: { category: "statement" } },
+  { label: "Pinterest", cat: "pinterest", img: pinterestImg, to: "/shop", search: { category: "pinterest" } },
+  { label: "Jackets", cat: "jacket", img: jacketsImg, to: "/shop", search: { category: "jacket" } },
+  { label: "Hoodies", cat: "hoodie", img: hoodieImg, to: "/shop", search: { category: "hoodie" } },
+  { label: "Sports & Fan", cat: "sports", img: cricketImg, to: "/collections/rcb" },
+  { label: "Bulk Orders", cat: "bulk", img: bulkImg, to: "/bulk-orders" },
 ];
 
 function Home() {
@@ -84,37 +126,28 @@ function Home() {
   });
 
   const shopAll = products.slice(0, 8);
+  const spotlightProducts = products.slice(0, 3);
 
   return (
     <div className="w-full">
       <HeroCarousel />
       <CategoriesGrid />
+      <NewArrivalsBanner />
       <CustomizerBanner />
       <CollectionsGrid />
+      <StyleSpotlightSection products={spotlightProducts} />
+      <NewSeasonBanner />
       <ShopAllSection products={shopAll} />
       <BulkOrdersSection />
       <StoreHeroPromoBanner />
       <ValuePropsStoryScroll />
       <StoreTestimonialsSection />
       <StoreFaqSection />
-
-      {/* Newsletter */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-16">
-        <Reveal className="text-center">
-          <div className="text-xs font-bold tracking-widest text-primary uppercase">STAY IN THE LOOP</div>
-          <h2 className="mt-2 text-display text-3xl md:text-5xl">Get 10% off your first fit.</h2>
-          <p className="mt-3 text-muted-foreground">Drops, discounts and matchday reveals — straight to your inbox.</p>
-          <form onSubmit={(e) => e.preventDefault()} className="mx-auto mt-6 flex max-w-md overflow-hidden border border-border">
-            <input placeholder="you@weekdayzz.in" className="flex-1 bg-background px-4 py-3 text-sm outline-none" />
-            <button className="bg-foreground px-6 text-sm font-bold text-background">JOIN</button>
-          </form>
-        </Reveal>
-      </section>
     </div>
   );
 }
 
-/* ─── HERO CAROUSEL — Dynamic Admin Website Posters & Sliding Animation ─── */
+/* ─── HERO CAROUSEL — Fashion-brand style: text directly on image ─── */
 function HeroCarousel() {
   const getPostersFn = useServerFn(getWebsitePostersServer);
   const { data: serverPosters } = useQuery({
@@ -123,33 +156,18 @@ function HeroCarousel() {
     staleTime: 60_000,
   });
 
-  const [localPosters, setLocalPosters] = useState<WebsitePoster[]>([]);
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => {
-    const loadPosters = () => {
-      const all = fetchWebsitePosters();
-      const active = all.filter((p) => p.is_active);
-      setLocalPosters(active.length > 0 ? active : all);
-    };
-    loadPosters();
-    window.addEventListener("website-posters-updated", loadPosters);
-    return () => window.removeEventListener("website-posters-updated", loadPosters);
-  }, []);
-
   const heroList = useMemo(() => {
-    if (serverPosters && serverPosters.length > 0) {
+    if (serverPosters && serverPosters.length >= 5) {
       const active = serverPosters.filter((p) => p.is_active);
-      if (active.length > 0) return active;
+      const isLegacy = active.some((p) => p.id === "poster-rcb-26");
+      if (!isLegacy && active.length >= 5) return active;
     }
-    if (localPosters && localPosters.length > 0) {
-      const active = localPosters.filter((p) => p.is_active);
-      if (active.length > 0) return active;
-    }
-    return DEFAULT_POSTERS;
-  }, [serverPosters, localPosters]);
+    return HERO_SLIDES;
+  }, [serverPosters]);
 
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
@@ -169,34 +187,20 @@ function HeroCarousel() {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
+  const onTouchMove = (e: React.TouchEvent) => { setTouchEnd(e.targetTouches[0].clientX); };
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
-    if (distance > 40) {
-      goNext();
-    } else if (distance < -40) {
-      goPrev();
-    }
+    if (distance > 40) goNext();
+    else if (distance < -40) goPrev();
   };
-
-  const onMouseDown = (e: React.MouseEvent) => {
-    setMouseDownStart(e.clientX);
-  };
-
+  const onMouseDown = (e: React.MouseEvent) => { setMouseDownStart(e.clientX); };
   const onMouseUp = (e: React.MouseEvent) => {
     if (mouseDownStart === null) return;
     const distance = mouseDownStart - e.clientX;
     setMouseDownStart(null);
-    if (distance > 40) {
-      goNext();
-    } else if (distance < -40) {
-      goPrev();
-    }
+    if (distance > 40) goNext();
+    else if (distance < -40) goPrev();
   };
 
   useEffect(() => {
@@ -206,7 +210,6 @@ function HeroCarousel() {
 
   return (
     <section className="relative bg-black text-white overflow-hidden group">
-      {/* 3:4 on mobile, tall cinematic on desktop */}
       <div
         className="relative w-full touch-pan-y select-none cursor-grab active:cursor-grabbing"
         style={{ paddingBottom: "min(75%, 90vh)" }}
@@ -221,68 +224,82 @@ function HeroCarousel() {
             key={("id" in s && s.id) ? (s.id as string) : `${s.title}-${idx}`}
             className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${idx === current ? "opacity-100 z-10" : "opacity-0 z-0"}`}
           >
+            {/* Full-bleed image */}
             <img
               src={s.img}
               alt={s.title}
               className="h-full w-full object-cover object-center"
               style={{ transform: idx === current ? "scale(1)" : "scale(1.04)", transition: "transform 8s ease-out" }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/25" />
-            <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 z-10">
-              <div className="mx-auto w-full max-w-2xl flex justify-center">
-                <div className="w-full bg-black/60 backdrop-blur-[2px] border border-white/20 p-6 sm:p-10 rounded-3xl shadow-2xl flex flex-col items-center text-center transition-transform duration-500 hover:border-white/30">
-                  {s.badge && (
-                    <span className="inline-block bg-white text-black font-black uppercase tracking-widest text-[10px] px-3.5 py-1 mb-3 rounded-full shadow-md">
-                      {s.badge}
-                    </span>
-                  )}
-                  <div className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase mb-2">{s.kicker}</div>
-                  <h1 className="text-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.94] font-black text-white">{s.title}</h1>
-                  <p className="mt-3 text-sm sm:text-base text-white/80 font-medium leading-relaxed max-w-md">{s.sub}</p>
-                  <div className="mt-6 flex justify-center w-full">
-                    <Link
-                      to={s.to as any}
-                      className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-300 rounded-full shadow-2xl"
-                    >
-                      {s.cta || "Shop All"} <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
+
+            {/* Multi-layer gradient for text legibility — heavy at bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+
+            {/* Text directly on image — bottom-left fashion brand style */}
+            <div className="absolute inset-0 flex flex-col justify-end p-6 sm:p-10 md:p-14 z-10">
+              {/* Badge pill */}
+              {s.badge && (
+                <span className="inline-block self-start bg-white text-black font-black uppercase tracking-widest text-[10px] sm:text-xs px-3 py-1 mb-3 shadow-lg">
+                  {s.badge}
+                </span>
+              )}
+              {/* Kicker */}
+              <div className="text-[10px] sm:text-xs font-bold tracking-[0.3em] text-white/70 uppercase mb-2">
+                {s.kicker}
+              </div>
+              {/* Big bold title */}
+              <h1 className="text-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.9] font-black text-white max-w-2xl uppercase">
+                {s.title}
+              </h1>
+              {/* Sub text */}
+              <p className="mt-3 text-sm sm:text-base text-white/75 font-medium leading-relaxed max-w-md">
+                {s.sub}
+              </p>
+              {/* CTA */}
+              <div className="mt-6">
+                <Link
+                  to={s.to as any}
+                  className="inline-flex items-center gap-2 bg-white text-black px-7 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-white/90 hover:gap-3 active:scale-95 transition-all duration-300 shadow-2xl"
+                >
+                  {s.cta || "SHOP ALL"} <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
             </div>
           </div>
         ))}
 
-        {/* Left / Right arrows */}
+        {/* Left arrow */}
         <button
           onClick={goPrev}
           aria-label="Previous slide"
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 transition-all opacity-0 group-hover:opacity-100"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-sm border border-white/20 text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
         >
-          &lsaquo;
+          <ChevronLeft className="h-5 w-5" />
         </button>
+        {/* Right arrow */}
         <button
           onClick={goNext}
           aria-label="Next slide"
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 transition-all opacity-0 group-hover:opacity-100"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-sm border border-white/20 text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
         >
-          &rsaquo;
+          <ChevronRight className="h-5 w-5" />
         </button>
 
         {/* Dots */}
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+        <div className="absolute bottom-6 right-6 flex items-center gap-2 z-20">
           {heroList.map((_, idx) => (
             <button
               key={idx}
               aria-label={`Go to slide ${idx + 1}`}
               onClick={() => goTo(idx)}
-              className={`h-1 rounded-full transition-all duration-500 ${idx === current ? "w-10 bg-white" : "w-4 bg-white/40 hover:bg-white/70"}`}
+              className={`h-[3px] rounded-full transition-all duration-500 ${idx === current ? "w-10 bg-white" : "w-4 bg-white/40 hover:bg-white/70"}`}
             />
           ))}
         </div>
 
         {/* Slide counter */}
-        <div className="absolute bottom-6 right-6 z-20 text-white/60 text-xs font-bold tracking-widest">
+        <div className="absolute bottom-6 left-6 sm:left-10 md:left-14 z-20 text-white/50 text-xs font-bold tracking-widest">
           {String(current + 1).padStart(2, "0")} / {String(heroList.length).padStart(2, "0")}
         </div>
       </div>
@@ -290,47 +307,73 @@ function HeroCarousel() {
   );
 }
 
-/* ─── CATEGORIES GRID — Bold Heading Cards with Category Images inside Circular Icons ─── */
+/* ─── CATEGORIES GRID — Circles only, no card boxes ─── */
 function CategoriesGrid() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
       <Reveal className="mb-8 text-center">
-        <div className="text-xs font-bold tracking-[0.25em] text-muted-foreground uppercase">BROWSE BY CATEGORY</div>
-        <h2 className="mt-1 text-display text-3xl sm:text-4xl font-black">Shop Your Style</h2>
-        <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-          Explore our signature cuts, matching couple drops, heavy fleece, and custom team apparel.
-        </p>
+        <h2 className="text-display text-3xl sm:text-4xl font-black uppercase tracking-wider">
+          BROWSE BY CATEGORY
+        </h2>
       </Reveal>
 
-      {/* 4 columns on desktop/tablet, 2 on mobile — bold heading cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+      {/* 4 columns on desktop/tablet, 4 on mobile — circles only, no card box */}
+      <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-4 sm:gap-6">
         {CATS.map((c, i) => (
           <Reveal key={c.label} delay={i * 40}>
             <Link
               to={c.to as any}
-              search={c.search}
-              className="group relative flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-foreground/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              search={(c as any).search}
+              className="group flex flex-col items-center text-center gap-3"
             >
-              {/* Category Circular Icon with Image - No plain black placeholder color */}
-              <div className="relative h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-full overflow-hidden border-2 border-border/80 group-hover:border-foreground transition-all duration-300 shadow-md bg-secondary/30 flex items-center justify-center p-1">
+              {/* Circle image only — no card background */}
+              <div className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full overflow-hidden border-2 border-border/60 group-hover:border-foreground transition-all duration-300 shadow-sm bg-muted/30">
                 <img
                   src={c.img}
                   alt={c.label}
-                  className="w-full h-full object-cover object-center rounded-full group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
-
-              {/* Bold Heading Card Info */}
-              <h3 className="mt-3.5 text-sm sm:text-base font-black uppercase tracking-wider text-foreground group-hover:text-accent transition-colors">
+              {/* Label below circle */}
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide text-foreground group-hover:text-primary transition-colors leading-tight">
                 {c.label}
-              </h3>
-              <p className="text-[11px] text-muted-foreground font-medium mt-0.5 line-clamp-1">
-                {c.desc}
-              </p>
+              </span>
             </Link>
           </Reveal>
         ))}
       </div>
+    </section>
+  );
+}
+
+/* ─── NEW ARRIVALS BANNER — Editorial full-width fashion banner ─── */
+function NewArrivalsBanner() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14">
+      <Reveal>
+        <div className="text-xs font-black tracking-[0.3em] uppercase text-center mb-4">NEW ARRIVALS</div>
+        <Link to="/shop" className="group relative block overflow-hidden rounded-xl" style={{ paddingBottom: "56%" }}>
+          <img
+            src={shalom1Img}
+            alt="New Arrivals"
+            className="absolute inset-0 h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+          />
+          {/* Gradient overlay — strong at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          {/* Text overlay — bottom left */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 flex items-end justify-between">
+            <div>
+              <p className="text-white/70 text-xs font-bold tracking-widest uppercase mb-1">SS26 Collection</p>
+              <div className="text-white font-black text-3xl sm:text-5xl md:text-6xl leading-none uppercase tracking-tight">
+                FROM ₹500
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-2 bg-white text-black text-xs font-black tracking-widest uppercase px-6 py-3 group-hover:bg-black group-hover:text-white border border-white transition-all duration-300">
+              SHOP NOW <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
+      </Reveal>
     </section>
   );
 }
@@ -370,11 +413,7 @@ function CollectionsGrid() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         <Reveal delay={0}>
           <AutoLayoutCard
-            title={
-              <>
-                Couple <br /> Collection
-              </>
-            }
+            title={<>Couple <br /> Collection</>}
             subtitle="SS26 Match Edition • Oversized Fits for Two"
             badge="POPULAR"
             mainImage={couplesImg}
@@ -389,11 +428,7 @@ function CollectionsGrid() {
         </Reveal>
         <Reveal delay={120}>
           <AutoLayoutCard
-            title={
-              <>
-                Trending <br /> Streetwear
-              </>
-            }
+            title={<>Trending <br /> Streetwear</>}
             subtitle="Top Picked Drops • Heavyweight Cotton"
             badge="HOT DROPS"
             mainImage="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1740&auto=format&fit=crop"
@@ -408,6 +443,85 @@ function CollectionsGrid() {
           />
         </Reveal>
       </div>
+    </section>
+  );
+}
+
+/* ─── STYLE SPOTLIGHT — Best sellers banner + product grid ─── */
+function StyleSpotlightSection({ products }: { products: any[] }) {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14">
+      <Reveal>
+        <div className="text-xs font-black tracking-[0.3em] uppercase text-center mb-4">STYLE SPOTLIGHT</div>
+      </Reveal>
+
+      {/* Top hero banner */}
+      <Reveal>
+        <Link to="/shop" className="group relative block overflow-hidden rounded-xl mb-4" style={{ paddingBottom: "42%" }}>
+          <img
+            src={shalom2Img}
+            alt="Best Sellers"
+            className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+            <p className="text-white/80 text-xs sm:text-sm font-bold tracking-widest uppercase mb-2">UP TO 50% OFF</p>
+            <div className="text-white font-black text-4xl sm:text-6xl md:text-7xl leading-none uppercase tracking-tight mb-4">
+              BEST SELLERS
+            </div>
+            <span className="inline-flex items-center gap-2 border border-white text-white text-xs font-black tracking-widest uppercase px-8 py-3 group-hover:bg-white group-hover:text-black transition-all duration-300">
+              SHOP NOW
+            </span>
+          </div>
+        </Link>
+      </Reveal>
+
+      {/* Product grid — 3 cards */}
+      {products.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {products.map((p, i) => (
+            <Reveal key={p.id} delay={i * 80}>
+              <ProductCard product={p} />
+            </Reveal>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─── NEW SEASON PROMO BANNER — Bold full-bleed editorial ─── */
+function NewSeasonBanner() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14">
+      <Reveal>
+        <Link to="/shop" className="group relative block overflow-hidden rounded-xl" style={{ paddingBottom: "65%" }}>
+          <img
+            src={shalom3Img}
+            alt="New Season Collection"
+            className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          />
+          {/* Dark overlay — centre-focused for text */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+
+          {/* Text — centre */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+            <span className="inline-block border border-white/60 text-white/80 text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase px-4 py-1 mb-4">
+              NEW SEASON
+            </span>
+            <div className="text-white font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.92] uppercase tracking-tight mb-2">
+              FROM ₹500
+            </div>
+            <div className="text-white font-black text-xl sm:text-2xl md:text-3xl leading-tight uppercase tracking-wide mb-6 opacity-90">
+              + EXTRA 20% OFF
+            </div>
+            <span className="inline-flex items-center gap-2 border border-white text-white text-xs font-black tracking-widest uppercase px-8 py-3.5 group-hover:bg-white group-hover:text-black transition-all duration-300">
+              SHOP NOW <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
+      </Reveal>
     </section>
   );
 }
