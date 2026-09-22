@@ -17,7 +17,16 @@ export interface WebsitePoster {
 
 export const DEFAULT_POSTERS: WebsitePoster[] = [];
 
-const LEGACY_POSTER_IDS = new Set(["poster-rcb-26", "poster-oversized-ss26", "poster-f1-pitlane"]);
+const LEGACY_POSTER_IDS = new Set([
+  "poster-rcb-26",
+  "poster-oversized-ss26",
+  "poster-f1-pitlane",
+  "poster-street-culture",
+  "poster-minimal-edit",
+  "poster-signature",
+  "poster-prototype-04",
+  "poster-raw-urban",
+]);
 
 export function cleanLegacyPosters(posters: WebsitePoster[]): WebsitePoster[] {
   if (!Array.isArray(posters)) return [];
@@ -89,7 +98,6 @@ export function fetchWebsitePosters(): WebsitePoster[] {
     if (Array.isArray(parsed)) {
       const cleaned = cleanLegacyPosters(parsed);
       if (cleaned.length !== parsed.length) {
-        // Persist cleaned version if legacy items were pruned
         localStorage.setItem(STORAGE_KEY, JSON.stringify(cleaned));
       }
       return cleaned;

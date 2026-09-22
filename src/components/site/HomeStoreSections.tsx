@@ -34,39 +34,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import promoPackagingImg from "@/assets/pexels-ron-lach-9594419.jpg";
 
 /* ==========================================
-   1. HERO PROMO BANNER (Sleek Black Theme)
+   1. HERO PROMO BANNER (Editorial Streetwear Card)
    ========================================== */
 export function StoreHeroPromoBanner() {
   return (
-    <section className="mx-auto max-w-7xl px-4 sm:px-6 my-10">
-      <div className="relative overflow-hidden rounded-3xl bg-black border border-white/15 text-white p-8 md:p-14 shadow-2xl">
-        <div 
-          className="absolute inset-0 opacity-15 pointer-events-none" 
-          style={{ 
-            backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)", 
-            backgroundSize: "24px 24px" 
-          }} 
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 my-14">
+      <div className="group relative overflow-hidden rounded-2xl md:rounded-3xl border border-white/20 shadow-2xl min-h-[460px] md:min-h-[520px] flex items-center justify-center">
+        {/* Editorial Background Image */}
+        <img
+          src={promoPackagingImg}
+          alt="Upgrade Your Streetwear Game"
+          className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
         />
-        
-        <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto py-4">
-          <span className="text-xs font-bold tracking-[0.25em] uppercase bg-white/15 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-white/90 mb-4">
-            Upgrade Your Streetwear Game
+
+        {/* Multi-layered dark gradients for readability & aesthetic */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/60 to-black/35" />
+        <div className="absolute inset-0 bg-black/25" />
+
+        {/* Text Overlay - Centered Editorial Fashion Style */}
+        <div className="relative z-10 flex flex-col items-center text-center max-w-3xl mx-auto px-6 py-12 md:py-16">
+          <span className="inline-block border border-white/60 text-white/90 text-[11px] sm:text-xs font-bold tracking-[0.3em] uppercase px-4 py-1.5 mb-6 backdrop-blur-sm shadow-sm">
+            [UPGRADE YOUR STREETWEAR GAME]
           </span>
-          <h2 className="text-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.05]">
+
+          <h2 className="text-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-white tracking-tight uppercase leading-[0.95] drop-shadow-md">
             Get up to 30% OFF all Products
           </h2>
-          <p className="mt-4 text-base sm:text-lg text-white/80 max-w-xl font-medium leading-relaxed">
-            Save up to 30% on selected heavy-cotton oversized tees, hoodies & fan merch this week. 
+
+          <p className="mt-4 text-sm sm:text-base md:text-lg text-white/80 max-w-xl font-medium leading-relaxed">
+            Save up to 30% on selected heavy-cotton oversized tees, hoodies &amp; fan merch this week. 
             Visit our collection page and buy now.
           </p>
+
           <div className="mt-8">
             <Link
               to="/shop"
-              className="inline-flex items-center justify-center bg-white text-black px-8 py-3.5 rounded-full text-sm font-black tracking-wide hover:bg-white/90 transition-all shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 uppercase"
+              className="inline-flex items-center justify-center gap-2.5 border-2 border-white bg-white text-black hover:bg-transparent hover:text-white px-9 py-3.5 text-xs sm:text-sm font-black tracking-widest uppercase transition-all duration-300 shadow-2xl hover:scale-105 active:scale-95"
             >
-              Shop The Sale <ArrowRight className="ml-2 h-4 w-4" />
+              Shop The Sale <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>

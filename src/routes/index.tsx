@@ -1,13 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useSuspenseQuery, queryOptions, useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { listProducts } from "@/lib/products.functions";
 import { listLatestReviews } from "@/lib/reviews.functions";
 import { ProductCard, ProductCardData } from "@/components/shop/ProductCard";
 import { Reveal } from "@/components/site/Reveal";
-import { Stars } from "@/components/site/Stars";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, Sparkles, Users, TrendingUp, Star, Zap } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   StoreHeroPromoBanner,
   ValuePropsStoryScroll,
@@ -26,8 +25,11 @@ import jacketsImg from "@/assets/jackets.png";
 import hoodieImg from "@/assets/hoodie.png";
 import cricketImg from "@/assets/cricket.png";
 import bulkImg from "@/assets/bulk.png";
+import shalom1Img from "@/assets/shalom-ejiofor-_7wel0dVeRA-unsplash.jpg";
+import shalom2Img from "@/assets/shalom-ejiofor-RgPEQjJWBYE-unsplash.jpg";
+import shalom3Img from "@/assets/shalom-ejiofor-t_prchAm4ag-unsplash.jpg";
+
 import { fetchWebsitePosters, getWebsitePostersServer, WebsitePoster } from "@/lib/posters";
-import { useMemo } from "react";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
@@ -39,28 +41,14 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-// Exactly 8 categories transformed into bold cards with assets inside circular icons
+// Exactly 8 categories transformed into clean circles (no card box)
 const CATS = [
-  {
-    label: "Tees",
-    cat: "tee",
-    img: teesImg,
-    desc: "240 GSM Heavy Cotton",
-    to: "/shop",
-    search: { category: "tee" },
-  },
-  {
-    label: "Couple",
-    cat: "couple",
-    img: couplesImg,
-    desc: "Matching Fits for Two",
-    to: "/collections/couple",
-  },
+  { label: "Tees", cat: "tee", img: teesImg, to: "/shop", search: { category: "tee" } },
+  { label: "Couple", cat: "couple", img: couplesImg, to: "/collections/couple" },
   {
     label: "Statement",
     cat: "statement",
     img: statementImg,
-    desc: "Bold Graphic Drops",
     to: "/shop",
     search: { category: "statement" },
   },
@@ -68,60 +56,13 @@ const CATS = [
     label: "Pinterest",
     cat: "pinterest",
     img: pinterestImg,
-    desc: "Viral Aesthetic Styles",
     to: "/shop",
     search: { category: "pinterest" },
   },
-  {
-    label: "Jackets",
-    cat: "jacket",
-    img: jacketsImg,
-    desc: "Streetwear Outerwear",
-    to: "/shop",
-    search: { category: "jacket" },
-  },
-  {
-    label: "Hoodies",
-    cat: "hoodie",
-    img: hoodieImg,
-    desc: "380 GSM Heavy Fleece",
-    to: "/shop",
-    search: { category: "hoodie" },
-  },
-  {
-    label: "Sports & Fan",
-    cat: "sports",
-    img: cricketImg,
-    desc: "Cricket & F1 Capsule",
-    to: "/collections/rcb",
-  },
-  {
-    label: "Bulk Orders",
-    cat: "bulk",
-    img: bulkImg,
-    desc: "Team & Fest Merch",
-    to: "/bulk-orders",
-  },
-];
-
-// Featured collections for grid
-const COLLECTIONS = [
-  {
-    label: "Couple Tees",
-    desc: "Match your vibe together",
-    slug: "couple",
-    bg: "from-rose-50 to-pink-100",
-    accent: "#e11d48",
-    emoji: "💑",
-  },
-  {
-    label: "Trending Now",
-    desc: "What everyone's wearing",
-    slug: "trending",
-    bg: "from-amber-50 to-orange-100",
-    accent: "#f97316",
-    emoji: "🔥",
-  },
+  { label: "Jackets", cat: "jacket", img: jacketsImg, to: "/shop", search: { category: "jacket" } },
+  { label: "Hoodies", cat: "hoodie", img: hoodieImg, to: "/shop", search: { category: "hoodie" } },
+  { label: "Sports & Fan", cat: "sports", img: cricketImg, to: "/collections/rcb" },
+  { label: "Bulk Orders", cat: "bulk", img: bulkImg, to: "/bulk-orders" },
 ];
 
 function Home() {
@@ -133,14 +74,18 @@ function Home() {
     staleTime: 5 * 60_000,
   });
 
-  const shopAll = products.slice(0, 8);
+  const shopAll = (products || []).slice(0, 8);
+  const spotlightProducts = (products || []).slice(0, 3);
 
   return (
     <div className="w-full">
       <HeroCarousel />
       <CategoriesGrid />
+      <NewArrivalsBanner />
       <CustomizerBanner />
       <CollectionsGrid />
+      <StyleSpotlightSection products={spotlightProducts} />
+      <NewSeasonBanner />
       <ShopAllSection products={shopAll} />
       <BulkOrdersSection />
       <StoreHeroPromoBanner />
@@ -307,7 +252,6 @@ function HeroCarousel() {
 
   return (
     <section className="relative bg-black text-white overflow-hidden group">
-      {/* 3:4 on mobile, tall cinematic on desktop */}
       <div
         className="relative w-full touch-pan-y select-none cursor-grab active:cursor-grabbing"
         style={{ paddingBottom: "min(75%, 90vh)" }}
@@ -363,36 +307,37 @@ function HeroCarousel() {
           </div>
         ))}
 
-        {/* Left / Right arrows */}
+        {/* Left arrow */}
         <button
           onClick={goPrev}
           aria-label="Previous slide"
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 transition-all opacity-0 group-hover:opacity-100"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-sm border border-white/20 text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
         >
-          &lsaquo;
+          <ChevronLeft className="h-5 w-5" />
         </button>
+        {/* Right arrow */}
         <button
           onClick={goNext}
           aria-label="Next slide"
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/25 transition-all opacity-0 group-hover:opacity-100"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-20 h-10 w-10 flex items-center justify-center bg-black/30 backdrop-blur-sm border border-white/20 text-white hover:bg-black/60 transition-all opacity-0 group-hover:opacity-100"
         >
-          &rsaquo;
+          <ChevronRight className="h-5 w-5" />
         </button>
 
         {/* Dots */}
-        <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
+        <div className="absolute bottom-6 right-6 flex items-center gap-2 z-20">
           {heroList.map((_, idx) => (
             <button
               key={idx}
               aria-label={`Go to slide ${idx + 1}`}
               onClick={() => goTo(idx)}
-              className={`h-1 rounded-full transition-all duration-500 ${idx === current ? "w-10 bg-white" : "w-4 bg-white/40 hover:bg-white/70"}`}
+              className={`h-[3px] rounded-full transition-all duration-500 ${idx === current ? "w-10 bg-white" : "w-4 bg-white/40 hover:bg-white/70"}`}
             />
           ))}
         </div>
 
         {/* Slide counter */}
-        <div className="absolute bottom-6 right-6 z-20 text-white/60 text-xs font-bold tracking-widest">
+        <div className="absolute bottom-6 left-6 sm:left-10 md:left-14 z-20 text-white/50 text-xs font-bold tracking-widest">
           {String(current + 1).padStart(2, "0")} / {String(heroList.length).padStart(2, "0")}
         </div>
       </div>
@@ -400,49 +345,81 @@ function HeroCarousel() {
   );
 }
 
-/* ─── CATEGORIES GRID — Bold Heading Cards with Category Images inside Circular Icons ─── */
+/* ─── CATEGORIES GRID — Circles only, no card boxes ─── */
 function CategoriesGrid() {
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
       <Reveal className="mb-8 text-center">
-        <div className="text-xs font-bold tracking-[0.25em] text-muted-foreground uppercase">
+        <h2 className="text-display text-3xl sm:text-4xl font-black uppercase tracking-wider">
           BROWSE BY CATEGORY
-        </div>
-        <h2 className="mt-1 text-display text-3xl sm:text-4xl font-black">Shop Your Style</h2>
-        <p className="mt-2 text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
-          Explore our signature cuts, matching couple drops, heavy fleece, and custom team apparel.
-        </p>
+        </h2>
       </Reveal>
 
-      {/* 4 columns on desktop/tablet, 2 on mobile — bold heading cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+      {/* 4 columns on desktop/tablet, 4 on mobile — circles only, no card box */}
+      <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-4 sm:gap-6">
         {CATS.map((c, i) => (
           <Reveal key={c.label} delay={i * 40}>
             <Link
               to={c.to as unknown as "/"}
               search={c.search}
-              className="group relative flex flex-col items-center text-center p-4 sm:p-5 rounded-2xl bg-card border border-border hover:border-foreground/40 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="group flex flex-col items-center text-center gap-3"
             >
-              {/* Category Circular Icon with Image - No plain black placeholder color */}
-              <div className="relative h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-full overflow-hidden border-2 border-border/80 group-hover:border-foreground transition-all duration-300 shadow-md bg-secondary/30 flex items-center justify-center p-1">
+              {/* Circle image only — no card background */}
+              <div className="relative h-16 w-16 sm:h-20 sm:w-20 md:h-24 md:w-24 rounded-full overflow-hidden border-2 border-border/60 group-hover:border-foreground transition-all duration-300 shadow-sm bg-muted/30">
                 <img
                   src={c.img}
                   alt={c.label}
-                  className="w-full h-full object-cover object-center rounded-full group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
-
-              {/* Bold Heading Card Info */}
-              <h3 className="mt-3.5 text-sm sm:text-base font-black uppercase tracking-wider text-foreground group-hover:text-accent transition-colors">
+              {/* Label below circle */}
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide text-foreground group-hover:text-primary transition-colors leading-tight">
                 {c.label}
-              </h3>
-              <p className="text-[11px] text-muted-foreground font-medium mt-0.5 line-clamp-1">
-                {c.desc}
-              </p>
+              </span>
             </Link>
           </Reveal>
         ))}
       </div>
+    </section>
+  );
+}
+
+/* ─── NEW ARRIVALS BANNER — Editorial full-width fashion banner ─── */
+function NewArrivalsBanner() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14">
+      <Reveal>
+        <div className="text-xs font-black tracking-[0.3em] uppercase text-center mb-4">
+          NEW ARRIVALS
+        </div>
+        <Link
+          to="/shop"
+          className="group relative block overflow-hidden rounded-xl"
+          style={{ paddingBottom: "56%" }}
+        >
+          <img
+            src={shalom1Img}
+            alt="New Arrivals"
+            className="absolute inset-0 h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+          />
+          {/* Gradient overlay — strong at bottom */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          {/* Text overlay — bottom left */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 flex items-end justify-between">
+            <div>
+              <p className="text-white/70 text-xs font-bold tracking-widest uppercase mb-1">
+                SS26 Collection
+              </p>
+              <div className="text-white font-black text-3xl sm:text-5xl md:text-6xl leading-none uppercase tracking-tight">
+                FROM ₹500
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-2 bg-white text-black text-xs font-black tracking-widest uppercase px-6 py-3 group-hover:bg-black group-hover:text-white border border-white transition-all duration-300">
+              SHOP NOW <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
+      </Reveal>
     </section>
   );
 }
@@ -529,6 +506,97 @@ function CollectionsGrid() {
   );
 }
 
+/* ─── STYLE SPOTLIGHT — Best sellers banner + product grid ─── */
+function StyleSpotlightSection({ products }: { products: ProductCardData[] }) {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14">
+      <Reveal>
+        <div className="text-xs font-black tracking-[0.3em] uppercase text-center mb-4">
+          STYLE SPOTLIGHT
+        </div>
+      </Reveal>
+
+      {/* Top hero banner */}
+      <Reveal>
+        <Link
+          to="/shop"
+          className="group relative block overflow-hidden rounded-xl mb-4"
+          style={{ paddingBottom: "42%" }}
+        >
+          <img
+            src={shalom2Img}
+            alt="Best Sellers"
+            className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+            <p className="text-white/80 text-xs sm:text-sm font-bold tracking-widest uppercase mb-2">
+              UP TO 50% OFF
+            </p>
+            <div className="text-white font-black text-4xl sm:text-6xl md:text-7xl leading-none uppercase tracking-tight mb-4">
+              BEST SELLERS
+            </div>
+            <span className="inline-flex items-center gap-2 border border-white text-white text-xs font-black tracking-widest uppercase px-8 py-3 group-hover:bg-white group-hover:text-black transition-all duration-300">
+              SHOP NOW
+            </span>
+          </div>
+        </Link>
+      </Reveal>
+
+      {/* Product grid — 3 cards */}
+      {products.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+          {products.map((p, i) => (
+            <Reveal key={p.id} delay={i * 80}>
+              <ProductCard product={p} />
+            </Reveal>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─── NEW SEASON PROMO BANNER — Bold full-bleed editorial ─── */
+function NewSeasonBanner() {
+  return (
+    <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-14">
+      <Reveal>
+        <Link
+          to="/shop"
+          className="group relative block overflow-hidden rounded-xl"
+          style={{ paddingBottom: "65%" }}
+        >
+          <img
+            src={shalom3Img}
+            alt="New Season Collection"
+            className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+          />
+          {/* Dark overlay — centre-focused for text */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-transparent" />
+
+          {/* Text — centre */}
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+            <span className="inline-block border border-white/60 text-white/80 text-[10px] sm:text-xs font-bold tracking-[0.3em] uppercase px-4 py-1 mb-4">
+              NEW SEASON
+            </span>
+            <div className="text-white font-black text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.92] uppercase tracking-tight mb-2">
+              FROM ₹500
+            </div>
+            <div className="text-white font-black text-xl sm:text-2xl md:text-3xl leading-tight uppercase tracking-wide mb-6 opacity-90">
+              + EXTRA 20% OFF
+            </div>
+            <span className="inline-flex items-center gap-2 border border-white text-white text-xs font-black tracking-widest uppercase px-8 py-3.5 group-hover:bg-white group-hover:text-black transition-all duration-300">
+              SHOP NOW <ArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
+      </Reveal>
+    </section>
+  );
+}
+
 /* ─── SHOP ALL SECTION — 2-column product grid ─── */
 function ShopAllSection({ products }: { products: ProductCardData[] }) {
   return (
@@ -568,106 +636,5 @@ function ShopAllSection({ products }: { products: ProductCardData[] }) {
         </Link>
       </div>
     </section>
-  );
-}
-
-function RcbBlock() {
-  const stories = [
-    {
-      k: "01",
-      t: "OFFICIAL MERCH",
-      d: "Signal-red fits built for cheer-block chaos. Authentic prints, unmatched energy.",
-    },
-    {
-      k: "02",
-      t: "PREMIUM 240 GSM",
-      d: "Heavyweight cotton oversized tees. Loud, loved, and made to last.",
-    },
-    {
-      k: "03",
-      t: "MATCH DAY FITS",
-      d: "Jerseys, hoodies, caps — the ultimate fan kit for every season.",
-    },
-  ];
-
-  return (
-    <div className="mx-auto max-w-[1400px] px-4 sm:px-6">
-      <section className="rcb-wash text-white mt-20 rounded-[2.5rem] md:rounded-[4rem] overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-20 md:py-28 relative">
-          <div className="absolute top-10 right-10 opacity-10 text-[10rem] font-black leading-none uppercase select-none pointer-events-none hidden lg:block">
-            PLAY
-            <br />
-            BOLD
-          </div>
-          <Reveal>
-            <div className="flex flex-col mb-12 relative z-10">
-              <div className="max-w-2xl">
-                <h2 className="text-display text-5xl md:text-7xl font-black leading-[0.9]">
-                  Red never leaves.
-                </h2>
-                <p className="mt-4 text-white/70 text-lg">
-                  The 2026 limited edition collection. Exclusively on WEEKDAYZZ.
-                </p>
-              </div>
-            </div>
-          </Reveal>
-          <div className="grid gap-12 md:grid-cols-[5fr_7fr] relative z-10">
-            <div className="md:sticky md:top-24 md:self-start group cursor-pointer">
-              <Reveal>
-                <Link
-                  to="/collections/$slug"
-                  params={{ slug: "rcb" }}
-                  className="block relative aspect-[4/5] overflow-hidden rounded-xl border border-white/20 shadow-2xl bg-black/40 p-6 flex items-center justify-center"
-                >
-                  <img
-                    src="/rcb-seeklogo.png"
-                    alt="RCB collection"
-                    className="h-full w-full object-contain transition-transform duration-700 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
-                  <div className="absolute bottom-6 left-6 right-6">
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-lg flex items-center justify-between hover:bg-white/20 transition-colors">
-                      <span className="font-bold tracking-wider uppercase text-sm">
-                        View Lookbook
-                      </span>
-                      <ArrowRight className="h-5 w-5" />
-                    </div>
-                  </div>
-                </Link>
-              </Reveal>
-            </div>
-            <div className="space-y-12 md:py-8 flex flex-col justify-center">
-              {stories.map((s, i) => (
-                <Reveal key={s.k} delay={i * 120}>
-                  <div className="flex gap-6 group">
-                    <div className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white/80 to-white/10 group-hover:from-white group-hover:to-white/30 transition-all duration-300 -mt-2">
-                      {s.k}
-                    </div>
-                    <div>
-                      <h3 className="text-display text-2xl md:text-3xl font-bold">{s.t}</h3>
-                      <p className="mt-2 max-w-md text-white/60 text-sm md:text-base leading-relaxed">
-                        {s.d}
-                      </p>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-              <Reveal delay={400}>
-                <div className="pt-4">
-                  <Link
-                    to="/collections/$slug"
-                    params={{ slug: "rcb" }}
-                    className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-4 text-xs font-bold tracking-widest uppercase hover:bg-foreground hover:text-white transition-all shadow-lg shrink-0 rounded-md"
-                  >
-                    SHOP COLLECTION <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </Reveal>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
   );
 }
