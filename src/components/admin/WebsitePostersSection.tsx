@@ -5,8 +5,8 @@ import {
   getWebsitePostersServer,
   saveWebsitePostersServer,
   WebsitePoster,
-  DEFAULT_POSTERS,
 } from "@/lib/posters";
+import { uploadProductImage } from "@/lib/admin.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -24,8 +24,6 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useDropzone } from "react-dropzone";
-import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
 /**
@@ -66,13 +64,14 @@ export default function WebsitePostersSection() {
   const qc = useQueryClient();
   const getPostersServerFn = useServerFn(getWebsitePostersServer);
   const savePostersServerFn = useServerFn(saveWebsitePostersServer);
+  const uploadImageServerFn = useServerFn(uploadProductImage);
 
   useEffect(() => {
     setPosters(fetchWebsitePosters());
     // Also fetch from server to get latest synced version across all devices
     getPostersServerFn()
       .then((serverData) => {
-        if (serverData && serverData.length > 0) {
+        if (serverData && Array.isArray(serverData)) {
           setPosters(serverData);
           saveWebsitePosters(serverData);
         }
@@ -98,12 +97,17 @@ export default function WebsitePostersSection() {
   };
 
   const handleDelete = (id: string) => {
-    if (posters.length <= 1) {
-      toast.error("At least one poster is required");
-      return;
-    }
+    if (!confirm("Are you sure you want to delete this poster?")) return;
     const updated = posters.filter((p) => p.id !== id);
     handleSaveAll(updated);
+    toast.success("Poster deleted");
+  };
+
+  const handleDeleteAll = () => {
+    if (confirm("Are you sure you want to delete ALL website posters? This action cannot be undone.")) {
+      handleSaveAll([]);
+      toast.success("Deleted all website posters!");
+    }
   };
 
   const handleMove = (index: number, direction: "up" | "down") => {
@@ -131,10 +135,45 @@ export default function WebsitePostersSection() {
     setEditingPoster(null);
   };
 
-  const handleResetToDefault = () => {
-    if (confirm("Reset website hero posters to factory defaults?")) {
-      handleSaveAll(DEFAULT_POSTERS);
-      toast.success("Reset posters to default!");
+  const handleFileUpload = async (file: File) => {
+    if (!file || !editingPoster) return;
+    setUploading(true);
+    try {
+      const reader = new FileReader();
+      const base64: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      let uploadedUrl = "";
+
+      try {
+        const res = await uploadImageServerFn({
+          data: {
+            base64,
+            filename: file.name,
+            contentType: file.type || "image/jpeg",
+          },
+        });
+        if (res?.url) {
+          uploadedUrl = res.url;
+        }
+      } catch (e) {
+        console.warn("Server upload exception, falling back to local compressed base64:", e);
+      }
+
+      if (!uploadedUrl) {
+        uploadedUrl = await compressDataUrl(base64, 1280, 0.78);
+      }
+
+      setEditingPoster((prev) => (prev ? { ...prev, img: uploadedUrl } : prev));
+      toast.success("Uploaded poster image!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to upload poster image");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -153,12 +192,14 @@ export default function WebsitePostersSection() {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleResetToDefault}
-            className="px-3 py-2 text-xs font-bold uppercase tracking-wider border border-border hover:bg-secondary text-muted-foreground transition-colors flex items-center gap-1.5"
-          >
-            <RotateCcw className="h-3.5 w-3.5" /> Reset Defaults
-          </button>
+          {posters.length > 0 && (
+            <button
+              onClick={handleDeleteAll}
+              className="px-3 py-2 text-xs font-bold uppercase tracking-wider border border-destructive/40 text-destructive hover:bg-destructive/10 transition-colors flex items-center gap-1.5"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Delete All Posters
+            </button>
+          )}
           <button
             onClick={() => {
               setIsNew(true);
@@ -182,109 +223,138 @@ export default function WebsitePostersSection() {
       </div>
 
       {/* Posters Grid */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posters.map((poster, index) => (
-          <div
-            key={poster.id}
-            className={cn(
-              "border bg-card overflow-hidden transition-all flex flex-col justify-between",
-              poster.is_active ? "border-border shadow-sm" : "border-border/50 opacity-60 bg-secondary/20",
-            )}
+      {posters.length === 0 ? (
+        <div className="border border-dashed border-border p-12 text-center bg-card space-y-4">
+          <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+          <h3 className="text-lg font-black uppercase tracking-wider text-foreground">No Active Website Posters</h3>
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            You have cleared all website posters. The homepage will display the fallback store hero banner until you upload a custom poster.
+          </p>
+          <button
+            onClick={() => {
+              setIsNew(true);
+              setEditingPoster({
+                id: `poster-${crypto.randomUUID()}`,
+                img: "",
+                kicker: "NEW CAMPAIGN",
+                title: "NEW HERO BANNER",
+                sub: "Discover the latest collection drop.",
+                badge: "LIMITED EDITION",
+                to: "/shop",
+                cta: "EXPLORE NOW",
+                is_active: true,
+              });
+            }}
+            className="px-4 py-2 bg-foreground text-background text-xs font-bold uppercase tracking-wider inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
-            {/* Poster Image Preview */}
-            <div className="relative h-56 bg-muted overflow-hidden">
-              <img
-                src={poster.img}
-                alt={poster.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = "none";
-                }}
-              />
-
-              {/* Status Badge */}
-              <div className="absolute top-3 left-3 flex gap-2">
-                <span
-                  className={cn(
-                    "text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow",
-                    poster.is_active ? "bg-foreground text-background" : "bg-destructive text-destructive-foreground",
-                  )}
-                >
-                  {poster.is_active ? "Active" : "Hidden"}
-                </span>
-                {poster.badge && (
-                  <span className="bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow">
-                    {poster.badge}
-                  </span>
-                )}
-              </div>
-
-              {/* Quick Order Actions */}
-              <div className="absolute top-3 right-3 flex gap-1 bg-background/90 border border-border p-1">
-                <button
-                  disabled={index === 0}
-                  onClick={() => handleMove(index, "up")}
-                  className="p-1 hover:bg-secondary disabled:opacity-30"
-                  title="Move Left/Up"
-                >
-                  <ArrowUp className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  disabled={index === posters.length - 1}
-                  onClick={() => handleMove(index, "down")}
-                  className="p-1 hover:bg-secondary disabled:opacity-30"
-                  title="Move Right/Down"
-                >
-                  <ArrowDown className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Poster Info */}
-            <div className="p-4 space-y-2 flex-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-accent block">
-                {poster.kicker}
-              </span>
-              <h3 className="text-lg font-black uppercase tracking-wide truncate">{poster.title}</h3>
-              <p className="text-xs text-muted-foreground line-clamp-2">{poster.sub}</p>
-              <div className="pt-2 text-[11px] font-semibold text-muted-foreground flex justify-between">
-                <span>CTA: <strong className="text-foreground">{poster.cta}</strong></span>
-                <span>Target: <strong className="text-foreground">{poster.to}</strong></span>
-              </div>
-            </div>
-
-            {/* Actions Bar */}
-            <div className="border-t border-border p-3 bg-secondary/30 flex items-center justify-between">
-              <button
-                onClick={() => handleToggleActive(poster.id)}
-                className="text-xs font-bold text-muted-foreground hover:text-foreground flex items-center gap-1"
-              >
-                {poster.is_active ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                {poster.is_active ? "Hide" : "Publish"}
-              </button>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setIsNew(false);
-                    setEditingPoster({ ...poster });
+            <Plus className="h-4 w-4" /> Add First Poster
+          </button>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {posters.map((poster, index) => (
+            <div
+              key={poster.id}
+              className={cn(
+                "border bg-card overflow-hidden transition-all flex flex-col justify-between",
+                poster.is_active ? "border-border shadow-sm" : "border-border/50 opacity-60 bg-secondary/20",
+              )}
+            >
+              {/* Poster Image Preview */}
+              <div className="relative h-56 bg-muted overflow-hidden">
+                <img
+                  src={poster.img}
+                  alt={poster.title}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
                   }}
-                  className="px-3 py-1.5 text-xs font-bold border border-border bg-background hover:bg-secondary flex items-center gap-1"
-                >
-                  <Edit2 className="h-3.5 w-3.5" /> Edit
-                </button>
+                />
+
+                {/* Status Badge */}
+                <div className="absolute top-3 left-3 flex gap-2">
+                  <span
+                    className={cn(
+                      "text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow",
+                      poster.is_active ? "bg-foreground text-background" : "bg-destructive text-destructive-foreground",
+                    )}
+                  >
+                    {poster.is_active ? "Active" : "Hidden"}
+                  </span>
+                  {poster.badge && (
+                    <span className="bg-amber-500 text-black text-[10px] font-black uppercase tracking-widest px-2 py-1 shadow">
+                      {poster.badge}
+                    </span>
+                  )}
+                </div>
+
+                {/* Quick Order Actions */}
+                <div className="absolute top-3 right-3 flex gap-1 bg-background/90 border border-border p-1">
+                  <button
+                    disabled={index === 0}
+                    onClick={() => handleMove(index, "up")}
+                    className="p-1 hover:bg-secondary disabled:opacity-30"
+                    title="Move Left/Up"
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    disabled={index === posters.length - 1}
+                    onClick={() => handleMove(index, "down")}
+                    className="p-1 hover:bg-secondary disabled:opacity-30"
+                    title="Move Right/Down"
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Poster Info */}
+              <div className="p-4 space-y-2 flex-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent block">
+                  {poster.kicker}
+                </span>
+                <h3 className="text-lg font-black uppercase tracking-wide truncate">{poster.title}</h3>
+                <p className="text-xs text-muted-foreground line-clamp-2">{poster.sub}</p>
+                <div className="pt-2 text-[11px] font-semibold text-muted-foreground flex justify-between">
+                  <span>CTA: <strong className="text-foreground">{poster.cta}</strong></span>
+                  <span>Target: <strong className="text-foreground">{poster.to}</strong></span>
+                </div>
+              </div>
+
+              {/* Actions Bar */}
+              <div className="border-t border-border p-3 bg-secondary/30 flex items-center justify-between">
                 <button
-                  onClick={() => handleDelete(poster.id)}
-                  className="p-1.5 text-destructive hover:bg-destructive/10"
-                  title="Delete Poster"
+                  onClick={() => handleToggleActive(poster.id)}
+                  className="text-xs font-bold text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  {poster.is_active ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {poster.is_active ? "Hide" : "Publish"}
                 </button>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setIsNew(false);
+                      setEditingPoster({ ...poster });
+                    }}
+                    className="px-3 py-1.5 text-xs font-bold border border-border bg-background hover:bg-secondary flex items-center gap-1"
+                  >
+                    <Edit2 className="h-3.5 w-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(poster.id)}
+                    className="p-1.5 text-destructive hover:bg-destructive/10"
+                    title="Delete Poster"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Edit / Add Modal */}
       {editingPoster && (
@@ -316,52 +386,17 @@ export default function WebsitePostersSection() {
                       onChange={(e) => setEditingPoster({ ...editingPoster, img: e.target.value })}
                       className="w-full border border-border bg-background px-3 py-2 text-xs font-mono outline-none"
                     />
-                    <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-border bg-secondary hover:bg-secondary/80 text-xs font-bold cursor-pointer">
+                    <label className="inline-flex items-center gap-2 px-3 py-1.5 border border-border bg-secondary hover:bg-secondary/80 text-xs font-bold cursor-pointer disabled:opacity-50">
                       <Upload className="h-3.5 w-3.5" />
                       {uploading ? "Uploading..." : "Upload Local Image"}
                       <input
                         type="file"
                         accept="image/*, .png, .jpg, .jpeg, .webp, .heic, .heif, .avif"
+                        disabled={uploading}
                         className="hidden"
-                        onChange={async (e) => {
+                        onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (!file) return;
-                          setUploading(true);
-                          try {
-                            const ext = file.name.split(".").pop();
-                            const path = `posters/${crypto.randomUUID()}.${ext}`;
-                            const { error } = await supabase.storage
-                              .from("user-graphics")
-                              .upload(path, file, { upsert: true });
-
-                            if (error) {
-                              // Fallback to FileReader DataURL if storage bucket restricts unauthenticated upload
-                              const reader = new FileReader();
-                              reader.onload = () => {
-                                const original = reader.result as string;
-                                // Compress the base64 fallback so multiple posters don't
-                                // blow past the ~5MB localStorage quota.
-                                compressDataUrl(original, 1280, 0.78).then((compressed) => {
-                                  setEditingPoster({ ...editingPoster, img: compressed });
-                                  setUploading(false);
-                                  toast.success("Poster image loaded!");
-                                });
-                              };
-                              reader.readAsDataURL(file);
-                              return;
-                            }
-
-                            const { data: publicUrl } = supabase.storage
-                              .from("user-graphics")
-                              .getPublicUrl(path);
-                            setEditingPoster({ ...editingPoster, img: publicUrl.publicUrl });
-                            toast.success("Uploaded poster image!");
-                          } catch (err) {
-                            console.error(err);
-                            toast.error("Failed to upload poster image");
-                          } finally {
-                            setUploading(false);
-                          }
+                          if (file) handleFileUpload(file);
                         }}
                       />
                     </label>
