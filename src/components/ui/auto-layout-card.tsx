@@ -117,7 +117,7 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
 
     const handleClick = () => {
       if (linkTo) {
-        navigate({ to: linkTo as any, search: linkSearch });
+        navigate({ to: linkTo as any, search: linkSearch as any });
       }
     };
 
@@ -202,8 +202,8 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
             }}
           >
             <Link
-              to={linkTo}
-              search={linkSearch}
+              to={linkTo as any}
+              search={linkSearch as any}
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-2 bg-foreground text-background px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-85 transition-all rounded-full shadow-md"
             >

@@ -36,8 +36,17 @@ const productsQuery = queryOptions({
   queryFn: () => listProducts(),
 });
 
+const postersQuery = queryOptions({
+  queryKey: ["website-posters"],
+  queryFn: () => getWebsitePostersServer(),
+});
+
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(productsQuery),
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(productsQuery),
+      context.queryClient.ensureQueryData(postersQuery),
+    ]),
   component: Home,
 });
 
@@ -128,7 +137,14 @@ function HeroCarousel() {
     staleTime: 60_000,
   });
 
-  const [localPosters, setLocalPosters] = useState<WebsitePoster[]>([]);
+  const [localPosters, setLocalPosters] = useState<WebsitePoster[]>(() => {
+    if (typeof window !== "undefined") {
+      const all = fetchWebsitePosters();
+      const active = all.filter((p) => p.is_active);
+      return active.length > 0 ? active : all;
+    }
+    return [];
+  });
   const [current, setCurrent] = useState(0);
   const [animating, setAnimating] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -139,7 +155,6 @@ function HeroCarousel() {
       const active = all.filter((p) => p.is_active);
       setLocalPosters(active.length > 0 ? active : all);
     };
-    loadPosters();
     window.addEventListener("website-posters-updated", loadPosters);
     return () => window.removeEventListener("website-posters-updated", loadPosters);
   }, []);
@@ -224,26 +239,23 @@ function HeroCarousel() {
 
   if (heroList.length === 0) {
     return (
-      <section className="relative bg-black text-white overflow-hidden py-24 sm:py-32 px-4">
-        <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-black to-neutral-950 opacity-90" />
-        <div className="relative z-10 max-w-3xl mx-auto text-center space-y-6">
-          <span className="inline-block bg-white text-black font-black uppercase tracking-widest text-xs px-4 py-1.5 rounded-full shadow-lg">
-            WEEKDAYZ OFFICIAL STORE
-          </span>
-          <h1 className="text-display text-4xl sm:text-6xl font-black tracking-tight uppercase">
-            ELEVATED STREETWEAR & OVERSIZED FITS
-          </h1>
-          <p className="text-sm sm:text-lg text-white/80 font-medium max-w-xl mx-auto">
-            Discover our latest drops, custom apparel, and limited-edition collections crafted for
-            maximum comfort.
-          </p>
-          <div className="pt-4">
-            <Link
-              to="/shop"
-              className="inline-flex items-center gap-2 bg-white text-black px-8 py-4 text-xs font-black tracking-widest uppercase hover:bg-white/90 hover:scale-105 active:scale-95 transition-all rounded-full shadow-2xl"
-            >
-              EXPLORE CATALOG <ArrowRight className="h-4 w-4" />
-            </Link>
+      <section className="relative w-full bg-neutral-900 overflow-hidden">
+        <div
+          className="relative w-full animate-pulse"
+          style={{ paddingBottom: "min(75%, 90vh)" }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 opacity-90" />
+          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 z-10">
+            <div className="mx-auto w-full max-w-2xl flex justify-center">
+              <div className="w-full bg-black/40 border border-white/10 p-6 sm:p-10 rounded-3xl backdrop-blur-md flex flex-col items-center text-center space-y-4">
+                <div className="h-4 w-32 bg-white/20 rounded-full" />
+                <div className="h-10 sm:h-14 w-4/5 bg-white/20 rounded-2xl" />
+                <div className="h-4 w-3/5 bg-white/10 rounded-lg" />
+                <div className="pt-2">
+                  <div className="h-11 w-44 bg-white/30 rounded-full" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
