@@ -551,10 +551,10 @@ function CreatorStudio() {
 
           {/* ── STICKY CANVAS COLUMN ── */}
           <div className="space-y-4 lg:sticky lg:top-24">
-            {/* Front / Back / Side Sleeve View Switcher */}
-            <div className="flex justify-between items-center bg-card border border-border p-1.5">
-              <div className="flex gap-1">
-                {(["Front", "Back", "Sleeve"] as const).map((side) => (
+            {/* Front / Back / Left Sleeve / Right Sleeve View Switcher */}
+            <div className="flex flex-wrap justify-between items-center bg-card border border-border p-1.5 gap-2">
+              <div className="flex flex-wrap gap-1">
+                {(["Front", "Back", "Left Sleeve", "Right Sleeve"] as const).map((side) => (
                   <button
                     key={side}
                     onClick={() => {
@@ -562,19 +562,19 @@ function CreatorStudio() {
                       setSelectedLayerId(null);
                     }}
                     className={cn(
-                      "px-3 sm:px-5 py-2 text-xs font-black uppercase tracking-widest transition-all",
+                      "px-2.5 sm:px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
                       printSide === side
                         ? "bg-foreground text-background shadow"
                         : "bg-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {side === "Sleeve" ? "Side Sleeve" : `${side} View`}
+                    {side === "Front" || side === "Back" ? `${side} View` : side}
                   </button>
                 ))}
               </div>
 
               {/* Quick layer count indicator */}
-              <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pr-3 flex items-center gap-1.5">
+              <div className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider pr-2 flex items-center gap-1.5">
                 <Layers className="h-3.5 w-3.5" />
                 {sideLayers.length} {sideLayers.length === 1 ? "Element" : "Elements"}
               </div>
@@ -587,7 +587,7 @@ function CreatorStudio() {
               style={{ aspectRatio: "3/4" }}
               onClick={() => setSelectedLayerId(null)}
             >
-              {/* Straight Upright T-Shirt Mockup (Front / Back / Side Sleeve) */}
+              {/* Straight Upright T-Shirt Mockup (Front / Back / Left Sleeve / Right Sleeve) */}
               <TShirtMockup
                 colorHex={color.hex}
                 side={printSide}
@@ -596,14 +596,16 @@ function CreatorStudio() {
                     ? color.frontMockup
                     : printSide === "Back"
                     ? color.backMockup
-                    : color.sleeveMockup
+                    : printSide === "Right Sleeve"
+                    ? (color.rightSleeveMockup || color.sleeveMockup)
+                    : (color.leftSleeveMockup || color.sleeveMockup)
                 }
                 className="absolute inset-0 p-4"
               />
 
               {/* Side badge */}
               <div className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1 z-10 shadow-md">
-                {printSide === "Sleeve" ? "Side Sleeve" : `${printSide} View`}
+                {printSide === "Front" || printSide === "Back" ? `${printSide} View` : printSide}
               </div>
 
               {/* Render Side Layers */}

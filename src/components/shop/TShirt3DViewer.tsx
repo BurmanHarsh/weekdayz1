@@ -277,13 +277,24 @@ export function TShirt3DViewer({ baseColor, garmentType, layers, size }: TShirt3
       }
       autoRotate.resume();
     };
+    const onRotateTo = (e: Event) => {
+      const angle = (e as CustomEvent<number>).detail;
+      const m = modelHandleRef.current;
+      if (m) {
+        m.group.rotation.x = 0;
+        m.group.rotation.y = angle;
+      }
+      autoRotate.pause();
+    };
     window.addEventListener("tshirt3d:paused", onPaused);
     window.addEventListener("tshirt3d:zoom", onZoom);
     window.addEventListener("tshirt3d:reset", onReset);
+    window.addEventListener("tshirt3d:rotateTo", onRotateTo);
     return () => {
       window.removeEventListener("tshirt3d:paused", onPaused);
       window.removeEventListener("tshirt3d:zoom", onZoom);
       window.removeEventListener("tshirt3d:reset", onReset);
+      window.removeEventListener("tshirt3d:rotateTo", onRotateTo);
     };
   }, [autoRotate]);
 

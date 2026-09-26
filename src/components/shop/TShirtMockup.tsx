@@ -1,6 +1,6 @@
 import React from "react";
 
-export type MockupViewSide = "Front" | "Back" | "Sleeve";
+export type MockupViewSide = "Front" | "Back" | "Sleeve" | "Left Sleeve" | "Right Sleeve";
 
 interface TShirtMockupProps {
   colorHex: string;
@@ -46,14 +46,15 @@ export function TShirtMockup({
     );
   }
 
-  // Side Sleeve Mockup View
-  if (side === "Sleeve") {
+  // Side Sleeve Mockup View (Left Sleeve vs Right Sleeve)
+  if (side === "Sleeve" || side === "Left Sleeve" || side === "Right Sleeve") {
+    const isRightSleeve = side === "Right Sleeve";
     return (
       <div
         className={`relative w-full h-full flex items-center justify-center overflow-hidden select-none transition-colors duration-300 ${className}`}
         style={{ backgroundColor: bgShade }}
       >
-        <div className="relative w-full max-w-[340px] aspect-[3/4] flex items-center justify-center p-4">
+        <div className={`relative w-full max-w-[340px] aspect-[3/4] flex items-center justify-center p-4 ${isRightSleeve ? "scale-x-[-1]" : ""}`}>
           {/* Studio sleeve profile vector with fabric shading */}
           <svg
             viewBox="0 0 300 400"
@@ -113,11 +114,12 @@ export function TShirtMockup({
               textAnchor="middle"
               fill={isBlack || isNavy ? "#FFFFFF" : "#000000"}
               opacity="0.35"
-              fontSize="10"
+              fontSize="9"
               fontWeight="bold"
               letterSpacing="1"
+              transform={isRightSleeve ? "scale(-1, 1) translate(-380, 0)" : undefined}
             >
-              SLEEVE PRINT ZONE
+              {isRightSleeve ? "RIGHT SLEEVE ZONE" : "LEFT SLEEVE ZONE"}
             </text>
           </svg>
         </div>

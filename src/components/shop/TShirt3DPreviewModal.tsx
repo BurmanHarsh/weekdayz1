@@ -92,6 +92,28 @@ export function TShirt3DPreviewModal({
 
         {/* 3D viewport — fixed height so the canvas can size itself */}
         <div className="relative w-full h-[460px] bg-gradient-to-b from-secondary/30 to-background">
+          {/* Top Floating View Angle Buttons */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 bg-background/90 backdrop-blur border border-border p-1 shadow-lg">
+            {[
+              { label: "Front", angle: 0 },
+              { label: "Back", angle: Math.PI },
+              { label: "Left Sleeve", angle: Math.PI / 2 },
+              { label: "Right Sleeve", angle: -Math.PI / 2 },
+            ].map((side) => (
+              <button
+                key={side.label}
+                type="button"
+                onClick={() => {
+                  setPaused(true);
+                  window.dispatchEvent(new CustomEvent("tshirt3d:rotateTo", { detail: side.angle }));
+                }}
+                className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider hover:bg-secondary transition-colors text-foreground"
+              >
+                {side.label}
+              </button>
+            ))}
+          </div>
+
           {open && (
             <ThreeJSBoundary>
               <ViewerPauser paused={paused}>

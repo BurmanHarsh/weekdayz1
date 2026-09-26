@@ -17,7 +17,7 @@ import { parseToSafeHex } from "./TShirt3DModel";
 export interface TextureLayer {
   id: string;
   type: "image" | "text";
-  side: "Front" | "Back";
+  side: "Front" | "Back" | "Sleeve" | "Left Sleeve" | "Right Sleeve";
   previewUrl?: string;
   text?: string;
   fontFamily?: string;
@@ -30,7 +30,7 @@ export interface TextureLayer {
 
 export interface RenderDesignToTextureOptions {
   layers: TextureLayer[];
-  side?: "Front" | "Back";
+  side?: "Front" | "Back" | "Sleeve" | "Left Sleeve" | "Right Sleeve";
   baseColor: string;
   resolution?: number;
 }
@@ -82,14 +82,32 @@ export async function renderDesignToTexture({
   const backCx = resolution * 0.7487;
   const backCy = resolution * 0.2918;
 
+  // Left Sleeve Outer Cap UV Center (U = 0.2890, V = 0.6349)
+  const leftSleeveCx = resolution * 0.2890;
+  const leftSleeveCy = resolution * 0.6349;
+
+  // Right Sleeve Outer Cap UV Center (U = 0.5635, V = 0.6391)
+  const rightSleeveCx = resolution * 0.5635;
+  const rightSleeveCy = resolution * 0.6391;
+
   // Draw user design graphics & text layers on top
   if (layers && layers.length > 0) {
     for (const layer of layers) {
       ctx.save();
 
-      const isFront = layer.side === "Front";
-      const cx = isFront ? frontCx : backCx;
-      const cy = isFront ? frontCy : backCy;
+      let cx = frontCx;
+      let cy = frontCy;
+
+      if (layer.side === "Back") {
+        cx = backCx;
+        cy = backCy;
+      } else if (layer.side === "Right Sleeve") {
+        cx = rightSleeveCx;
+        cy = rightSleeveCy;
+      } else if (layer.side === "Left Sleeve" || layer.side === "Sleeve") {
+        cx = leftSleeveCx;
+        cy = leftSleeveCy;
+      }
 
       // Map 2D designer offset (around 400x400) to 3D UV space
       const scaleFactor = (resolution / 800) * 1.3;
