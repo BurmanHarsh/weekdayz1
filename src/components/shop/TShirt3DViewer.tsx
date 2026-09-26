@@ -172,7 +172,6 @@ export function TShirt3DViewer({ baseColor, garmentType, layers, size }: TShirt3
     };
     const onUp = (e: PointerEvent) => {
       isDragging = false;
-      autoRotate.resume();
       try {
         dom.releasePointerCapture(e.pointerId);
       } catch {
