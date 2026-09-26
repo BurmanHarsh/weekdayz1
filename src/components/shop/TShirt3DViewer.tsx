@@ -279,12 +279,13 @@ export function TShirt3DViewer({ baseColor, garmentType, layers, size }: TShirt3
     };
     const onRotateTo = (e: Event) => {
       const angle = (e as CustomEvent<number>).detail;
+      autoRotate.setRotation(angle);
       const m = modelHandleRef.current;
       if (m) {
         m.group.rotation.x = 0;
         m.group.rotation.y = angle;
       }
-      autoRotate.pause();
+      autoRotate.notifyInteract();
     };
     window.addEventListener("tshirt3d:paused", onPaused);
     window.addEventListener("tshirt3d:zoom", onZoom);

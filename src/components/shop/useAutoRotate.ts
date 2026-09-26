@@ -46,6 +46,10 @@ export function useAutoRotate(options: {
 
   return {
     getRotation: () => rotationRef.current,
+    setRotation: (val: number) => {
+      rotationRef.current = val;
+      subscribersRef.current.forEach((cb) => cb(val));
+    },
     pause: () => {
       pausedRef.current = true;
     },

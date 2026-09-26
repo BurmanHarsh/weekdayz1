@@ -97,14 +97,13 @@ export function TShirt3DPreviewModal({
             {[
               { label: "Front", angle: 0 },
               { label: "Back", angle: Math.PI },
-              { label: "Left Sleeve", angle: Math.PI / 2 },
-              { label: "Right Sleeve", angle: -Math.PI / 2 },
+              { label: "Left Sleeve", angle: -Math.PI / 2 },
+              { label: "Right Sleeve", angle: Math.PI / 2 },
             ].map((side) => (
               <button
                 key={side.label}
                 type="button"
                 onClick={() => {
-                  setPaused(true);
                   window.dispatchEvent(new CustomEvent("tshirt3d:rotateTo", { detail: side.angle }));
                 }}
                 className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider hover:bg-secondary transition-colors text-foreground"
