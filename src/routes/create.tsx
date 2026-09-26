@@ -179,6 +179,48 @@ function CreatorStudio() {
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  // Dynamically compute where the sleeve print zone sits within the canvas.
+  // The sleeve SVG container is max-w-[340px] aspect-[3/4] centered inside the canvas.
+  // Print zone rect in SVG viewBox(0 0 300 400): center at (190, 205).
+  const [sleeveAnchor, setSleeveAnchor] = useState({
+    leftSleeve: { left: "50%", top: "50%" },
+    rightSleeve: { left: "50%", top: "50%" },
+  });
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    function computeAnchor() {
+      const W = el!.clientWidth;
+      if (!W) return;
+      // Canvas has aspect-ratio 3:4
+      const H = W * (4 / 3);
+      // Sleeve container is max 340px, same 3:4 ratio, centered
+      const S = Math.min(W, 340);
+      const Sh = S * (4 / 3);
+      // p-4 = 16px padding each side around the SVG inside the sleeve container
+      const pad = 16;
+      // SVG render area top-left in canvas absolute coords
+      const svgLeft = (W - S) / 2 + pad;
+      const svgTop = (H - Sh) / 2 + pad;
+      const svgW = S - pad * 2;
+      const svgH = Sh - pad * 2;
+      // Print zone center (190/300, 205/400) in SVG viewBox units → canvas px
+      const printX = svgLeft + (190 / 300) * svgW;
+      const printY = svgTop + (205 / 400) * svgH;
+      // Mirror X for right sleeve (scale-x-[-1] flips the sleeve container)
+      const mirrorX = W - printX;
+      setSleeveAnchor({
+        leftSleeve: { left: `${((printX / W) * 100).toFixed(2)}%`, top: `${((printY / H) * 100).toFixed(2)}%` },
+        rightSleeve: { left: `${((mirrorX / W) * 100).toFixed(2)}%`, top: `${((printY / H) * 100).toFixed(2)}%` },
+      });
+    }
+    computeAnchor();
+    const ro = new ResizeObserver(computeAnchor);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Load existing design for re-editing if designId or cartKey is provided
   useEffect(() => {
     async function loadSavedDesign() {
@@ -627,11 +669,13 @@ function CreatorStudio() {
               {/* Render Side Layers */}
               {sideLayers.map((layer) => {
                 const isSelected = layer.id === selectedLayerId;
-                // For sleeve views: anchor layers to the sleeve print zone rather than canvas center.
-                // The sleeve SVG print rect is centered at ~63% x, ~51% y in the 300×400 viewBox.
+                // Use dynamically measured sleeve print zone position for accurate anchoring.
                 const isSleeveView = printSide === "Left Sleeve" || printSide === "Right Sleeve";
-                const anchorTop = isSleeveView ? "51%" : "50%";
-                const anchorLeft = isSleeveView ? "63%" : "50%";
+                const sleevePos = printSide === "Right Sleeve"
+                  ? sleeveAnchor.rightSleeve
+                  : sleeveAnchor.leftSleeve;
+                const anchorTop = isSleeveView ? sleevePos.top : "50%";
+                const anchorLeft = isSleeveView ? sleevePos.left : "50%";
                 return (
                   <motion.div
                     key={layer.id}
