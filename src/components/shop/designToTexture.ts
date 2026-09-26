@@ -82,13 +82,13 @@ export async function renderDesignToTexture({
   const backCx = resolution * 0.7487;
   const backCy = resolution * 0.2918;
 
-  // Left Sleeve Outer Cap UV Center (U = 0.2890, V = 0.6349)
-  const leftSleeveCx = resolution * 0.2890;
-  const leftSleeveCy = resolution * 0.6349;
+  // Left Sleeve Outer Cap UV Center (U = 0.1971, V = 0.8306)
+  const leftSleeveCx = resolution * 0.1971;
+  const leftSleeveCy = resolution * 0.8306;
 
-  // Right Sleeve Outer Cap UV Center (U = 0.5635, V = 0.6391)
-  const rightSleeveCx = resolution * 0.5635;
-  const rightSleeveCy = resolution * 0.6391;
+  // Right Sleeve Outer Cap UV Center (U = 0.5669, V = 0.8306)
+  const rightSleeveCx = resolution * 0.5669;
+  const rightSleeveCy = resolution * 0.8306;
 
   // Draw user design graphics & text layers on top
   if (layers && layers.length > 0) {

@@ -67,11 +67,11 @@ export function TShirt3DPreviewModal({
   garmentType,
   size = "L",
 }: TShirt3DPreviewModalProps) {
-  const [paused, setPaused] = useState(true);
+  const [paused, setPaused] = useState(false);
 
-  // Default to paused when opening so view stays controlled by user
+  // Restore auto-rotate on open
   useEffect(() => {
-    if (open) setPaused(true);
+    if (open) setPaused(false);
   }, [open]);
 
   const handleReset = () => {
