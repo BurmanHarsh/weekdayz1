@@ -189,7 +189,12 @@ function CreatorStudio() {
             if (foundColor) setColor(foundColor);
           }
           if (item.size) setSize(item.size);
-          if (item.designConfig.layers) setLayers(item.designConfig.layers);
+          if (item.designConfig.layers) {
+            const valid = item.designConfig.layers.filter(
+              (l: DesignLayer) => !(l.type === "image" && l.previewUrl?.startsWith("blob:"))
+            );
+            setLayers(valid);
+          }
           return;
         }
       }
@@ -208,7 +213,10 @@ function CreatorStudio() {
                 if (c) setColor(c);
               }
               if (Array.isArray(settings.layers)) {
-                setLayers(settings.layers);
+                const valid = settings.layers.filter(
+                  (l: DesignLayer) => !(l.type === "image" && l.previewUrl?.startsWith("blob:"))
+                );
+                setLayers(valid);
               }
             }
           }
@@ -233,22 +241,29 @@ function CreatorStudio() {
       toast.error("Max file size is 15MB");
       return;
     }
-    const previewUrl = URL.createObjectURL(f);
-    const newLayer: DesignLayer = {
-      id: crypto.randomUUID(),
-      type: "image",
-      side: printSide,
-      file: f,
-      previewUrl,
-      x: 0,
-      y: 0,
-      scale: 1,
-      rotate: 0,
-      zIndex: layers.length + 1,
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (!dataUrl) return;
+
+      const newLayer: DesignLayer = {
+        id: crypto.randomUUID(),
+        type: "image",
+        side: printSide,
+        file: f,
+        previewUrl: dataUrl,
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotate: 0,
+        zIndex: layers.length + 1,
+      };
+      setLayers((prev) => [...prev, newLayer]);
+      setSelectedLayerId(newLayer.id);
+      toast.success(`Image added to ${printSide} print`);
     };
-    setLayers((prev) => [...prev, newLayer]);
-    setSelectedLayerId(newLayer.id);
-    toast.success(`Image added to ${printSide} print`);
+    reader.readAsDataURL(f);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -649,6 +664,9 @@ function CreatorStudio() {
                       <img
                         src={layer.previewUrl}
                         alt=""
+                        onError={() => {
+                          setLayers((prev) => prev.filter((l) => l.id !== layer.id));
+                        }}
                         className="w-40 h-40 object-contain pointer-events-none"
                       />
                     ) : (
