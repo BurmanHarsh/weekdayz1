@@ -10,6 +10,8 @@ export interface MockupColor {
   frontMockup?: string;
   backMockup?: string;
   sleeveMockup?: string;
+  leftSleeveMockup?: string;
+  rightSleeveMockup?: string;
   isActive: boolean;
 }
 
