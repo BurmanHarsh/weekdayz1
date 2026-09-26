@@ -33,6 +33,7 @@ import { TShirt3DPreviewModal } from "@/components/shop/TShirt3DPreviewModal";
 import { TShirtMockup, getTShirtSvgDataUrl, MockupViewSide } from "@/components/shop/TShirtMockup";
 import {
   fetchLocalMockupColors,
+  saveLocalMockupColors,
   getMockupSettingsServer,
   MockupColor,
   DEFAULT_MOCKUP_COLORS,
@@ -626,6 +627,11 @@ function CreatorStudio() {
               {/* Render Side Layers */}
               {sideLayers.map((layer) => {
                 const isSelected = layer.id === selectedLayerId;
+                // For sleeve views: anchor layers to the sleeve print zone rather than canvas center.
+                // The sleeve SVG print rect is centered at ~63% x, ~51% y in the 300×400 viewBox.
+                const isSleeveView = printSide === "Left Sleeve" || printSide === "Right Sleeve";
+                const anchorTop = isSleeveView ? "51%" : "50%";
+                const anchorLeft = isSleeveView ? "63%" : "50%";
                 return (
                   <motion.div
                     key={layer.id}
@@ -645,6 +651,8 @@ function CreatorStudio() {
                       );
                     }}
                     style={{
+                      top: anchorTop,
+                      left: anchorLeft,
                       x: layer.x,
                       y: layer.y,
                       rotate: layer.rotate,
@@ -652,7 +660,7 @@ function CreatorStudio() {
                       zIndex: layer.zIndex,
                     }}
                     className={cn(
-                      "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-2 cursor-grab active:cursor-grabbing border-2 transition-colors",
+                      "absolute -translate-x-1/2 -translate-y-1/2 p-2 cursor-grab active:cursor-grabbing border-2 transition-colors",
                       isSelected ? "border-foreground ring-2 ring-foreground/20 bg-foreground/5" : "border-transparent hover:border-foreground/30",
                     )}
                     onClick={(e) => {

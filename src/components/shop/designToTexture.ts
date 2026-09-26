@@ -97,6 +97,8 @@ export async function renderDesignToTexture({
 
       let cx = frontCx;
       let cy = frontCy;
+      // Sleeve designs are smaller so use a reduced size multiplier
+      let sizeMultiplier = 1.0;
 
       if (layer.side === "Back") {
         cx = backCx;
@@ -104,13 +106,19 @@ export async function renderDesignToTexture({
       } else if (layer.side === "Right Sleeve") {
         cx = rightSleeveCx;
         cy = rightSleeveCy;
+        sizeMultiplier = 0.55;
       } else if (layer.side === "Left Sleeve" || layer.side === "Sleeve") {
         cx = leftSleeveCx;
         cy = leftSleeveCy;
+        sizeMultiplier = 0.55;
       }
 
-      // Map 2D designer offset (around 400x400) to 3D UV space
-      const scaleFactor = (resolution / 800) * 1.3;
+      // Map 2D designer offset to 3D UV space
+      // Sleeve views use a tighter scale factor since the sleeve print area is smaller
+      const isSleeve = layer.side === "Left Sleeve" || layer.side === "Right Sleeve" || layer.side === "Sleeve";
+      const scaleFactor = isSleeve
+        ? (resolution / 800) * 0.55
+        : (resolution / 800) * 1.3;
       const layerX = cx + layer.x * scaleFactor;
       const layerY = cy + layer.y * scaleFactor;
 
@@ -120,13 +128,13 @@ export async function renderDesignToTexture({
       if (layer.type === "image" && layer.previewUrl) {
         try {
           const img = await loadImage(layer.previewUrl);
-          const baseSize = (resolution / 4.5) * layer.scale;
+          const baseSize = (resolution / 4.5) * layer.scale * sizeMultiplier;
           ctx.drawImage(img, -baseSize / 2, -baseSize / 2, baseSize, baseSize);
         } catch {
           // skip broken image
         }
       } else if (layer.type === "text" && layer.text) {
-        const fontSize = Math.round((resolution / 26) * layer.scale);
+        const fontSize = Math.round((resolution / 26) * layer.scale * sizeMultiplier);
         ctx.font = `bold ${fontSize}px ${layer.fontFamily || "sans-serif"}`;
         ctx.fillStyle = layer.fillColor || "#FFFFFF";
         ctx.textAlign = "center";
