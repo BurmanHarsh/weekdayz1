@@ -18,41 +18,29 @@ export const DEFAULT_MOCKUP_COLORS: MockupColor[] = [
     id: "color-white",
     name: "White",
     hex: "#FFFFFF",
-    frontMockup: "/products/tee-white.jpg",
-    backMockup: "/products/tee-white.jpg",
-    sleeveMockup: "/products/tee-white.jpg",
     isActive: true,
   },
   {
     id: "color-navy",
     name: "Navy Blue",
     hex: "#0F2042",
-    frontMockup: "/products/tee-black.jpg",
-    backMockup: "/products/tee-black.jpg",
-    sleeveMockup: "/products/tee-black.jpg",
     isActive: true,
   },
   {
     id: "color-black",
     name: "Black",
     hex: "#111111",
-    frontMockup: "/products/tee-black.jpg",
-    backMockup: "/products/tee-black.jpg",
-    sleeveMockup: "/products/tee-black.jpg",
     isActive: true,
   },
   {
     id: "color-offwhite",
     name: "Off White",
     hex: "#EFE6D5",
-    frontMockup: "/products/tee-white.jpg",
-    backMockup: "/products/tee-white.jpg",
-    sleeveMockup: "/products/tee-white.jpg",
     isActive: true,
   },
 ];
 
-const STORAGE_KEY = "weekdayzz_mockups_and_colors_v2";
+const STORAGE_KEY = "weekdayzz_mockups_and_colors_v3";
 
 export function fetchLocalMockupColors(): MockupColor[] {
   if (typeof window === "undefined") return DEFAULT_MOCKUP_COLORS;

@@ -16,9 +16,9 @@ export function TShirtMockup({
   className = "",
 }: TShirtMockupProps) {
   const hex = colorHex.toLowerCase();
-  const isBlack = hex === "#0a0a0a" || hex === "#121212" || hex === "#111111" || hex === "#000000";
-  const isOffWhite = hex === "#f5f0e8" || hex === "#f3ebdd" || hex === "#efe6d5";
-  const isNavy = hex === "#162238" || hex === "#1b2a4a" || hex === "#162444" || hex === "#0f2042";
+  const isBlack = hex === "#0a0a0a" || hex === "#121212" || hex === "#111111" || hex === "#000000" || hex === "black";
+  const isOffWhite = hex === "#f5f0e8" || hex === "#f3ebdd" || hex === "#efe6d5" || hex === "off white" || hex === "offwhite";
+  const isNavy = hex === "#162238" || hex === "#1b2a4a" || hex === "#162444" || hex === "#0f2042" || hex === "navy blue" || hex === "navy";
 
   // Lightest subtle background shade matching each t-shirt color (with clear contrast)
   const bgShade = isBlack
@@ -29,8 +29,9 @@ export function TShirtMockup({
     ? "#EBEBEF"
     : "#FFFFFF";
 
-  // If custom uploaded mockup URL is provided for this side, render it directly
-  if (customMockupUrl) {
+  // Render uploaded custom mockup image only if it's a real user upload (not a default system template URL)
+  const isCustomUploaded = customMockupUrl && !customMockupUrl.startsWith("/products/");
+  if (isCustomUploaded) {
     return (
       <div
         className={`relative w-full h-full flex items-center justify-center overflow-hidden select-none transition-colors duration-300 ${className}`}
@@ -147,11 +148,11 @@ export function TShirtMockup({
         />
       ) : isNavy ? (
         <img
-          src="/products/tee-black.jpg"
+          src="/products/tee-white.jpg"
           alt={`${side} View Navy Blue T-Shirt`}
           className="w-full h-full object-contain p-4 pointer-events-none"
           style={{
-            filter: "brightness(1.9) contrast(1.1) sepia(0.9) hue-rotate(180deg) saturate(3.5)",
+            filter: "sepia(0.8) hue-rotate(170deg) saturate(3.5) brightness(0.45)",
           }}
         />
       ) : (
