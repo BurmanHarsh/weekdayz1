@@ -42,9 +42,14 @@ export function mergeCategoriesWithDefaults(categories: StoreCategory[]): StoreC
   }
   return categories.map((cat) => {
     const fallback = DEFAULT_CATEGORIES.find((d) => d.id === cat.id);
+    // Only use saved img if it's a full external URL (uploaded to Supabase storage).
+    // Raw filenames / stale hashed paths from old builds would 404 → always re-use
+    // the current bundled asset for default categories.
+    const isExternalUrl =
+      cat.img && (cat.img.startsWith("http://") || cat.img.startsWith("https://") || cat.img.startsWith("//"));
     return {
       ...cat,
-      img: cat.img || fallback?.img || teesImg,
+      img: isExternalUrl ? cat.img : (fallback?.img || teesImg),
       to: cat.to || fallback?.to || "/shop",
       is_active: cat.is_active !== false,
     };
