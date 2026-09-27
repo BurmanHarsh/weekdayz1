@@ -99,7 +99,7 @@ export default function BulkOrdersPage() {
                 Submit Custom Request <ArrowRight className="h-4 w-4" />
               </a>
               <a
-                href="https://wa.me/919876543210?text=Hi%20Weekdayzz,%20I%20want%20to%20inquire%20about%20a%20bulk%20order."
+                href="https://wa.me/919236150810?text=Hi%20Weekdayzz,%20I%20want%20to%20inquire%20about%20a%20bulk%20order."
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 border border-white/30 bg-white/10 backdrop-blur-sm px-6 py-3.5 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-white/20 transition-all"
@@ -227,7 +227,7 @@ export default function BulkOrdersPage() {
                   </label>
                   <Input
                     required
-                    placeholder="+91 98765 43210"
+                    placeholder="+91 92361 50810"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   />

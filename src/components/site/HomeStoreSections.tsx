@@ -329,9 +329,9 @@ export function BulkOrdersSection() {
         <div className="relative">
 
           {/* ── Kicker ── */}
-          <div className="flex items-center gap-2 mb-8">
-            <span className="text-foreground animate-spin inline-block">✱</span>
-            <span className="text-xs font-bold tracking-[0.35em] text-muted-foreground uppercase">
+          <div className="flex items-center gap-3 mb-8">
+            <span className="text-black dark:text-white text-2xl sm:text-3xl font-black animate-spin inline-block">✱</span>
+            <span className="text-2xl sm:text-3xl font-black tracking-wider text-black dark:text-white uppercase">
               BULK &amp; TEAM MERCH
             </span>
           </div>
@@ -469,7 +469,7 @@ export function BulkOrdersSection() {
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold">Phone *</label>
-                          <Input required placeholder="+91 98765 43210" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
+                          <Input required placeholder="+91 92361 50810" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -509,11 +509,11 @@ export function BulkOrdersSection() {
 
               {/* Quick contact links */}
               <div className="flex flex-col gap-2 w-full lg:items-end">
-                <a href="mailto:sales@weekdayzz.in?subject=Bulk%20Order%20Inquiry" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
-                  <Mail className="h-3.5 w-3.5" /> sales@weekdayzz.in
+                <a href="mailto:weekdayzz01@gmail.com?subject=Bulk%20Order%20Inquiry" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                  <Mail className="h-3.5 w-3.5" /> weekdayzz01@gmail.com
                 </a>
-                <a href="tel:+919876543210" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
-                  <Phone className="h-3.5 w-3.5" /> +91 98765 43210
+                <a href="tel:+919236150810" className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors">
+                  <Phone className="h-3.5 w-3.5" /> +91 9236150810
                 </a>
               </div>
             </div>
