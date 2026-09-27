@@ -17,19 +17,17 @@ import {
 import { AdmitOneTicket } from "@/components/ui/admit-one-ticket";
 import AutoLayoutCard from "@/components/ui/auto-layout-card";
 
-import teesImg from "@/assets/tees.png";
 import couplesImg from "@/assets/couples.png";
-import statementImg from "@/assets/statement.png";
-import pinterestImg from "@/assets/pinterest finds.png";
-import jacketsImg from "@/assets/jackets.png";
-import hoodieImg from "@/assets/hoodie.png";
-import cricketImg from "@/assets/cricket.png";
-import bulkImg from "@/assets/bulk.png";
 import shalom1Img from "@/assets/shalom-ejiofor-_7wel0dVeRA-unsplash.jpg";
 import shalom2Img from "@/assets/shalom-ejiofor-RgPEQjJWBYE-unsplash.jpg";
 import shalom3Img from "@/assets/shalom-ejiofor-t_prchAm4ag-unsplash.jpg";
 
 import { fetchWebsitePosters, getWebsitePostersServer, WebsitePoster } from "@/lib/posters";
+import {
+  fetchLocalCategories,
+  getStoreCategoriesServer,
+  StoreCategory,
+} from "@/lib/categories";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
@@ -41,38 +39,21 @@ const postersQuery = queryOptions({
   queryFn: () => getWebsitePostersServer(),
 });
 
+const categoriesQuery = queryOptions({
+  queryKey: ["store-categories"],
+  queryFn: () => getStoreCategoriesServer(),
+});
+
 export const Route = createFileRoute("/")({
   loader: ({ context }) =>
     Promise.all([
       context.queryClient.ensureQueryData(productsQuery),
       context.queryClient.ensureQueryData(postersQuery),
+      context.queryClient.ensureQueryData(categoriesQuery),
     ]),
   component: Home,
 });
 
-// Exactly 8 categories transformed into clean circles (no card box)
-const CATS = [
-  { label: "Tees", cat: "tee", img: teesImg, to: "/shop", search: { category: "tee" } },
-  { label: "Couple", cat: "couple", img: couplesImg, to: "/collections/couple" },
-  {
-    label: "Statement",
-    cat: "statement",
-    img: statementImg,
-    to: "/shop",
-    search: { category: "statement" },
-  },
-  {
-    label: "Pinterest",
-    cat: "pinterest",
-    img: pinterestImg,
-    to: "/shop",
-    search: { category: "pinterest" },
-  },
-  { label: "Jackets", cat: "jacket", img: jacketsImg, to: "/shop", search: { category: "jacket" } },
-  { label: "Hoodies", cat: "hoodie", img: hoodieImg, to: "/shop", search: { category: "hoodie" } },
-  { label: "Sports & Fan", cat: "sports", img: cricketImg, to: "/collections/rcb" },
-  { label: "Bulk Orders", cat: "bulk", img: bulkImg, to: "/bulk-orders" },
-];
 
 function Home() {
   const { data: products } = useSuspenseQuery(productsQuery);
@@ -239,22 +220,14 @@ function HeroCarousel() {
 
   if (heroList.length === 0) {
     return (
-      <section className="relative w-full bg-neutral-900 overflow-hidden">
-        <div
-          className="relative w-full animate-pulse"
-          style={{ paddingBottom: "min(75%, 90vh)" }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 opacity-90" />
-          <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 z-10">
-            <div className="mx-auto w-full max-w-2xl flex justify-center">
-              <div className="w-full bg-black/40 border border-white/10 p-6 sm:p-10 rounded-3xl backdrop-blur-md flex flex-col items-center text-center space-y-4">
-                <div className="h-4 w-32 bg-white/20 rounded-full" />
-                <div className="h-10 sm:h-14 w-4/5 bg-white/20 rounded-2xl" />
-                <div className="h-4 w-3/5 bg-white/10 rounded-lg" />
-                <div className="pt-2">
-                  <div className="h-11 w-44 bg-white/30 rounded-full" />
-                </div>
-              </div>
+      <section className="relative w-full bg-neutral-950 overflow-hidden">
+        <div className="relative w-full h-[75vh] sm:h-[82vh] md:h-[88vh] min-h-[520px] max-h-[920px] animate-pulse flex items-center justify-center p-6 text-center">
+          <div className="max-w-xl flex flex-col items-center space-y-4">
+            <div className="h-3.5 w-32 bg-white/20 rounded-full" />
+            <div className="h-12 sm:h-16 w-4/5 bg-white/20 rounded-lg" />
+            <div className="h-4 w-3/5 bg-white/10 rounded-full" />
+            <div className="pt-4">
+              <div className="h-11 w-44 border border-white/40 rounded-full" />
             </div>
           </div>
         </div>
@@ -265,8 +238,7 @@ function HeroCarousel() {
   return (
     <section className="relative bg-black text-white overflow-hidden group">
       <div
-        className="relative w-full touch-pan-y select-none cursor-grab active:cursor-grabbing"
-        style={{ paddingBottom: "min(75%, 90vh)" }}
+        className="relative w-full h-[75vh] sm:h-[82vh] md:h-[88vh] min-h-[520px] max-h-[920px] touch-pan-y select-none cursor-grab active:cursor-grabbing"
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -287,32 +259,37 @@ function HeroCarousel() {
                 transition: "transform 8s ease-out",
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/25" />
-            <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 z-10">
-              <div className="mx-auto w-full max-w-2xl flex justify-center">
-                <div className="w-full bg-black/60 backdrop-blur-[2px] border border-white/20 p-6 sm:p-10 rounded-3xl shadow-2xl flex flex-col items-center text-center transition-transform duration-500 hover:border-white/30">
-                  {s.badge && (
-                    <span className="inline-block bg-white text-black font-black uppercase tracking-widest text-[10px] px-3.5 py-1 mb-3 rounded-full shadow-md">
-                      {s.badge}
-                    </span>
-                  )}
-                  <div className="text-[10px] font-bold tracking-[0.3em] text-white/70 uppercase mb-2">
+            {/* Subtle cinematic gradient overlay to ensure text legibility while keeping image fully visible */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/20 to-black/25 pointer-events-none" />
+
+            {/* Clean editorial typography overlay directly over image (No dark card/box) */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 sm:p-10 text-center z-10">
+              <div className="mx-auto w-full max-w-4xl flex flex-col items-center">
+                {s.badge && (
+                  <span className="inline-block bg-white/20 backdrop-blur-md border border-white/30 text-white font-black uppercase tracking-widest text-[10px] px-3.5 py-1 mb-3 rounded-full shadow-lg">
+                    {s.badge}
+                  </span>
+                )}
+                {s.kicker && (
+                  <p className="text-xs sm:text-sm font-bold tracking-[0.35em] text-white/90 uppercase drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)] mb-2">
                     {s.kicker}
-                  </div>
-                  <h1 className="text-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.94] font-black text-white">
-                    {s.title}
-                  </h1>
-                  <p className="mt-3 text-sm sm:text-base text-white/80 font-medium leading-relaxed max-w-md">
+                  </p>
+                )}
+                <h1 className="text-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white uppercase tracking-tight leading-[0.94] drop-shadow-[0_4px_24px_rgba(0,0,0,0.75)]">
+                  {s.title}
+                </h1>
+                {s.sub && (
+                  <p className="mt-3 sm:mt-4 text-xs sm:text-base font-medium text-white/90 tracking-wide max-w-lg drop-shadow-[0_2px_12px_rgba(0,0,0,0.8)] leading-relaxed">
                     {s.sub}
                   </p>
-                  <div className="mt-6 flex justify-center w-full">
-                    <Link
-                      to={s.to as unknown as "/"}
-                      className="inline-flex items-center justify-center gap-2 bg-white text-black px-8 py-3.5 text-xs font-black tracking-widest uppercase hover:bg-white/90 hover:scale-105 active:scale-95 transition-all duration-300 rounded-full shadow-2xl"
-                    >
-                      {s.cta || "Shop All"} <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
+                )}
+                <div className="mt-7 sm:mt-8 flex justify-center">
+                  <Link
+                    to={s.to as unknown as "/"}
+                    className="inline-flex items-center justify-center border border-white/80 bg-white/10 hover:bg-white hover:text-black text-white px-8 sm:px-10 py-3 sm:py-3.5 text-xs sm:text-sm font-bold tracking-[0.25em] uppercase rounded-full backdrop-blur-xs transition-all duration-300 shadow-xl hover:scale-105 active:scale-95"
+                  >
+                    {s.cta || "VIEW MORE"}
+                  </Link>
                 </div>
               </div>
             </div>
@@ -357,8 +334,46 @@ function HeroCarousel() {
   );
 }
 
-/* ─── CATEGORIES GRID — Circles only, no card boxes ─── */
+/* ─── CATEGORIES GRID — Circles only, dynamically configured by Admin ─── */
 function CategoriesGrid() {
+  const getCategoriesFn = useServerFn(getStoreCategoriesServer);
+  const { data: serverCategories } = useQuery({
+    queryKey: ["store-categories"],
+    queryFn: () => getCategoriesFn(),
+    staleTime: 60_000,
+  });
+
+  const [categories, setCategories] = useState<StoreCategory[]>([]);
+
+  useEffect(() => {
+    // Hydrate from localStorage on client mount only
+    const all = fetchLocalCategories();
+    const active = all.filter((c) => c.is_active);
+    setCategories(active.length > 0 ? active : all);
+
+    const handleUpdate = () => {
+      const all = fetchLocalCategories();
+      const active = all.filter((c) => c.is_active);
+      setCategories(active.length > 0 ? active : all);
+    };
+    window.addEventListener("categories-updated", handleUpdate);
+    return () => window.removeEventListener("categories-updated", handleUpdate);
+  }, []);
+
+  const activeCategories = useMemo(() => {
+    if (serverCategories && serverCategories.length > 0) {
+      const active = serverCategories.filter((c) => c.is_active);
+      if (active.length > 0) return active;
+    }
+    if (categories && categories.length > 0) {
+      const active = categories.filter((c) => c.is_active);
+      if (active.length > 0) return active;
+    }
+    return [];
+  }, [serverCategories, categories]);
+
+  if (activeCategories.length === 0) return null;
+
   return (
     <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
       <Reveal className="mb-8 text-center">
@@ -367,10 +382,10 @@ function CategoriesGrid() {
         </h2>
       </Reveal>
 
-      {/* 4 columns on desktop/tablet, 4 on mobile — circles only, no card box */}
+      {/* Dynamic responsive grid for circle categories */}
       <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-8 gap-4 sm:gap-6">
-        {CATS.map((c, i) => (
-          <Reveal key={c.label} delay={i * 40}>
+        {activeCategories.map((c, i) => (
+          <Reveal key={c.id || c.label} delay={i * 40}>
             <Link
               to={c.to as unknown as "/"}
               search={c.search}
