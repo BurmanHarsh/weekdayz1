@@ -23,7 +23,7 @@ export function TShirt3DViewer({ baseColor, garmentType, layers, size }: TShirt3
 
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [activeSide, setActiveSide] = useState<"Front" | "Back">("Front");
+  const [activeSide, setActiveSide] = useState<"Front" | "Back" | "Left Sleeve" | "Right Sleeve">("Front");
 
   const hexColor = parseToSafeHex(baseColor);
 
@@ -209,7 +209,15 @@ export function TShirt3DViewer({ baseColor, garmentType, layers, size }: TShirt3
       if (modelHandleRef.current) {
         const totalY = modelHandleRef.current.group.rotation.y;
         const deg = ((((totalY % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)) * 180) / Math.PI;
-        setActiveSide(deg <= 90 || deg >= 270 ? "Front" : "Back");
+        if (deg >= 45 && deg < 135) {
+          setActiveSide("Right Sleeve");
+        } else if (deg >= 135 && deg < 225) {
+          setActiveSide("Back");
+        } else if (deg >= 225 && deg < 315) {
+          setActiveSide("Left Sleeve");
+        } else {
+          setActiveSide("Front");
+        }
       }
 
       raf = requestAnimationFrame(loop);
@@ -356,7 +364,7 @@ export function TShirt3DViewer({ baseColor, garmentType, layers, size }: TShirt3
 
       {/* Side indicator */}
       <div className="absolute top-3 left-3 bg-foreground/90 text-background px-2.5 py-1 text-[10px] font-black uppercase tracking-widest pointer-events-none z-10">
-        {activeSide} View
+        {activeSide.includes("Sleeve") ? activeSide : `${activeSide} View`}
       </div>
 
       {/* Interaction Hint */}

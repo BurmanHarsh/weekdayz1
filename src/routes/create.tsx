@@ -778,17 +778,29 @@ function CreatorStudio() {
                 );
               })}
 
-              {/* Empty state hint */}
+              {/* Compact bottom pill so the entire t-shirt is 100% visible */}
               {sideLayers.length === 0 && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none p-6 text-center">
-                  <div className="bg-background/85 backdrop-blur border border-border p-4 max-w-xs shadow-lg">
-                    <p className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      No graphics on {printSide} side
-                    </p>
-                    <p className="text-[11px] text-muted-foreground mt-1">
-                      Upload an image or add text from the panel to position your design.
-                    </p>
-                  </div>
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 w-max max-w-[92%]">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTab("image");
+                      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                      if (fileInput) {
+                        fileInput.click();
+                      } else {
+                        const panel = document.getElementById("customizer-tools");
+                        panel?.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
+                    className="group bg-background/90 hover:bg-background backdrop-blur-md border border-border/80 px-3.5 py-1.5 rounded-full shadow-md flex items-center gap-2 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                  >
+                    <Upload className="h-3.5 w-3.5 text-foreground group-hover:text-primary transition-colors shrink-0" />
+                    <span className="text-[11px] font-bold tracking-wide text-foreground">
+                      Upload your graphic or add text
+                    </span>
+                  </button>
                 </div>
               )}
 
@@ -844,7 +856,7 @@ function CreatorStudio() {
           <div className="space-y-6">
 
             {/* Add Content Tabs: Image vs Text */}
-            <div className="border border-border bg-card p-4 space-y-4">
+            <div id="customizer-tools" className="border border-border bg-card p-4 space-y-4">
               <div className="flex border-b border-border">
                 <button
                   onClick={() => setActiveTab("image")}
@@ -855,7 +867,7 @@ function CreatorStudio() {
                       : "border-transparent text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <ImageIcon className="h-4 w-4" /> Upload Image
+                  <ImageIcon className="h-4 w-4" /> Upload Graphic
                 </button>
                 <button
                   onClick={() => setActiveTab("text")}
@@ -881,9 +893,9 @@ function CreatorStudio() {
                 >
                   <input {...getInputProps()} />
                   <Upload className="h-6 w-6 mx-auto mb-2 text-foreground" />
-                  <p className="text-xs font-bold uppercase tracking-wider">Drop or Select Images</p>
+                  <p className="text-xs font-bold uppercase tracking-wider">Drop or Select Graphic</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Add multiple graphics to Front or Back. PNG, JPG, WEBP, or Phone Photos (max 15MB).
+                    Upload graphics to Front, Back, or Sleeves. PNG, JPG, WEBP, or Photos (max 15MB).
                   </p>
                 </div>
               )}
