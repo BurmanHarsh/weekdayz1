@@ -29,6 +29,7 @@ import {
   StoreCategory,
 } from "@/lib/categories";
 
+
 const productsQuery = queryOptions({
   queryKey: ["products"],
   queryFn: () => listProducts(),
@@ -336,41 +337,26 @@ function HeroCarousel() {
 
 /* ─── CATEGORIES GRID — Circles only, dynamically configured by Admin ─── */
 function CategoriesGrid() {
-  const getCategoriesFn = useServerFn(getStoreCategoriesServer);
-  const { data: serverCategories } = useQuery({
-    queryKey: ["store-categories"],
-    queryFn: () => getCategoriesFn(),
-    staleTime: 60_000,
-  });
+  // Data is pre-fetched in the route loader — useSuspenseQuery is consistent
+  // between SSR and client, eliminating the hydration mismatch.
+  const { data: serverCategories } = useSuspenseQuery(categoriesQuery);
 
-  const [categories, setCategories] = useState<StoreCategory[]>([]);
+  const [overrideCategories, setOverrideCategories] = useState<StoreCategory[] | null>(null);
 
   useEffect(() => {
-    // Hydrate from localStorage on client mount only
-    const all = fetchLocalCategories();
-    const active = all.filter((c) => c.is_active);
-    setCategories(active.length > 0 ? active : all);
-
+    // Listen for admin edits made during this session (localStorage broadcast)
     const handleUpdate = () => {
       const all = fetchLocalCategories();
-      const active = all.filter((c) => c.is_active);
-      setCategories(active.length > 0 ? active : all);
+      setOverrideCategories(all);
     };
     window.addEventListener("categories-updated", handleUpdate);
     return () => window.removeEventListener("categories-updated", handleUpdate);
   }, []);
 
   const activeCategories = useMemo(() => {
-    if (serverCategories && serverCategories.length > 0) {
-      const active = serverCategories.filter((c) => c.is_active);
-      if (active.length > 0) return active;
-    }
-    if (categories && categories.length > 0) {
-      const active = categories.filter((c) => c.is_active);
-      if (active.length > 0) return active;
-    }
-    return [];
-  }, [serverCategories, categories]);
+    const source = overrideCategories ?? serverCategories ?? [];
+    return source.filter((c) => c.is_active);
+  }, [serverCategories, overrideCategories]);
 
   if (activeCategories.length === 0) return null;
 
