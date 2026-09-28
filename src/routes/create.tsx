@@ -38,19 +38,18 @@ import {
   MockupColor,
   DEFAULT_MOCKUP_COLORS,
 } from "@/lib/mockups";
+import {
+  fetchLocalStudioConfig,
+  saveLocalStudioConfig,
+  getStudioConfigServer,
+  CustomStudioConfig,
+  GarmentCatalogItem,
+  DEFAULT_STUDIO_CONFIG,
+  DEFAULT_CATALOGS,
+  DEFAULT_STUDIO_RATES,
+} from "@/lib/studio-config";
 
-const BASE_PRICE = 1899_00 / 100 * 100; // base tee 1899
-const CUSTOM_PRINT_SURCHARGE = 20000; // ₹200 in paise/cents
-
-export const GARMENT_TYPES = [
-  "Oversized Tees",
-  "Baby Tees",
-  "Polo Tees",
-  "Regular Fit",
-  "Hoodies",
-  "Sweatshirts",
-];
-
+export const GARMENT_TYPES = DEFAULT_CATALOGS.map((c) => c.name);
 export const SIZES = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
 const FONTS = [
@@ -127,18 +126,51 @@ function CreatorStudio() {
   const createDesignFn = useServerFn(createDesign);
   const getDesignByIdFn = useServerFn(getDesignById);
   const getMockupSettingsFn = useServerFn(getMockupSettingsServer);
+  const getStudioConfigFn = useServerFn(getStudioConfigServer);
 
   const [availableColors, setAvailableColors] = useState<MockupColor[]>(() => fetchLocalMockupColors());
   const [color, setColor] = useState<MockupColor>(() => {
     const list = fetchLocalMockupColors();
     return list[0] || DEFAULT_MOCKUP_COLORS[0];
   });
-  const [garment, setGarment] = useState(GARMENT_TYPES[0]);
+
+  const [studioConfig, setStudioConfig] = useState<CustomStudioConfig>(() => fetchLocalStudioConfig());
+  const activeCatalogs = studioConfig.catalogs.filter((c) => c.isActive);
+  const catalogsList = activeCatalogs.length > 0 ? activeCatalogs : DEFAULT_CATALOGS;
+
+  const [selectedCatalog, setSelectedCatalog] = useState<GarmentCatalogItem>(() => {
+    const list = fetchLocalStudioConfig().catalogs.filter((c) => c.isActive);
+    return list[0] || DEFAULT_CATALOGS[0];
+  });
+  const [garment, setGarment] = useState(() => selectedCatalog.name);
   const [size, setSize] = useState("L");
   const [printSide, setPrintSide] = useState<MockupViewSide>("Front");
 
   const [layers, setLayers] = useState<DesignLayer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
+
+  // Sync studio config (catalogs & rates)
+  useEffect(() => {
+    const handleStudioUpdate = () => {
+      const latest = fetchLocalStudioConfig();
+      setStudioConfig(latest);
+    };
+    window.addEventListener("studio-config-updated", handleStudioUpdate);
+    getStudioConfigFn()
+      .then((data) => {
+        if (data && data.catalogs && data.catalogs.length > 0) {
+          setStudioConfig(data);
+          saveLocalStudioConfig(data);
+          const updatedActive = data.catalogs.filter((c) => c.isActive);
+          if (updatedActive.length > 0 && !updatedActive.some((c) => c.name === garment)) {
+            setSelectedCatalog(updatedActive[0]);
+            setGarment(updatedActive[0].name);
+          }
+        }
+      })
+      .catch(() => {});
+    return () => window.removeEventListener("studio-config-updated", handleStudioUpdate);
+  }, [garment]);
 
   // Sync colors & mockups dynamically from server and custom event
   useEffect(() => {
@@ -161,6 +193,17 @@ function CreatorStudio() {
       .catch(() => {});
     return () => window.removeEventListener("mockups-updated", handleUpdate);
   }, []);
+
+  const handleSelectGarment = (garmentName: string) => {
+    setGarment(garmentName);
+    const cat = catalogsList.find((c) => c.name === garmentName);
+    if (cat) {
+      setSelectedCatalog(cat);
+      if (cat.sizes && cat.sizes.length > 0 && !cat.sizes.includes(size)) {
+        setSize(cat.sizes[0]);
+      }
+    }
+  };
 
   // Text Tool inputs
   const [activeTab, setActiveTab] = useState<"image" | "text">("image");
@@ -402,7 +445,16 @@ function CreatorStudio() {
   };
 
   const hasGraphics = layers.length > 0;
-  const total = BASE_PRICE + (hasGraphics ? CUSTOM_PRINT_SURCHARGE : 0);
+  const basePrice = selectedCatalog?.basePrice ?? studioConfig.rates.defaultBasePrice;
+  const customPrintSurcharge = selectedCatalog?.surcharge ?? studioConfig.rates.customPrintSurcharge;
+  const total = basePrice + (hasGraphics ? customPrintSurcharge : 0);
+
+  const dynamicPrintCosts = [
+    { label: "Front Chest Print (Small)", price: studioConfig.rates.frontChestPrintPrice },
+    { label: "Front Full Print (A3)", price: studioConfig.rates.frontFullPrintPrice },
+    { label: "Back Full Print (A3)", price: studioConfig.rates.backFullPrintPrice },
+    { label: "Sleeve Print", price: studioConfig.rates.sleevePrintPrice },
+  ];
 
   // Generate Composite Canvas Image Blob for a specific side (Front / Back / Sleeve)
   const generateSideCompositeBlob = async (side: MockupViewSide): Promise<Blob> => {
@@ -1124,20 +1176,32 @@ function CreatorStudio() {
               )
             )}
 
-            {/* Garment Selection */}
+            {/* Garment Selection with Dynamic Catalogs & Rates */}
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
-                Garment Type
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">
+                  Garment Style &amp; Catalog
+                </label>
+                <span className="text-xs font-mono font-bold text-accent">
+                  {formatPrice(basePrice)}
+                </span>
+              </div>
               <select
                 value={garment}
-                onChange={(e) => setGarment(e.target.value)}
-                className="w-full border border-border bg-background px-3 py-2.5 text-sm font-semibold outline-none focus:border-foreground transition-colors appearance-none cursor-pointer"
+                onChange={(e) => handleSelectGarment(e.target.value)}
+                className="w-full border border-border bg-background px-3 py-2.5 text-sm font-semibold outline-none focus:border-foreground transition-colors appearance-none cursor-pointer rounded-lg"
               >
-                {GARMENT_TYPES.map((g) => (
-                  <option key={g} value={g}>{g}</option>
+                {catalogsList.map((g) => (
+                  <option key={g.id || g.name} value={g.name}>
+                    {g.name} — {formatPrice(g.basePrice)}
+                  </option>
                 ))}
               </select>
+              {selectedCatalog?.description && (
+                <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
+                  {selectedCatalog.description}
+                </p>
+              )}
             </div>
 
             {/* Color Selection with Dynamic Colors */}
@@ -1180,14 +1244,14 @@ function CreatorStudio() {
                 </button>
               </div>
               <div className="flex flex-wrap gap-1.5">
-                {SIZES.map((s) => (
+                {(selectedCatalog?.sizes && selectedCatalog.sizes.length > 0 ? selectedCatalog.sizes : SIZES).map((s) => (
                   <button
                     key={s}
                     onClick={() => setSize(s)}
                     className={cn(
-                      "px-3 py-2 text-xs font-bold border transition-all",
+                      "px-3 py-2 text-xs font-bold border transition-all rounded",
                       size === s
-                        ? "bg-foreground text-background border-foreground"
+                        ? "bg-foreground text-background border-foreground shadow"
                         : "border-border hover:border-foreground/50 bg-background",
                     )}
                   >
@@ -1198,7 +1262,7 @@ function CreatorStudio() {
             </div>
 
             {/* Print Cost Breakdown Accordion */}
-            <div className="border border-border">
+            <div className="border border-border rounded-xl overflow-hidden">
               <button
                 onClick={() => setCostOpen((v) => !v)}
                 className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-secondary transition-colors"
@@ -1208,7 +1272,7 @@ function CreatorStudio() {
               </button>
               {costOpen && (
                 <div className="border-t border-border divide-y divide-border bg-card">
-                  {PRINT_COSTS.map((p) => (
+                  {dynamicPrintCosts.map((p) => (
                     <div key={p.label} className="flex justify-between items-center px-4 py-2.5">
                       <span className="text-xs text-muted-foreground">{p.label}</span>
                       <span className="text-xs font-bold">{formatPrice(p.price)}</span>
@@ -1219,15 +1283,15 @@ function CreatorStudio() {
             </div>
 
             {/* Price Summary Box */}
-            <div className="bg-secondary/50 border border-border p-4 space-y-2">
+            <div className="bg-secondary/50 border border-border p-4 space-y-2 rounded-xl">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Base {garment}</span>
-                <span className="font-semibold">{formatPrice(BASE_PRICE)}</span>
+                <span className="font-semibold">{formatPrice(basePrice)}</span>
               </div>
               {hasGraphics && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Custom Printing</span>
-                  <span className="font-semibold">+{formatPrice(CUSTOM_PRINT_SURCHARGE)}</span>
+                  <span className="font-semibold">+{formatPrice(customPrintSurcharge)}</span>
                 </div>
               )}
               <div className="border-t border-border pt-2 flex justify-between font-black text-base">
@@ -1250,7 +1314,7 @@ function CreatorStudio() {
         <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-sm">
             <span className="text-muted-foreground hidden sm:inline">
-              Base {formatPrice(BASE_PRICE)} {hasGraphics ? `+ Print ${formatPrice(CUSTOM_PRINT_SURCHARGE)}` : ""}
+              Base {formatPrice(basePrice)} {hasGraphics ? `+ Print ${formatPrice(customPrintSurcharge)}` : ""}
             </span>
             <span className="font-black text-lg">{formatPrice(total)}</span>
           </div>
@@ -1258,7 +1322,7 @@ function CreatorStudio() {
           <button
             disabled={saving || layers.length === 0}
             onClick={handleAddToCart}
-            className="flex-shrink-0 inline-flex items-center justify-center gap-2 bg-foreground text-background px-6 py-3.5 text-xs uppercase tracking-widest font-bold disabled:opacity-40 hover:opacity-85 transition-all shadow-lg"
+            className="flex-shrink-0 inline-flex items-center justify-center gap-2 bg-foreground text-background px-6 py-3.5 text-xs uppercase tracking-widest font-bold disabled:opacity-40 hover:opacity-85 transition-all shadow-lg rounded-lg"
           >
             <ShoppingBag className="h-4 w-4" />
             {saving ? "Saving Custom Design…" : cartKey ? "Update Custom Tee in BAG" : "Add Custom Tee to BAG"}

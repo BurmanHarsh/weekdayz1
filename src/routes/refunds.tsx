@@ -32,40 +32,40 @@ function RefundsPage() {
         <section className="bg-card border border-border p-6 rounded-xl space-y-2">
           <div className="flex items-center gap-2 text-accent font-bold uppercase tracking-wider text-xs">
             <PackageCheck className="h-4 w-4" />
-            <span>1. 100% Prepaid Only (No COD)</span>
+            <span>1. Payment — Secure Prepaid Checkout</span>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            All orders on Weekdayzz must be 100% prepaid at the time of checkout. We accept UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards (Visa, MasterCard, RuPay), NetBanking, and verified digital wallets via 256-bit encrypted Razorpay. Cash on Delivery (COD) is strictly not accepted for both standard and custom orders.
+            All orders on Weekdayzz are 100% prepaid at the time of checkout. We accept UPI (Google Pay, PhonePe, Paytm), Debit/Credit Cards (Visa, MasterCard, RuPay), NetBanking, and verified digital wallets via 256-bit encrypted Razorpay. Cash on Delivery (COD) is strictly not accepted for both standard and custom orders.
           </p>
         </section>
 
         <section className="bg-card border border-border p-6 rounded-xl space-y-2">
-          <div className="flex items-center gap-2 text-destructive font-bold uppercase tracking-wider text-xs">
-            <AlertCircle className="h-4 w-4" />
-            <span>2. Return Policy — No Returns Accepted</span>
+          <div className="flex items-center gap-2 text-accent font-bold uppercase tracking-wider text-xs">
+            <RotateCcw className="h-4 w-4" />
+            <span>2. Returns — Easy Exchange Support</span>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            In order to maintain strict hygiene standards and bespoke production cycles, Weekdayzz does not accept returns or refunds for any order once dispatched. Please refer to our detailed sizing guides prior to placing an order.
+            We provide dedicated exchange support across all purchases. While direct returns for refunds are not accepted once dispatched to maintain strict quality standards, eligible items and orders can easily be exchanged within our designated exchange windows.
           </p>
         </section>
 
         <section className="bg-card border border-border p-6 rounded-xl space-y-2">
           <div className="flex items-center gap-2 text-foreground font-bold uppercase tracking-wider text-xs">
             <RotateCcw className="h-4 w-4 text-accent" />
-            <span>3. Standard Orders: 4-Day Exchange Window</span>
+            <span>3. Standard Orders: Within 4 Days of Delivery</span>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            For all standard catalog drops and products, you can request an exchange <strong>within 4 days after delivery</strong>. Exchange conditions cover standard size or color replacements. The garment must be completely unused, unwashed, and retained with all original tags attached.
+            For all standard catalog drops and products, you can request an exchange <strong>within 4 days of delivery</strong>. Eligible items can be exchanged for standard size or color replacements. The garment must be completely unused, unwashed, and retained with all original tags attached.
           </p>
         </section>
 
         <section className="bg-card border border-border p-6 rounded-xl space-y-2">
           <div className="flex items-center gap-2 text-foreground font-bold uppercase tracking-wider text-xs">
             <ShieldCheck className="h-4 w-4 text-accent" />
-            <span>4. Custom Orders: 2-Day Exchange Window</span>
+            <span>4. Custom Orders: Within 2 Days of Delivery</span>
           </div>
           <p className="text-muted-foreground text-xs leading-relaxed">
-            Because custom orders are custom printed individually to your specifications, exchange requests must be submitted <strong>within 2 days after delivery</strong>. Exchange is valid <em>only</em> if the wrong size was delivered or an incorrect print/defective graphic was printed on our part. Please provide clear unboxing photos or videos to support@weekdayzz.in.
+            Because custom orders are custom printed individually to your specifications, exchange requests must be submitted <strong>within 2 days of delivery</strong>. Eligible cases can be exchanged (valid if wrong size was delivered or an incorrect print/defective graphic was printed on our part). Please provide clear unboxing photos or videos to support@weekdayzz.in.
           </p>
         </section>
       </div>

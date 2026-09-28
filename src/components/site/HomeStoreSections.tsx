@@ -543,7 +543,7 @@ export function StoreFaqSection() {
     },
     {
       q: "Can I return or exchange a product?",
-      a: "We do not accept returns. However, we offer an exchange window: standard orders within 4 days after delivery (standard size or color exchange); custom orders within 2 days after delivery (valid only if wrong size or incorrect print/design was delivered).",
+      a: "We offer dedicated exchange support! Standard orders have an exchange window within 4 days of delivery (eligible items can be exchanged for size or color). Custom orders have an exchange window within 2 days of delivery for eligible cases (wrong size or incorrect print delivered).",
     },
     {
       q: "Are payments secure? Do you accept COD?",

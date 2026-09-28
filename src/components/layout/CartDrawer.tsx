@@ -117,9 +117,9 @@ export function CartDrawer() {
                 </div>
                 <div className="bg-muted/40 border border-border/80 p-2.5 rounded-lg text-[10px] text-muted-foreground leading-relaxed">
                   <div className="font-bold text-foreground uppercase tracking-wider text-[10px] mb-0.5">
-                    100% Prepaid • Quick Exchange
+                    Secure Prepaid • Easy Exchange Support
                   </div>
-                  Standard 4-day exchange (size/color) • Custom 2-day exchange (wrong print/size). No returns accepted.
+                  Standard: within 4 days of delivery (eligible items) • Custom: within 2 days of delivery (eligible cases).
                 </div>
                 <button
                   onClick={() => {

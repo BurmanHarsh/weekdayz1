@@ -9,31 +9,31 @@ export interface StorePoliciesNoticeProps {
 
 export const STORE_POLICIES = [
   {
-    category: "Payment Method",
+    category: "Payment",
     icon: CreditCard,
-    standard: "100% Prepaid only (No COD)",
-    custom: "100% Prepaid only",
+    standard: "Secure Prepaid Checkout",
+    custom: "Secure Prepaid Checkout",
     highlight: true,
   },
   {
-    category: "Return Policy",
-    icon: ShieldAlert,
-    standard: "No Returns accepted",
-    custom: "No Returns accepted",
+    category: "Returns",
+    icon: RotateCcw,
+    standard: "Easy Exchange Support",
+    custom: "Exchange Support Available",
     highlight: false,
   },
   {
     category: "Exchange Window",
     icon: Clock,
-    standard: "Within 4 days after delivery",
-    custom: "Within 2 days after delivery",
+    standard: "Within 4 days of delivery",
+    custom: "Within 2 days of delivery",
     highlight: true,
   },
   {
-    category: "Exchange Conditions",
-    icon: RotateCcw,
-    standard: "standard size/color exchange",
-    custom: "Valid only if wrong size or incorrect print/design was delivered",
+    category: "Exchange Eligibility",
+    icon: ShieldAlert,
+    standard: "Eligible items can be exchanged",
+    custom: "Eligible cases can be exchanged",
     highlight: false,
   },
 ];
@@ -47,7 +47,7 @@ export function StorePoliciesNotice({ className, variant = "table" }: StorePolic
           <span>Store &amp; Exchange Policy</span>
         </div>
         <p className="text-muted-foreground text-[11px] leading-relaxed">
-          <strong>100% Prepaid Only</strong> (No COD) • <strong>Standard:</strong> 4-day exchange (size/color) • <strong>Custom:</strong> 2-day exchange (wrong size/print only) • <em>No returns accepted.</em>
+          <strong>Secure Prepaid Checkout</strong> • <strong>Standard:</strong> Easy exchange support within 4 days of delivery • <strong>Custom:</strong> Exchange support within 2 days of delivery for eligible cases.
         </p>
       </div>
     );
@@ -86,27 +86,21 @@ export function StorePoliciesNotice({ className, variant = "table" }: StorePolic
                     <span>{p.category}</span>
                   </td>
                   <td className="py-3 px-4 text-foreground/90 font-medium">
-                    {p.standard === "100% Prepaid only (No COD)" ? (
+                    {p.category === "Payment" ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded bg-accent/15 text-accent font-bold text-[11px]">
                         {p.standard}
                       </span>
-                    ) : p.standard === "No Returns accepted" ? (
-                      <span className="text-destructive font-semibold">{p.standard}</span>
                     ) : (
                       p.standard
                     )}
                   </td>
                   <td className="py-3 px-4 text-foreground/90 font-medium">
-                    {p.custom === "100% Prepaid only" ? (
+                    {p.category === "Payment" ? (
                       <span className="inline-flex items-center px-2 py-0.5 rounded bg-accent/15 text-accent font-bold text-[11px]">
                         {p.custom}
                       </span>
-                    ) : p.custom === "No Returns accepted" ? (
-                      <span className="text-destructive font-semibold">{p.custom}</span>
                     ) : (
-                      <span className={p.category === "Exchange Conditions" ? "text-muted-foreground" : ""}>
-                        {p.custom}
-                      </span>
+                      p.custom
                     )}
                   </td>
                 </tr>

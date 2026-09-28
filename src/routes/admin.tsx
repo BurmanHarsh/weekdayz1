@@ -148,7 +148,7 @@ function AdminPage() {
             { id: "analytics", label: "📈 Profit Analytics" },
             { id: "posters", label: "🖼️ Website Posters" },
             { id: "categories", label: "🏷️ Categories" },
-            { id: "mockups", label: "🎨 Mockups & Colors" },
+            { id: "mockups", label: "🎨 Create Studio & Catalogs" },
             { id: "catalog", label: "Catalog & Products" },
             { id: "orders", label: "Orders & Shipping" },
             { id: "promos", label: "Promo Codes" },
