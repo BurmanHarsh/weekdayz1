@@ -285,12 +285,23 @@ function HeroCarousel() {
                   </p>
                 )}
                 <div className="mt-7 sm:mt-8 flex justify-center">
-                  <Link
-                    to={s.to as unknown as "/"}
-                    className="inline-flex items-center justify-center border border-white/80 bg-white/10 hover:bg-white hover:text-black text-white px-8 sm:px-10 py-3 sm:py-3.5 text-xs sm:text-sm font-bold tracking-[0.25em] uppercase rounded-full backdrop-blur-xs transition-all duration-300 shadow-xl hover:scale-105 active:scale-95"
-                  >
-                    {s.cta || "VIEW MORE"}
-                  </Link>
+                  {s.to && /^https?:\/\//i.test(s.to) ? (
+                    <a
+                      href={s.to}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center border border-white/80 bg-white/10 hover:bg-white hover:text-black text-white px-8 sm:px-10 py-3 sm:py-3.5 text-xs sm:text-sm font-bold tracking-[0.25em] uppercase rounded-full backdrop-blur-xs transition-all duration-300 shadow-xl hover:scale-105 active:scale-95"
+                    >
+                      {s.cta || "VIEW MORE"}
+                    </a>
+                  ) : (
+                    <Link
+                      to={s.to as unknown as "/"}
+                      className="inline-flex items-center justify-center border border-white/80 bg-white/10 hover:bg-white hover:text-black text-white px-8 sm:px-10 py-3 sm:py-3.5 text-xs sm:text-sm font-bold tracking-[0.25em] uppercase rounded-full backdrop-blur-xs transition-all duration-300 shadow-xl hover:scale-105 active:scale-95"
+                    >
+                      {s.cta || "VIEW MORE"}
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
