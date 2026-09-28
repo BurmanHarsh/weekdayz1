@@ -28,7 +28,7 @@ export const Route = createFileRoute("/bulk-orders")({
   head: () => ({
     meta: [
       { title: "Bulk & Corporate Custom Orders | WEEKDAYZZ" },
-      { name: "description", content: "Order custom merchandise for your college fest, corporate team, sports club or brand. Tiered volume discounts from 15+ pieces." },
+      { name: "description", content: "Order custom merchandise for your college fest, corporate team, sports club or brand. Tiered volume discounts from 10+ pieces." },
       { property: "og:title", content: "Bulk & Team Merch — WEEKDAYZZ" },
     ],
   }),
@@ -119,7 +119,7 @@ export default function BulkOrdersPage() {
               <div className="absolute bottom-4 left-4 right-4 bg-black/60 backdrop-blur-md border border-white/15 p-3 rounded-2xl flex items-center justify-between text-xs">
                 <div>
                   <div className="font-bold text-white">Tiered Volume Pricing</div>
-                  <div className="text-[11px] text-white/70">From 15+ to 10,000+ pieces</div>
+                  <div className="text-[11px] text-white/70">From 10+ to 10,000+ pieces</div>
                 </div>
                 <span className="bg-white text-black font-black text-[10px] px-2.5 py-1 rounded-full uppercase">
                   Up to 40% OFF
@@ -142,7 +142,7 @@ export default function BulkOrdersPage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { tier: "Squad", qty: "15 – 49 Pcs", discount: "15% OFF", sub: "Ideal for club committees & small batches" },
+            { tier: "Squad", qty: "10 – 49 Pcs", discount: "15% OFF", sub: "Ideal for club committees & small batches" },
             { tier: "Crew", qty: "50 – 99 Pcs", discount: "25% OFF", sub: "Perfect for departments & student fests" },
             { tier: "Brand", qty: "100 – 249 Pcs", discount: "32% OFF", sub: "Designed for corporate summits & runs" },
             { tier: "Wholesale", qty: "250+ Pcs", discount: "40% OFF", sub: "Maximum wholesale pricing with custom labels" },
@@ -288,7 +288,7 @@ export default function BulkOrdersPage() {
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
                   >
-                    <option value="15-49">15 – 49 pieces</option>
+                    <option value="10-49">10 – 49 pieces</option>
                     <option value="50-100">50 – 100 pieces</option>
                     <option value="100-250">100 – 250 pieces</option>
                     <option value="250-500">250 – 500 pieces</option>

@@ -360,7 +360,7 @@ export function BulkOrdersSection() {
           {/* ── Stats row ── */}
           <div className="flex flex-wrap lg:justify-start justify-between items-center py-3 text-sm gap-x-6">
             <div className="flex items-center gap-2 mb-2 sm:text-base text-xs">
-              <span className="text-foreground font-black text-lg">15+</span>
+              <span className="text-foreground font-black text-lg">10+</span>
               <span className="text-muted-foreground">pieces minimum</span>
               <span className="text-border">|</span>
             </div>
@@ -410,7 +410,7 @@ export function BulkOrdersSection() {
             {/* Feature checklist */}
             <div className="grid sm:grid-cols-2 gap-3 mt-8">
               {[
-                { label: "Tiered Volume Discounts", sub: "Special pricing from 15+ pieces" },
+                { label: "Tiered Volume Discounts", sub: "Special pricing from 10+ pieces" },
                 { label: "Custom Prints & Puff Merch", sub: "Upload your art or get our designers" },
                 { label: "Dedicated Account Manager", sub: "Personal support order to delivery" },
                 { label: "Sample Proofing", sub: "Physical fabric review before full run" },
@@ -535,7 +535,7 @@ export function StoreFaqSection() {
     },
     {
       q: "Do you offer bulk discounts or custom orders?",
-      a: "Yes! We specialize in custom team, corporate, and college fest merchandise. Orders above 15 pieces qualify for tiered wholesale discounts. Click the 'Contact Sales Team' button above to get a custom quote within 24 hours.",
+      a: "Yes! We specialize in custom team, corporate, and college fest merchandise. Orders above 10 pieces qualify for tiered wholesale discounts. Click the 'Contact Sales Team' button above to get a custom quote within 24 hours.",
     },
     {
       q: "What is the fabric quality of Weekdayzz apparel?",
