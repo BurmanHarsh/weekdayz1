@@ -27,14 +27,36 @@ import {
 import { formatPrice } from "@/lib/format";
 import { TabSkeleton } from "@/components/admin/shared";
 
-/* ─── Lazy-loaded tab sections (code-split) ─── */
-const ProductCatalogSection = lazy(() => import("@/components/admin/ProductCatalogSection"));
-const OrdersQueue = lazy(() => import("@/components/admin/OrdersQueue"));
-const PromoCodeSection = lazy(() => import("@/components/admin/PromoCodeSection"));
-const ProfitAnalyticsSection = lazy(() => import("@/components/admin/ProfitAnalyticsSection"));
-const WebsitePostersSection = lazy(() => import("@/components/admin/WebsitePostersSection"));
-const MockupsAndColorsSection = lazy(() => import("@/components/admin/MockupsAndColorsSection"));
-const StoreCategoriesSection = lazy(() => import("@/components/admin/StoreCategoriesSection"));
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+) {
+  return lazy(async () => {
+    try {
+      const component = await factory();
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem("retry_lazy_refresh");
+      }
+      return component;
+    } catch (error: any) {
+      const alreadyRefreshed = typeof window !== "undefined" && window.sessionStorage.getItem("retry_lazy_refresh") === "true";
+      if (!alreadyRefreshed && typeof window !== "undefined") {
+        window.sessionStorage.setItem("retry_lazy_refresh", "true");
+        window.location.reload();
+        return new Promise(() => {}) as unknown as Promise<{ default: T }>;
+      }
+      throw error;
+    }
+  });
+}
+
+/* ─── Lazy-loaded tab sections (code-split with auto-refresh on new deploys) ─── */
+const ProductCatalogSection = lazyWithRetry(() => import("@/components/admin/ProductCatalogSection"));
+const OrdersQueue = lazyWithRetry(() => import("@/components/admin/OrdersQueue"));
+const PromoCodeSection = lazyWithRetry(() => import("@/components/admin/PromoCodeSection"));
+const ProfitAnalyticsSection = lazyWithRetry(() => import("@/components/admin/ProfitAnalyticsSection"));
+const WebsitePostersSection = lazyWithRetry(() => import("@/components/admin/WebsitePostersSection"));
+const MockupsAndColorsSection = lazyWithRetry(() => import("@/components/admin/MockupsAndColorsSection"));
+const StoreCategoriesSection = lazyWithRetry(() => import("@/components/admin/StoreCategoriesSection"));
 
 export const Route = createFileRoute("/admin")({
   head: () => ({
