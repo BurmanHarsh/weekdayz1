@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+import { sendWelcomeEmail } from "@/lib/email";
+
 const ADMIN_CACHE_KEY = "wdz_admin_role";
 const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -68,11 +70,26 @@ export function useAuth() {
       }
     };
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       if (!alive) return;
       setSession(s);
       setUser(s?.user ?? null);
       setLoading(false);
+
+      if (event === "SIGNED_IN" && s?.user?.email) {
+        const createdAt = s.user.created_at ? new Date(s.user.created_at).getTime() : 0;
+        const isRecent = Date.now() - createdAt < 5 * 60 * 1000;
+        const key = `welcome_sent_${s.user.id}`;
+        if (isRecent && typeof window !== "undefined" && !localStorage.getItem(key)) {
+          localStorage.setItem(key, "1");
+          sendWelcomeEmail({
+            data: {
+              email: s.user.email,
+              name: (s.user.user_metadata?.full_name || s.user.user_metadata?.name || "") as string,
+            },
+          }).catch((err) => console.error("Welcome email failed:", err));
+        }
+      }
     });
 
     syncSession();
