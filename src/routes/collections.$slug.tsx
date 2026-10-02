@@ -6,6 +6,7 @@ import { Reveal } from "@/components/site/Reveal";
 import rcbFeature from "@/assets/rcb-feature.jpg";
 import f1Feature from "@/assets/f1-feature.jpg";
 import { useServerFn } from "@tanstack/react-start";
+import { WhatsAppCallout, WhatsAppFloatingButton } from "@/components/shop/WhatsAppCustomNotice";
 
 const productsQuery = queryOptions({
   queryKey: ["products"],
@@ -74,6 +75,13 @@ const COLLECTIONS: Record<
     wash: "bg-gradient-to-br from-teal-950 via-zinc-900 to-black",
     match: (title, cat) => /pin|aesthetic/i.test(title) || /pin|aesthetic/i.test(cat),
   },
+  customized: {
+    title: "Customized Collection",
+    tagline: "Custom prints made for your story. Upload photos, add text, wear your memories.",
+    kicker: "CUSTOM PRINTS",
+    wash: "bg-gradient-to-br from-emerald-950 via-zinc-900 to-black",
+    match: (title, cat) => /custom/i.test(cat) || /custom/i.test(title),
+  },
 };
 
 function resolveCollection(slug: string) {
@@ -123,6 +131,7 @@ function Collection() {
   const c = resolveCollection(slug);
   const { data: all } = useSuspenseQuery(productsQuery);
   const items = all.filter((p) => c.match(p.title, p.category));
+  const isCustomized = slug.toLowerCase().includes("custom");
 
   return (
     <div>
@@ -141,6 +150,11 @@ function Collection() {
         </div>
       </section>
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
+        {isCustomized && (
+          <div className="max-w-2xl mx-auto mb-8">
+            <WhatsAppCallout />
+          </div>
+        )}
         {items.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-muted-foreground text-sm uppercase tracking-widest">No products currently matching this collection</p>
@@ -158,6 +172,13 @@ function Collection() {
           </div>
         )}
       </section>
+
+      {/* Floating WhatsApp Quick Action Button for Customized Collection */}
+      {isCustomized && (
+        <WhatsAppFloatingButton
+          message="Hi Weekdayzz, I'm exploring the Customized collection and have questions/photos to share."
+        />
+      )}
     </div>
   );
 }

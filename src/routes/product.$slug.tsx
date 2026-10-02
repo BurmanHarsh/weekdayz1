@@ -12,6 +12,7 @@ import { formatPrice } from "@/lib/format";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { WhatsAppCallout, WhatsAppFloatingButton } from "@/components/shop/WhatsAppCustomNotice";
 
 const productQ = (slug: string) =>
   queryOptions({
@@ -128,6 +129,13 @@ function ProductPageInner() {
   const isCouple = product.category?.toLowerCase().includes("couple") ||
     product.title?.toLowerCase().includes("couple") ||
     availableColors.some((c: string) => c.toLowerCase().includes("couple"));
+
+  // Customized category / custom product detection
+  const isCustomized =
+    Boolean(product.category?.toLowerCase().includes("custom")) ||
+    Boolean(product.title?.toLowerCase().includes("custom")) ||
+    Boolean(product.title?.toLowerCase().includes("pics tees"));
+
   const [maleSize, setMaleSize] = useState(product.sizes[1] ?? product.sizes[0]);
   const [maleColor, setMaleColor] = useState<"White" | "Black">("White");
   const [femaleSize, setFemaleSize] = useState(product.sizes[0]);
@@ -691,6 +699,11 @@ function ProductPageInner() {
             </div>
           </div>
 
+          {/* WhatsApp Order Details Callout for Customized Category */}
+          {isCustomized && (
+            <WhatsAppCallout className="mt-6" />
+          )}
+
           <div className="mt-6 flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => handleAdd(false)}
@@ -857,6 +870,13 @@ function ProductPageInner() {
 
       {/* You May Also Like Section */}
       <YouMayAlsoLikeSection currentProductId={product.id} category={product.category} />
+
+      {/* Floating WhatsApp Quick Action Button for Customized Products */}
+      {isCustomized && (
+        <WhatsAppFloatingButton
+          message={`Hi Weekdayzz, I'm checking out the custom "${product.title}" and have photos/texts to share.`}
+        />
+      )}
     </div>
   );
 }

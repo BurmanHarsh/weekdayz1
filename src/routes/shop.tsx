@@ -5,6 +5,7 @@ import { listProducts } from "@/lib/products.functions";
 import { ProductCard } from "@/components/shop/ProductCard";
 import { SlidersHorizontal, X, Search } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { WhatsAppCallout, WhatsAppFloatingButton } from "@/components/shop/WhatsAppCustomNotice";
 
 import { z } from "zod";
 
@@ -42,6 +43,7 @@ function matchesCategory(productCat: string, filterCat: string) {
   if (pCat.includes(fCat) || fCat.includes(pCat)) return true;
 
   // Aliases & Substrings
+  if ((fCat === "customized" || fCat === "custom") && (pCat.includes("custom") || pCat.includes("customized"))) return true;
   if (fCat === "couple" && pCat.includes("couple")) return true;
   if (fCat === "statement" && pCat.includes("statement")) return true;
   if ((fCat === "pinterest" || fCat === "pins") && (pCat.includes("pin") || pCat.includes("pinterest"))) return true;
@@ -94,7 +96,7 @@ function Shop() {
   const [sort, setSort] = useState<"new" | "price_asc" | "price_desc">("new");
 
   const availableCategories = useMemo(() => {
-    const defaultCats = ["tee", "couple", "statement", "pinterest", "hoodie"];
+    const defaultCats = ["tee", "couple", "statement", "pinterest", "hoodie", "customized"];
     const foundCats = data.map((p) => p.category?.toLowerCase()?.trim()).filter(Boolean);
     const set = new Set<string>();
     defaultCats.forEach((c) => set.add(c));
@@ -272,13 +274,21 @@ function Shop() {
       <div className="grid lg:grid-cols-[240px_1fr] gap-10">
         <aside className="hidden lg:block sticky top-24 self-start">{Filters}</aside>
 
-        <div className="grid gap-6 sm:gap-8 grid-cols-2 md:grid-cols-3">
-          {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-          {filtered.length === 0 && (
-            <p className="col-span-full text-center text-muted-foreground py-20">No drops match these filters.</p>
+        <div>
+          {Boolean(category && (category.toLowerCase().includes("custom") || matchesCategory("customized", category))) && (
+            <div className="mb-6">
+              <WhatsAppCallout />
+            </div>
           )}
+
+          <div className="grid gap-6 sm:gap-8 grid-cols-2 md:grid-cols-3">
+            {filtered.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+            {filtered.length === 0 && (
+              <p className="col-span-full text-center text-muted-foreground py-20">No drops match these filters.</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -313,6 +323,13 @@ function Shop() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Floating WhatsApp Quick Action Button when viewing customized category */}
+      {Boolean(category && (category.toLowerCase().includes("custom") || matchesCategory("customized", category))) && (
+        <WhatsAppFloatingButton
+          message="Hi Weekdayzz, I'm browsing the customized collection and have photos/texts to share."
+        />
+      )}
     </div>
   );
 }
