@@ -8,8 +8,7 @@ import {
   RotateCw,
   Maximize2,
   Trash2,
-  ChevronDown,
-  ChevronUp,
+  CreditCard,
   Box,
   Type,
   Image as ImageIcon,
@@ -92,9 +91,8 @@ export interface DesignLayer {
 
 const PRINT_COSTS = [
   { label: "Front Chest Print (Small)", price: 9900 },
-  { label: "Front Full Print (A3)", price: 19900 },
+  { label: "Front Full Print (A3)", price: 14900 },
   { label: "Back Full Print (A3)", price: 19900 },
-  { label: "Sleeve Print", price: 5900 },
 ];
 
 const createSearchSchema = z.object({
@@ -212,57 +210,17 @@ function CreatorStudio() {
   const [selectedTextColor, setSelectedTextColor] = useState("#FFFFFF");
 
   const [saving, setSaving] = useState(false);
+  const [buyingNow, setBuyingNow] = useState(false);
   const [loadingDesign, setLoadingDesign] = useState(false);
-  const [costOpen, setCostOpen] = useState(false);
+  // Front print type: chest (small, +₹99) or full (A3, +₹149)
+  const [frontPrintType, setFrontPrintType] = useState<"chest" | "full">("chest");
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
   const [preview3D, setPreview3D] = useState(false);
 
   const [frontCompositeBlobUrl, setFrontCompositeBlobUrl] = useState<string | undefined>();
   const [backCompositeBlobUrl, setBackCompositeBlobUrl] = useState<string | undefined>();
 
-  const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Dynamically compute where the sleeve print zone sits within the canvas.
-  // The sleeve SVG container is max-w-[340px] aspect-[3/4] centered inside the canvas.
-  // Print zone rect in SVG viewBox(0 0 300 400): center at (190, 205).
-  const [sleeveAnchor, setSleeveAnchor] = useState({
-    leftSleeve: { left: "50%", top: "50%" },
-    rightSleeve: { left: "50%", top: "50%" },
-  });
-
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-    function computeAnchor() {
-      const W = el!.clientWidth;
-      if (!W) return;
-      // Canvas has aspect-ratio 3:4
-      const H = W * (4 / 3);
-      // Sleeve container is max 340px, same 3:4 ratio, centered
-      const S = Math.min(W, 340);
-      const Sh = S * (4 / 3);
-      // p-4 = 16px padding each side around the SVG inside the sleeve container
-      const pad = 16;
-      // SVG render area top-left in canvas absolute coords
-      const svgLeft = (W - S) / 2 + pad;
-      const svgTop = (H - Sh) / 2 + pad;
-      const svgW = S - pad * 2;
-      const svgH = Sh - pad * 2;
-      // Print zone center (190/300, 205/400) in SVG viewBox units → canvas px
-      const printX = svgLeft + (190 / 300) * svgW;
-      const printY = svgTop + (205 / 400) * svgH;
-      // Mirror X for right sleeve (scale-x-[-1] flips the sleeve container)
-      const mirrorX = W - printX;
-      setSleeveAnchor({
-        leftSleeve: { left: `${((printX / W) * 100).toFixed(2)}%`, top: `${((printY / H) * 100).toFixed(2)}%` },
-        rightSleeve: { left: `${((mirrorX / W) * 100).toFixed(2)}%`, top: `${((printY / H) * 100).toFixed(2)}%` },
-      });
-    }
-    computeAnchor();
-    const ro = new ResizeObserver(computeAnchor);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   // Load existing design for re-editing if designId or cartKey is provided
   useEffect(() => {
@@ -446,15 +404,20 @@ function CreatorStudio() {
 
   const hasGraphics = layers.length > 0;
   const basePrice = selectedCatalog?.basePrice ?? studioConfig.rates.defaultBasePrice;
-  const customPrintSurcharge = selectedCatalog?.surcharge ?? studioConfig.rates.customPrintSurcharge;
-  const total = basePrice + (hasGraphics ? customPrintSurcharge : 0);
 
-  const dynamicPrintCosts = [
-    { label: "Front Chest Print (Small)", price: studioConfig.rates.frontChestPrintPrice },
-    { label: "Front Full Print (A3)", price: studioConfig.rates.frontFullPrintPrice },
-    { label: "Back Full Print (A3)", price: studioConfig.rates.backFullPrintPrice },
-    { label: "Sleeve Print", price: studioConfig.rates.sleevePrintPrice },
-  ];
+  // Which sides currently have at least one layer?
+  const hasFrontLayers  = layers.some((l) => l.side === "Front");
+  const hasBackLayers   = layers.some((l) => l.side === "Back");
+
+  // Per-placement costs
+  const frontPrintCost  = hasFrontLayers
+    ? (frontPrintType === "chest"
+        ? studioConfig.rates.frontChestPrintPrice   // ₹99
+        : studioConfig.rates.frontFullPrintPrice)    // ₹149
+    : 0;
+  const backPrintCost   = hasBackLayers  ? studioConfig.rates.backFullPrintPrice  : 0; // ₹199
+
+  const total = basePrice + frontPrintCost + backPrintCost;
 
   // Generate Composite Canvas Image Blob for a specific side (Front / Back / Sleeve)
   const generateSideCompositeBlob = async (side: MockupViewSide): Promise<Blob> => {
@@ -476,7 +439,7 @@ function CreatorStudio() {
       // Draw T-shirt texture mockup image
       const baseImg = new Image();
       baseImg.crossOrigin = "anonymous";
-      const customUrl = side === "Front" ? color.frontMockup : side === "Back" ? color.backMockup : color.sleeveMockup;
+      const customUrl = side === "Front" ? color.frontMockup : color.backMockup;
       baseImg.src = getTShirtSvgDataUrl(color.hex, side, customUrl);
 
       baseImg.onload = async () => {
@@ -545,12 +508,10 @@ function CreatorStudio() {
 
     setSaving(true);
     try {
-      // Generate composite snapshot from the primary decorated side (Front, Back, or Sleeve)
+      // Generate composite snapshot from the primary decorated side (Front or Back)
       const decoratedSide: MockupViewSide = layers.some((l) => l.side === "Front")
         ? "Front"
-        : layers.some((l) => l.side === "Back")
-        ? "Back"
-        : "Sleeve";
+        : "Back";
       const primaryBlob = await generateSideCompositeBlob(decoratedSide);
       const primaryBlobUrl = URL.createObjectURL(primaryBlob);
       if (decoratedSide === "Front") setFrontCompositeBlobUrl(primaryBlobUrl);
@@ -635,6 +596,90 @@ function CreatorStudio() {
     }
   }
 
+  // Buy Now — saves design + adds to cart + immediately goes to checkout
+  async function handleBuyNow() {
+    if (!user) {
+      toast.error("Sign in to place your order");
+      navigate({ to: "/auth" });
+      return;
+    }
+    if (layers.length === 0) {
+      toast.error("Add at least one image or text layer first");
+      return;
+    }
+
+    setBuyingNow(true);
+    try {
+      const decoratedSide: MockupViewSide = layers.some((l) => l.side === "Front")
+        ? "Front"
+        : "Back";
+      const primaryBlob = await generateSideCompositeBlob(decoratedSide);
+      const primaryBlobUrl = URL.createObjectURL(primaryBlob);
+      if (decoratedSide === "Front") setFrontCompositeBlobUrl(primaryBlobUrl);
+      else if (decoratedSide === "Back") setBackCompositeBlobUrl(primaryBlobUrl);
+
+      const compositePath = `${user.id}/composite_${crypto.randomUUID()}.png`;
+      const { error: upCompErr } = await supabase.storage
+        .from("user-graphics")
+        .upload(compositePath, primaryBlob, { upsert: false, contentType: "image/png" });
+      if (upCompErr) throw upCompErr;
+
+      const { data: signedData, error: signedErr } = await supabase.storage
+        .from("user-graphics")
+        .createSignedUrl(compositePath, 60 * 60 * 24 * 7);
+      if (signedErr) throw signedErr;
+      const imageUrl = signedData.signedUrl;
+
+      const serializedLayers = await Promise.all(
+        layers.map(async (layer) => {
+          if (layer.type === "image" && layer.file) {
+            const ext = layer.file.name.split(".").pop() ?? "png";
+            const rawPath = `${user.id}/raw_${crypto.randomUUID()}.${ext}`;
+            await supabase.storage
+              .from("user-graphics")
+              .upload(rawPath, layer.file, { upsert: false, contentType: layer.file.type });
+            return { ...layer, file: undefined, rawPath };
+          }
+          return { ...layer, file: undefined };
+        }),
+      );
+
+      const placementSettings = {
+        garment,
+        size,
+        colorName: color.name,
+        colorHex: color.hex,
+        layers: serializedLayers,
+      };
+
+      const { id } = await createDesignFn({
+        data: {
+          design_file_url: compositePath,
+          base_color: color.hex,
+          placement_settings: placementSettings,
+        },
+      });
+
+      addItem({
+        custom_design_id: id,
+        title: `Custom ${garment} · ${color.name}`,
+        image: imageUrl,
+        size,
+        color: color.name,
+        unit_price_cents: total,
+        designConfig: placementSettings,
+      });
+
+      // Go straight to checkout
+      navigate({ to: "/checkout" });
+    } catch (e) {
+      console.error(e);
+      toast.error(e instanceof Error ? e.message : "Failed to process. Try again.");
+    } finally {
+      setBuyingNow(false);
+    }
+  }
+
   return (
     <div className="w-full min-h-screen pb-28">
       {/* Page Header */}
@@ -661,10 +706,10 @@ function CreatorStudio() {
 
           {/* ── STICKY CANVAS COLUMN ── */}
           <div className="space-y-4 lg:sticky lg:top-24">
-            {/* Front / Back / Left Sleeve / Right Sleeve View Switcher */}
+            {/* Front / Back View Switcher */}
             <div className="flex flex-wrap justify-between items-center bg-card border border-border p-1.5 gap-2">
               <div className="flex flex-wrap gap-1">
-                {(["Front", "Back", "Left Sleeve", "Right Sleeve"] as const).map((side) => (
+                {(["Front", "Back"] as const).map((side) => (
                   <button
                     key={side}
                     onClick={() => {
@@ -672,13 +717,13 @@ function CreatorStudio() {
                       setSelectedLayerId(null);
                     }}
                     className={cn(
-                      "px-2.5 sm:px-4 py-2 text-xs font-black uppercase tracking-widest transition-all",
+                      "px-3 sm:px-5 py-2 text-xs font-black uppercase tracking-widest transition-all",
                       printSide === side
                         ? "bg-foreground text-background shadow"
                         : "bg-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {side === "Front" || side === "Back" ? `${side} View` : side}
+                    {side} View
                   </button>
                 ))}
               </div>
@@ -692,42 +737,30 @@ function CreatorStudio() {
 
             {/* Canvas Outer Preview Box */}
             <div
-              ref={canvasRef}
               className="relative border border-border overflow-hidden select-none"
               style={{ aspectRatio: "3/4" }}
               onClick={() => setSelectedLayerId(null)}
             >
-              {/* Straight Upright T-Shirt Mockup (Front / Back / Left Sleeve / Right Sleeve) */}
+              {/* Straight Upright T-Shirt Mockup (Front / Back) */}
               <TShirtMockup
                 colorHex={color.hex}
                 side={printSide}
                 customMockupUrl={
                   printSide === "Front"
                     ? color.frontMockup
-                    : printSide === "Back"
-                    ? color.backMockup
-                    : printSide === "Right Sleeve"
-                    ? (color.rightSleeveMockup || color.sleeveMockup)
-                    : (color.leftSleeveMockup || color.sleeveMockup)
+                    : color.backMockup
                 }
                 className="absolute inset-0 p-4"
               />
 
               {/* Side badge */}
               <div className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1 z-10 shadow-md">
-                {printSide === "Front" || printSide === "Back" ? `${printSide} View` : printSide}
+                {printSide} View
               </div>
 
               {/* Render Side Layers */}
               {sideLayers.map((layer) => {
                 const isSelected = layer.id === selectedLayerId;
-                // Use dynamically measured sleeve print zone position for accurate anchoring.
-                const isSleeveView = printSide === "Left Sleeve" || printSide === "Right Sleeve";
-                const sleevePos = printSide === "Right Sleeve"
-                  ? sleeveAnchor.rightSleeve
-                  : sleeveAnchor.leftSleeve;
-                const anchorTop = isSleeveView ? sleevePos.top : "50%";
-                const anchorLeft = isSleeveView ? sleevePos.left : "50%";
                 return (
                   <motion.div
                     key={layer.id}
@@ -747,8 +780,8 @@ function CreatorStudio() {
                       );
                     }}
                     style={{
-                      top: anchorTop,
-                      left: anchorLeft,
+                      top: "50%",
+                      left: "50%",
                       x: layer.x,
                       y: layer.y,
                       rotate: layer.rotate,
@@ -947,7 +980,7 @@ function CreatorStudio() {
                   <Upload className="h-6 w-6 mx-auto mb-2 text-foreground" />
                   <p className="text-xs font-bold uppercase tracking-wider">Drop or Select Graphic</p>
                   <p className="text-[11px] text-muted-foreground mt-1">
-                    Upload graphics to Front, Back, or Sleeves. PNG, JPG, WEBP, or Photos (max 15MB).
+                    Upload graphics to Front or Back. PNG, JPG, WEBP, or Photos (max 15MB).
                   </p>
                 </div>
               )}
@@ -1261,26 +1294,42 @@ function CreatorStudio() {
               </div>
             </div>
 
-            {/* Print Cost Breakdown Accordion */}
-            <div className="border border-border rounded-xl overflow-hidden">
-              <button
-                onClick={() => setCostOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold uppercase tracking-widest hover:bg-secondary transition-colors"
-              >
-                <span>Print Cost Breakdown</span>
-                {costOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
-              {costOpen && (
-                <div className="border-t border-border divide-y divide-border bg-card">
-                  {dynamicPrintCosts.map((p) => (
-                    <div key={p.label} className="flex justify-between items-center px-4 py-2.5">
-                      <span className="text-xs text-muted-foreground">{p.label}</span>
-                      <span className="text-xs font-bold">{formatPrice(p.price)}</span>
-                    </div>
-                  ))}
+
+
+            {/* Front Print Type Selector — only shown when front has layers */}
+            {hasFrontLayers && (
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold block mb-2">
+                  Front Print Area
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setFrontPrintType("chest")}
+                    className={cn(
+                      "flex flex-col items-center py-2.5 px-2 border rounded-lg text-xs font-bold transition-all",
+                      frontPrintType === "chest"
+                        ? "bg-foreground text-background border-foreground shadow"
+                        : "border-border hover:border-foreground/50 bg-background"
+                    )}
+                  >
+                    <span>Chest (Small)</span>
+                    <span className="text-[10px] font-mono mt-0.5 opacity-70">+{formatPrice(studioConfig.rates.frontChestPrintPrice)}</span>
+                  </button>
+                  <button
+                    onClick={() => setFrontPrintType("full")}
+                    className={cn(
+                      "flex flex-col items-center py-2.5 px-2 border rounded-lg text-xs font-bold transition-all",
+                      frontPrintType === "full"
+                        ? "bg-foreground text-background border-foreground shadow"
+                        : "border-border hover:border-foreground/50 bg-background"
+                    )}
+                  >
+                    <span>Full (A3)</span>
+                    <span className="text-[10px] font-mono mt-0.5 opacity-70">+{formatPrice(studioConfig.rates.frontFullPrintPrice)}</span>
+                  </button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Price Summary Box */}
             <div className="bg-secondary/50 border border-border p-4 space-y-2 rounded-xl">
@@ -1288,12 +1337,21 @@ function CreatorStudio() {
                 <span className="text-muted-foreground">Base {garment}</span>
                 <span className="font-semibold">{formatPrice(basePrice)}</span>
               </div>
-              {hasGraphics && (
+              {hasFrontLayers && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Custom Printing</span>
-                  <span className="font-semibold">+{formatPrice(customPrintSurcharge)}</span>
+                  <span className="text-muted-foreground">
+                    Front {frontPrintType === "chest" ? "Chest" : "Full"} Print
+                  </span>
+                  <span className="font-semibold">+{formatPrice(frontPrintCost)}</span>
                 </div>
               )}
+              {hasBackLayers && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Back Full Print</span>
+                  <span className="font-semibold">+{formatPrice(backPrintCost)}</span>
+                </div>
+              )}
+
               <div className="border-t border-border pt-2 flex justify-between font-black text-base">
                 <span>Total</span>
                 <span>{formatPrice(total)}</span>
@@ -1314,19 +1372,44 @@ function CreatorStudio() {
         <div className="mx-auto max-w-7xl flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 text-sm">
             <span className="text-muted-foreground hidden sm:inline">
-              Base {formatPrice(basePrice)} {hasGraphics ? `+ Print ${formatPrice(customPrintSurcharge)}` : ""}
+              {garment} — {formatPrice(basePrice)}
             </span>
             <span className="font-black text-lg">{formatPrice(total)}</span>
           </div>
 
-          <button
-            disabled={saving || layers.length === 0}
-            onClick={handleAddToCart}
-            className="flex-shrink-0 inline-flex items-center justify-center gap-2 bg-foreground text-background px-6 py-3.5 text-xs uppercase tracking-widest font-bold disabled:opacity-40 hover:opacity-85 transition-all shadow-lg rounded-lg"
-          >
-            <ShoppingBag className="h-4 w-4" />
-            {saving ? "Saving Custom Design…" : cartKey ? "Update Custom Tee in BAG" : "Add Custom Tee to BAG"}
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Add to Bag */}
+            <button
+              disabled={saving || buyingNow || layers.length === 0}
+              onClick={handleAddToCart}
+              className="inline-flex items-center justify-center gap-2 border border-foreground text-foreground px-5 py-3 text-xs uppercase tracking-widest font-bold disabled:opacity-40 hover:bg-secondary transition-all rounded-lg"
+            >
+              <ShoppingBag className="h-4 w-4" />
+              <span className="hidden sm:inline">{saving ? "Saving…" : cartKey ? "Update Bag" : "Add to Bag"}</span>
+            </button>
+
+            {/* Buy Now — skip cart, go straight to checkout */}
+            <button
+              disabled={saving || buyingNow || layers.length === 0}
+              onClick={handleBuyNow}
+              className="inline-flex items-center justify-center gap-2 bg-foreground text-background px-6 py-3 text-xs uppercase tracking-widest font-bold disabled:opacity-40 hover:opacity-85 transition-all shadow-lg rounded-lg"
+            >
+              {buyingNow ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Processing…
+                </>
+              ) : (
+                <>
+                  <CreditCard className="h-4 w-4" />
+                  Buy Now
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 

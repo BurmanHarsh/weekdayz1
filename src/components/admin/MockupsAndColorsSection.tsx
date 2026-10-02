@@ -405,7 +405,7 @@ export default function MockupsAndColorsSection() {
             "Create Your Own" Studio Config
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Manage T-shirt catalogs, customize garment rates & print fees, and upload multi-angle mockup images.
+            Manage T-shirt catalogs and upload multi-angle mockup images.
           </p>
         </div>
 
@@ -413,7 +413,6 @@ export default function MockupsAndColorsSection() {
         <div className="flex items-center gap-1.5 bg-card border border-border p-1 rounded-xl self-start sm:self-auto">
           {[
             { id: "catalogs", label: "🏷️ T-Shirt Catalogs", count: studioConfig.catalogs.length },
-            { id: "rates", label: "💰 Rates & Pricing" },
             { id: "colors", label: "🎨 Mockups & Colors", count: colors.length },
           ].map((t) => (
             <button
@@ -592,13 +591,7 @@ export default function MockupsAndColorsSection() {
                   </div>
                 </div>
 
-                {/* Surcharge Note */}
-                <div className="pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
-                  <span>Print Surcharge:</span>
-                  <span className="font-semibold text-foreground">
-                    +{formatPrice(catalog.surcharge ?? studioConfig.rates.customPrintSurcharge)}
-                  </span>
-                </div>
+
               </div>
             ))}
           </div>
@@ -727,8 +720,8 @@ export default function MockupsAndColorsSection() {
                     </div>
                   </div>
 
-                  {/* Category, Badge, Print Surcharge */}
-                  <div className="grid sm:grid-cols-3 gap-4">
+                  {/* Category & Badge */}
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-bold uppercase tracking-wider text-foreground">
                         Category
@@ -761,32 +754,6 @@ export default function MockupsAndColorsSection() {
                         }
                         className="w-full border border-border bg-background px-3 py-2.5 text-xs font-semibold outline-none focus:border-foreground rounded-lg"
                       />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                        Print Surcharge (₹)
-                      </label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-xs font-bold text-muted-foreground">
-                          ₹
-                        </span>
-                        <input
-                          type="number"
-                          step="1"
-                          placeholder={String(Math.round(studioConfig.rates.customPrintSurcharge / 100))}
-                          value={
-                            editingCatalog.surcharge !== undefined
-                              ? Math.round(editingCatalog.surcharge / 100)
-                              : ""
-                          }
-                          onChange={(e) => {
-                            const val = e.target.value === "" ? undefined : parseInt(e.target.value) * 100;
-                            setEditingCatalog({ ...editingCatalog, surcharge: val });
-                          }}
-                          className="w-full pl-7 pr-3 py-2.5 border border-border bg-background text-xs font-bold outline-none focus:border-foreground rounded-lg"
-                        />
-                      </div>
                     </div>
                   </div>
 
@@ -878,220 +845,6 @@ export default function MockupsAndColorsSection() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* ── TAB 2: STUDIO RATES & PRINTING PRICING ── */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {subTab === "rates" && (
-        <form onSubmit={handleSaveRates} className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/20 border border-border p-4 rounded-xl">
-            <div>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                Studio Rates &amp; Printing Pricing
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Set base garment prices and custom printing fee breakdowns. Changes reflect immediately in the studio &amp; cart.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleResetRates}
-                className="inline-flex items-center gap-1.5 border border-border px-3 py-2 text-xs font-semibold uppercase tracking-wider hover:bg-secondary rounded-lg transition-colors"
-              >
-                <RotateCcw className="h-3.5 w-3.5" /> Reset Defaults
-              </button>
-
-              <button
-                type="submit"
-                disabled={savingRates}
-                className="inline-flex items-center gap-2 bg-foreground text-background px-5 py-2 text-xs font-black uppercase tracking-wider hover:opacity-90 rounded-lg transition-opacity shadow-md disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {savingRates ? "Saving Rates…" : "Save All Rates"}
-              </button>
-            </div>
-          </div>
-
-          <div className="grid sm:grid-cols-2 gap-6">
-            {/* Primary Rates Card */}
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
-              <div className="flex items-center gap-2 border-b border-border pb-3">
-                <Shirt className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-black uppercase tracking-wider text-foreground">
-                  Primary Garment &amp; Custom Surcharge Rates
-                </h4>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      Default Base T-Shirt Price (₹)
-                    </label>
-                    <span className="text-xs font-mono font-bold text-accent">
-                      {formatPrice(ratesForm.defaultBasePrice)}
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-xs font-bold text-muted-foreground">₹</span>
-                    <input
-                      type="number"
-                      step="1"
-                      value={Math.round(ratesForm.defaultBasePrice / 100)}
-                      onChange={(e) =>
-                        setRatesForm({
-                          ...ratesForm,
-                          defaultBasePrice: (parseInt(e.target.value) || 0) * 100,
-                        })
-                      }
-                      className="w-full pl-7 pr-3 py-2.5 border border-border bg-background text-sm font-bold outline-none focus:border-foreground rounded-lg"
-                    />
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Applied when a garment catalog does not specify a custom base rate.
-                  </p>
-                </div>
-
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                      Custom Print Surcharge (₹)
-                    </label>
-                    <span className="text-xs font-mono font-bold text-accent">
-                      +{formatPrice(ratesForm.customPrintSurcharge)}
-                    </span>
-                  </div>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-xs font-bold text-muted-foreground">₹</span>
-                    <input
-                      type="number"
-                      step="1"
-                      value={Math.round(ratesForm.customPrintSurcharge / 100)}
-                      onChange={(e) =>
-                        setRatesForm({
-                          ...ratesForm,
-                          customPrintSurcharge: (parseInt(e.target.value) || 0) * 100,
-                        })
-                      }
-                      className="w-full pl-7 pr-3 py-2.5 border border-border bg-background text-sm font-bold outline-none focus:border-foreground rounded-lg"
-                    />
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Added to order when customer places at least one custom graphic or text layer.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Print Placement Breakdown Rates */}
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-5 shadow-sm">
-              <div className="flex items-center gap-2 border-b border-border pb-3">
-                <Tag className="h-4 w-4 text-accent" />
-                <h4 className="text-xs font-black uppercase tracking-wider text-foreground">
-                  Print Location Cost Breakdown (Display / Accordion)
-                </h4>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Front Chest (Small) (₹)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs font-bold text-muted-foreground">₹</span>
-                    <input
-                      type="number"
-                      step="1"
-                      value={Math.round(ratesForm.frontChestPrintPrice / 100)}
-                      onChange={(e) =>
-                        setRatesForm({
-                          ...ratesForm,
-                          frontChestPrintPrice: (parseInt(e.target.value) || 0) * 100,
-                        })
-                      }
-                      className="w-full pl-7 pr-3 py-2 border border-border bg-background text-xs font-bold outline-none focus:border-foreground rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Front Full Print (A3) (₹)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs font-bold text-muted-foreground">₹</span>
-                    <input
-                      type="number"
-                      step="1"
-                      value={Math.round(ratesForm.frontFullPrintPrice / 100)}
-                      onChange={(e) =>
-                        setRatesForm({
-                          ...ratesForm,
-                          frontFullPrintPrice: (parseInt(e.target.value) || 0) * 100,
-                        })
-                      }
-                      className="w-full pl-7 pr-3 py-2 border border-border bg-background text-xs font-bold outline-none focus:border-foreground rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Back Full Print (A3) (₹)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs font-bold text-muted-foreground">₹</span>
-                    <input
-                      type="number"
-                      step="1"
-                      value={Math.round(ratesForm.backFullPrintPrice / 100)}
-                      onChange={(e) =>
-                        setRatesForm({
-                          ...ratesForm,
-                          backFullPrintPrice: (parseInt(e.target.value) || 0) * 100,
-                        })
-                      }
-                      className="w-full pl-7 pr-3 py-2 border border-border bg-background text-xs font-bold outline-none focus:border-foreground rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase tracking-wider text-foreground">
-                    Sleeve Print (₹)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2 text-xs font-bold text-muted-foreground">₹</span>
-                    <input
-                      type="number"
-                      step="1"
-                      value={Math.round(ratesForm.sleevePrintPrice / 100)}
-                      onChange={(e) =>
-                        setRatesForm({
-                          ...ratesForm,
-                          sleevePrintPrice: (parseInt(e.target.value) || 0) * 100,
-                        })
-                      }
-                      className="w-full pl-7 pr-3 py-2 border border-border bg-background text-xs font-bold outline-none focus:border-foreground rounded-lg"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2 text-right">
-                <button
-                  type="submit"
-                  disabled={savingRates}
-                  className="bg-foreground text-background px-5 py-2.5 text-xs font-black uppercase tracking-wider hover:opacity-90 rounded-lg transition-opacity shadow"
-                >
-                  {savingRates ? "Saving…" : "Save Print Costs"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-      )}
 
       {/* ───────────────────────────────────────────────────────────── */}
       {/* ── TAB 3: MOCKUP COLORS & ANGLES ── */}
