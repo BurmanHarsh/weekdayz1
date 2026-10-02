@@ -54,19 +54,77 @@ export const sendWelcomeEmail = createServerFn({ method: "POST" })
 
     await sendEmail({
       to: data.email,
-      subject: "Welcome to Weekdayzz",
+      subject: "Welcome to Weekdayzz 🔥",
       html: `
-        <div style="font-family:Arial,Helvetica,sans-serif;max-width:600px;margin:0 auto;color:#111">
-          <div style="background:#111;color:#fff;padding:28px;text-align:center">
-            <div style="font-size:22px;font-weight:900;letter-spacing:.15em">WEEKDAYZZ</div>
-          </div>
-          <div style="padding:36px 28px">
-            <h1 style="font-size:28px;margin:0 0 14px">Welcome, ${safeName}.</h1>
-            <p style="font-size:16px;line-height:1.6;color:#444">Your Weekdayzz account is ready. Explore the latest drops, save your favourites, and make something your own in Creator Studio.</p>
-            <a href="${process.env.VITE_SITE_URL ?? "https://weekdayzz.in"}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:14px 24px;font-weight:700;margin-top:12px">Shop the latest drops</a>
-          </div>
-          <div style="border-top:1px solid #eee;padding:20px 28px;color:#888;font-size:12px">Weekdayzz · Built for the always-online generation</div>
-        </div>
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #f7f7f7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #f7f7f7; padding: 40px 10px;">
+              <tr>
+                <td align="center">
+                  <table width="600" border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border: 1px solid #eaeaea;">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background-color: #0A0A0A; padding: 32px 24px; text-align: center;">
+                        <span style="font-size: 26px; font-weight: 900; letter-spacing: 0.2em; color: #ffffff; text-transform: uppercase;">WEEKDAYZZ</span>
+                      </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                      <td style="padding: 40px 36px 32px;">
+                        <h1 style="margin: 0 0 16px; font-size: 24px; font-weight: 800; color: #111111; letter-spacing: -0.02em;">Welcome, ${safeName}!</h1>
+                        <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #555555;">
+                          Your Weekdayzz account is live. You now have full access to our limited streetwear drops, custom Creator Studio, and order tracking.
+                        </p>
+
+                        <!-- Highlights Box -->
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #fafafa; border-radius: 8px; border: 1px solid #eeeeee; margin-bottom: 28px;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <div style="font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #111; margin-bottom: 8px;">What you can do:</div>
+                              <ul style="margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; color: #444;">
+                                <li><strong>Creator Studio:</strong> Design custom tees with custom text and uploads.</li>
+                                <li><strong>Exclusive Drops:</strong> Access heavyweight tees with high-density and puff prints.</li>
+                                <li><strong>Fast Shipping:</strong> Track your deliveries straight to your door via DTDC.</li>
+                              </ul>
+                            </td>
+                          </tr>
+                        </table>
+
+                        <!-- CTA Buttons -->
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td align="center" style="padding-bottom: 12px;">
+                              <a href="${process.env.VITE_SITE_URL ?? "https://weekdayzz.in"}/create" style="display: inline-block; background-color: #0A0A0A; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; padding: 15px 32px; border-radius: 6px;">Design in Studio &rarr;</a>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td align="center">
+                              <a href="${process.env.VITE_SITE_URL ?? "https://weekdayzz.in"}" style="display: inline-block; color: #666666; text-decoration: underline; font-size: 13px; font-weight: 600; padding: 6px;">Explore Latest Drops</a>
+                            </td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #fafafa; border-top: 1px solid #eeeeee; padding: 24px 36px; text-align: center;">
+                        <p style="margin: 0 0 6px; font-size: 12px; font-weight: 600; color: #777777; letter-spacing: 0.05em; text-transform: uppercase;">Weekdayzz · Built for the always-online generation</p>
+                        <p style="margin: 0; font-size: 11px; color: #aaaaaa;">&copy; ${new Date().getFullYear()} Weekdayzz. All rights reserved.</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
       `,
     });
 

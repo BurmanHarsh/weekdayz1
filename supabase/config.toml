@@ -11,7 +11,7 @@ RAZORPAY_KEY_ID="rzp_live_TEtasug4cgmYdw"
 RAZORPAY_KEY_SECRET="fFLWHehG4C7AnTFzgnCarU7K"
 VITE_RAZORPAY_KEY_ID="rzp_live_TEtasug4cgmYdw"
 
-RESEND_API_KEY="re_KTpNkK8A_HvoNp71FfCAavLMWLdrZNhfr"
+RESEND_API_KEY=""
 
 
 # supabase password=OoE2dT2mNyb8p8ro
