@@ -57,15 +57,27 @@ async function handleRazorpayWebhook(request: Request): Promise<Response> {
     }
 
     const payload = JSON.parse(body);
-    if (payload.event === "payment.captured") {
-      const notes = payload.payload.payment.entity.notes;
-      if (notes && notes.userId && notes.orderData) {
-        const userId = notes.userId;
-        const orderData = JSON.parse(notes.orderData);
 
-        await internalPlaceOrder(supabaseAdmin, userId, orderData);
-      }
+    // Always return 200 for events we don't handle — Razorpay retries on non-2xx.
+    if (payload.event !== "payment.captured") {
+      return new Response("Event acknowledged", { status: 200 });
     }
+
+    const notes = payload.payload?.payment?.entity?.notes;
+    if (!notes?.userId || !notes?.orderData) {
+      console.error("Webhook: payment.captured missing userId/orderData in notes", { notes });
+      return new Response("Missing order notes", { status: 200 }); // 200 so Razorpay doesn't retry indefinitely
+    }
+
+    if (!supabaseAdmin.from) {
+      console.error("Webhook: supabaseAdmin is not initialized — SUPABASE_SERVICE_ROLE_KEY may be missing");
+      return new Response("Internal Server Error", { status: 500 });
+    }
+
+    const userId = notes.userId;
+    const orderData = JSON.parse(notes.orderData);
+
+    await internalPlaceOrder(supabaseAdmin, userId, orderData);
 
     return new Response("Webhook processed", { status: 200 });
   } catch (error) {

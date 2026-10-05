@@ -42,6 +42,8 @@ const PlaceOrderSchema = z.object({
 
 export async function internalPlaceOrder(supabase: any, userId: string, data: any) {
     // 1. Insert order record into database
+    // Note: shipping_details may be absent when called from the Razorpay webhook
+    // (the webhook payload only carries total_cents + items from Razorpay notes).
     const { data: order, error } = await supabase
       .from("orders")
       .insert({
@@ -49,7 +51,7 @@ export async function internalPlaceOrder(supabase: any, userId: string, data: an
         total_cents: data.total_cents,
         payment_status: "paid",
         fulfillment_status: "processing",
-        shipping_details: data.shipping_details as any,
+        ...(data.shipping_details ? { shipping_details: data.shipping_details } : {}),
       })
       .select("id")
       .single();

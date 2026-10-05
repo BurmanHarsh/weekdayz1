@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { formatPrice } from "@/lib/format";
+import { imgUrl } from "@/lib/image";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { useAuth } from "@/hooks/use-auth";
 import { toggleWishlist, getWishlistIds } from "@/lib/wishlist.functions";
@@ -23,9 +24,9 @@ export type ProductCardData = {
 };
 
 export function ProductCard({ product }: { product: ProductCardData }) {
-  const primary = product.image_urls[0] ?? "/products/tee-black.jpg";
+  const primary = imgUrl(product.image_urls[0], "card");
   const secondaryCandidate = product.image_urls.find((u, i) => i > 0 && !u.includes("size-chart"));
-  const secondary = secondaryCandidate && secondaryCandidate !== primary ? secondaryCandidate : null;
+  const secondary = secondaryCandidate && secondaryCandidate !== product.image_urls[0] ? imgUrl(secondaryCandidate, "card") : null;
 
   const [hasSecondaryError, setHasSecondaryError] = useState(false);
   const [hasPrimaryError, setHasPrimaryError] = useState(false);

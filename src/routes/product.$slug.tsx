@@ -9,6 +9,7 @@ import { getProductReviews, submitReview, deleteReview, canUserReviewProduct } f
 import { toggleWishlist, getWishlistIds } from "@/lib/wishlist.functions";
 import { useCart } from "@/lib/cart-store";
 import { formatPrice } from "@/lib/format";
+import { imgUrl } from "@/lib/image";
 import { useCurrencyStore } from "@/lib/currency-store";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -312,7 +313,7 @@ function ProductPageInner() {
                     i === imgIdx ? "border-accent shadow-sm" : "border-transparent hover:border-border"
                   }`}
                 >
-                  <img src={u} alt="" className="w-full h-full object-contain p-0.5" />
+                  <img src={imgUrl(u, "thumb")} alt="" className="w-full h-full object-contain p-0.5" />
                 </button>
               ))}
             </div>
@@ -333,7 +334,7 @@ function ProductPageInner() {
             onMouseLeave={() => setZoom((z) => ({ ...z, active: false }))}
           >
             <img
-              src={product.image_urls[imgIdx]}
+              src={imgUrl(product.image_urls[imgIdx], "detail")}
               alt={product.title}
               onClick={() => setLightboxOpen(true)}
               className="w-full h-full object-contain p-2 transition-transform duration-200 cursor-zoom-in"
@@ -626,7 +627,7 @@ function ProductPageInner() {
                 {/* Main Expanded Image */}
                 <div className="relative flex items-center justify-center w-full max-h-[75vh] overflow-hidden">
                   <img
-                    src={product.image_urls[imgIdx]}
+                    src={imgUrl(product.image_urls[imgIdx], "full")}
                     alt={product.title}
                     className="max-h-[75vh] max-w-full object-contain shadow-2xl rounded"
                   />
@@ -666,7 +667,7 @@ function ProductPageInner() {
                           i === imgIdx ? "border-accent scale-105" : "border-white/20 opacity-60 hover:opacity-100"
                         }`}
                       >
-                        <img src={u} alt="" className="w-full h-full object-contain bg-black/40 p-0.5" />
+                        <img src={imgUrl(u, "thumb")} alt="" className="w-full h-full object-contain bg-black/40 p-0.5" />
                       </button>
                     ))}
                   </div>

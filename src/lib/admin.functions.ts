@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { sendShipped, sendDelivered } from "./email";
 import { getFallbackProducts, addCustomFallbackProduct, updateCustomFallbackProduct, deleteCustomFallbackProduct, saveStorageCustomProducts, removeStorageCustomProduct, fetchStorageCustomProducts, FallbackProduct } from "@/lib/fallback-data";
+import { uploadToR2, isR2Configured } from "@/lib/r2";
 
 const ADMIN_EMAILS = [
   "burmanharsh886@gmail.com",
@@ -302,8 +303,19 @@ export const uploadProductImage = createServerFn({ method: "POST" })
     const base64Clean = base64.includes(",") ? base64.split(",")[1] : base64;
     const buffer = Buffer.from(base64Clean, "base64");
     const ext = filename.split(".").pop() ?? "jpg";
-    const path = `products/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    const key = `products/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
 
+    // ── Try R2 first (zero egress fees) ──────────────────────────────────────
+    if (isR2Configured()) {
+      try {
+        const url = await uploadToR2(key, buffer, contentType);
+        return { url };
+      } catch (e: any) {
+        console.warn("[uploadProductImage] R2 upload failed, falling back to Supabase:", e?.message);
+      }
+    }
+
+    // ── Fallback: Supabase Storage ────────────────────────────────────────────
     const adminClient = await getAdminSupabaseClient();
     const bucketsToTry = ["product-images", "user-graphics", "public"];
 
@@ -312,12 +324,12 @@ export const uploadProductImage = createServerFn({ method: "POST" })
         try {
           const { error } = await adminClient.storage
             .from(bucket)
-            .upload(path, buffer, { contentType, upsert: true });
+            .upload(key, buffer, { contentType, upsert: true });
 
           if (!error) {
             const { data: publicData } = adminClient.storage
               .from(bucket)
-              .getPublicUrl(path);
+              .getPublicUrl(key);
             if (publicData?.publicUrl) {
               return { url: publicData.publicUrl };
             }
@@ -328,12 +340,12 @@ export const uploadProductImage = createServerFn({ method: "POST" })
       try {
         const { error } = await context.supabase.storage
           .from(bucket)
-          .upload(path, buffer, { contentType, upsert: true });
+          .upload(key, buffer, { contentType, upsert: true });
 
         if (!error) {
           const { data: publicData } = context.supabase.storage
             .from(bucket)
-            .getPublicUrl(path);
+            .getPublicUrl(key);
           if (publicData?.publicUrl) {
             return { url: publicData.publicUrl };
           }
