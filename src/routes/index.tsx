@@ -18,6 +18,9 @@ import { AdmitOneTicket } from "@/components/ui/admit-one-ticket";
 import AutoLayoutCard from "@/components/ui/auto-layout-card";
 
 import couplesImg from "@/assets/couples.png";
+import coupleCollectionImg from "@/assets/1000225355.jpg";
+import trendingStreetImg from "@/assets/1000235703.jpg";
+import newArrivalImg from "@/assets/IMG_20261003_125022.png";
 import shalom1Img from "@/assets/shalom-ejiofor-_7wel0dVeRA-unsplash.jpg";
 import shalom2Img from "@/assets/shalom-ejiofor-RgPEQjJWBYE-unsplash.jpg";
 import shalom3Img from "@/assets/shalom-ejiofor-t_prchAm4ag-unsplash.jpg";
@@ -419,15 +422,15 @@ function NewArrivalsBanner() {
         <Link
           to="/shop"
           className="group relative block overflow-hidden rounded-xl"
-          style={{ paddingBottom: "56%" }}
+          style={{ paddingBottom: "32.5%" }}
         >
           <img
-            src={shalom1Img}
+            src={newArrivalImg}
             alt="New Arrivals"
-            className="absolute inset-0 h-full w-full object-cover object-top group-hover:scale-105 transition-transform duration-700"
+            className="absolute inset-0 h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
           />
           {/* Gradient overlay — strong at bottom */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
           {/* Text overlay — bottom left */}
           <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 flex items-end justify-between">
             <div>
@@ -495,8 +498,9 @@ function CollectionsGrid() {
             }
             subtitle="SS26 Match Edition • Oversized Fits for Two"
             badge="POPULAR"
-            mainImage={couplesImg}
+            mainImage={coupleCollectionImg}
             logoImage="/logo.png"
+            hideLogo={true}
             extraImages={[
               "/products/certified-yapper-listener-couple.png",
               "/products/calm-admi-kaleshi-aurat-black.png",
@@ -514,8 +518,9 @@ function CollectionsGrid() {
             }
             subtitle="Top Picked Drops • Heavyweight Cotton"
             badge="HOT DROPS"
-            mainImage="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1740&auto=format&fit=crop"
+            mainImage={trendingStreetImg}
             logoImage="/logo.png"
+            hideLogo={true}
             extraImages={[
               "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=1740&auto=format&fit=crop",
               "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=1740&auto=format&fit=crop",

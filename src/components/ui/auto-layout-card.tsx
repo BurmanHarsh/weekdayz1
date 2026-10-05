@@ -83,6 +83,7 @@ export interface AutoLayoutCardProps extends Omit<HTMLMotionProps<"div">, "title
   badge?: string;
   mainImage?: string;
   logoImage?: string;
+  hideLogo?: boolean;
   extraImages?: string[];
   linkTo?: string;
   linkSearch?: Record<string, string>;
@@ -101,6 +102,7 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
       badge = "TRENDING",
       mainImage = "https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=1740&auto=format&fit=crop",
       logoImage = "/logo.png",
+      hideLogo = false,
       extraImages = [
         "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=1742&auto=format&fit=crop",
         "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=1740&auto=format&fit=crop",
@@ -152,20 +154,22 @@ const AutoLayoutCard = React.forwardRef<HTMLDivElement, AutoLayoutCardProps>(
             alt="main-image"
             className="bg-slate-50 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
-            {logoImage.startsWith("/") ? (
-              <span className="text-white text-2xl md:text-3xl font-black uppercase tracking-widest border-2 border-white/80 px-4 py-1.5 bg-black/40 backdrop-blur-md">
-                WEEKDAYZZ
-              </span>
-            ) : (
-              <motion.img
-                layout
-                src={logoImage}
-                alt="logo"
-                className="w-20 object-contain drop-shadow-md"
-              />
-            )}
-          </div>
+          {!hideLogo && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[2px]">
+              {logoImage.startsWith("/") ? (
+                <span className="text-white text-2xl md:text-3xl font-black uppercase tracking-widest border-2 border-white/80 px-4 py-1.5 bg-black/40 backdrop-blur-md">
+                  WEEKDAYZZ
+                </span>
+              ) : (
+                <motion.img
+                  layout
+                  src={logoImage}
+                  alt="logo"
+                  className="w-20 object-contain drop-shadow-md"
+                />
+              )}
+            </div>
+          )}
           <div className="absolute top-3 left-3 bg-foreground text-background text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-md">
             {badge}
           </div>

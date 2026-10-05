@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WhatsAppCallout, WhatsAppFloatingButton } from "@/components/shop/WhatsAppCustomNotice";
 
 import { z } from "zod";
+import shopBannerImg from "@/assets/shalom-ejiofor-_7wel0dVeRA-unsplash.jpg";
 
 const productsQ = queryOptions({
   queryKey: ["products"],
@@ -60,9 +61,9 @@ function ShopHeaderBanner() {
         {/* Left Side: Clothing Hangers Image */}
         <div className="md:col-span-7 relative h-64 md:h-full w-full overflow-hidden">
           <img
-            src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?q=80&w=1600&auto=format&fit=crop"
+            src={shopBannerImg}
             alt="WEEKDAYZZ Collection"
-            className="h-full w-full object-cover object-left"
+            className="h-full w-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#ebebeb] hidden md:block" />
         </div>
